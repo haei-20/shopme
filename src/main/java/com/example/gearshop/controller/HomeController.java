@@ -1,0 +1,485 @@
+package com.example.gearshop.controller;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.example.gearshop.model.KhachHang;
+import com.example.gearshop.model.LoaiSanPham;
+import com.example.gearshop.model.NguoiDung;
+import com.example.gearshop.model.NhanVien;
+import com.example.gearshop.model.SanPham;
+import com.example.gearshop.repository.KhachHangRepository;
+import com.example.gearshop.repository.LoaiSanPhamRepository;
+import com.example.gearshop.repository.NguoiDungRepository;
+import com.example.gearshop.repository.NhanVienRepository;
+import com.example.gearshop.repository.SanPhamRepository;
+import com.example.gearshop.service.DangKyService;
+import com.example.gearshop.service.NguoiDungService;
+import com.example.gearshop.service.PasswordResetService;
+import com.example.gearshop.service.SanPhamService;
+
+import jakarta.servlet.http.HttpSession;
+
+@Controller
+public class HomeController {
+
+    @Autowired
+    private SanPhamRepository sanPhamRepo;
+
+    @Autowired
+    private LoaiSanPhamRepository loaiSPRepo;
+
+    @Autowired
+    private NguoiDungRepository nguoiDungRepo;
+
+    @Autowired
+    private KhachHangRepository khachHangRepo;
+    @Autowired
+    private NhanVienRepository nhanVienRepo;
+
+    @Autowired
+    private SanPhamService sanPhamService;
+
+    @Autowired
+    private DangKyService dangKyService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
+
+    @Value("${app.forgot-password.otp-expiration-ms:300000}")
+    private long otpExpirationMs;
+
+    @GetMapping("/")
+    public String homePage(Model model, HttpSession session) {
+        // Lấy thông tin người dùng từ session
+        NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
+        if (nguoiDung != null) {
+            model.addAttribute("nguoiDung", nguoiDung); // Thêm thông tin người dùng vào model
+        }
+
+        List<Integer> sanPhamDaXem = (List<Integer>) session.getAttribute("sanPhamDaXem");
+
+        List<SanPham> danhSachSanPhamDaXem = new ArrayList<>();
+        if (sanPhamDaXem != null && !sanPhamDaXem.isEmpty()) {
+            List<Long> sanPhamDaXemLong = new ArrayList<>();
+            for (Integer id : sanPhamDaXem) {
+                sanPhamDaXemLong.add(id.longValue());
+            }
+            danhSachSanPhamDaXem = new ArrayList<>(sanPhamRepo.findAllById(sanPhamDaXemLong));
+            // Nếu cần giữ thứ tự như Session lưu (id mới nhất ở đầu)
+            danhSachSanPhamDaXem.sort(Comparator.comparingInt(sp -> sanPhamDaXem.indexOf(sp.getId().intValue())));
+        }
+
+        model.addAttribute("danhSachSanPhamDaXem", danhSachSanPhamDaXem);
+
+        SanPham sanPhamMoiXem = (SanPham) session.getAttribute("sanPhamMoiXem");
+        List<SanPham> sanPhamGoiY = new ArrayList<>();
+
+        if (sanPhamMoiXem != null) {
+            sanPhamGoiY = sanPhamService.getSanPhamTuongTu(sanPhamMoiXem);
+        }
+
+        model.addAttribute("sanPhamGoiY", sanPhamGoiY);
+        // Thêm các sản phẩm bán chạy vào model
+        model.addAttribute("sanPhamBanChay", sanPhamRepo.findTop10ByOrderByDaBanDesc());
+
+        // Thêm danh mục sản phẩm theo loại vào model
+        List<String> tenLoaiList = List.of("Mainboard", "CPU", "RAM", "VGA", "Ổ cứng", "Nguồn", "Tản nhiệt", "Case",
+                "Màn hình");
+        Map<String, List<SanPham>> sanPhamTheoLoai = new LinkedHashMap<>();
+        for (String tenLoai : tenLoaiList) {
+            LoaiSanPham loai = loaiSPRepo.findByTenLoaiSanPham(tenLoai);
+            if (loai != null) {
+                sanPhamTheoLoai.put(tenLoai, sanPhamRepo.findTop10ByLoaiSanPhamOrderByDaBanDesc(loai));
+            }
+        }
+        model.addAttribute("sanPhamTheoLoai", sanPhamTheoLoai);
+
+        return "clientTemplate/trangchu"; // Trả về giao diện trang chủ
+    }
+
+    @GetMapping("/dangnhap")
+    public String showLoginPage() {
+        return "clientTemplate/dangnhap"; // login.html trong templates
+    }
+
+    @PostMapping("/dangky/gui-ma")
+    public String sendRegisterOtp(@RequestParam String tenNguoiDung,
+            @RequestParam String tenDangNhap,
+            @RequestParam String matKhau,
+            @RequestParam String nhapLaiMatKhau,
+            @RequestParam String email,
+            @RequestParam String sdt,
+            @RequestParam String diaChi,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        String validationError = dangKyService.validateThongTinDangKy(tenDangNhap, matKhau, nhapLaiMatKhau,
+            email, sdt, diaChi, tenNguoiDung);
+        if (validationError != null) {
+            redirectAttributes.addFlashAttribute("error", validationError);
+            redirectAttributes.addFlashAttribute("registerStep", "input");
+            return "redirect:/dangnhap";
+        }
+
+        try {
+            String otp = passwordResetService.generateVerificationCode();
+            passwordResetService.sendVerificationCode(email, otp);
+
+            session.setAttribute("pendingRegisterTenNguoiDung", tenNguoiDung);
+            session.setAttribute("pendingRegisterTenDangNhap", tenDangNhap);
+            session.setAttribute("pendingRegisterMatKhau", matKhau);
+            session.setAttribute("pendingRegisterEmail", email);
+            session.setAttribute("pendingRegisterSdt", sdt);
+            session.setAttribute("pendingRegisterDiaChi", diaChi);
+            session.setAttribute("pendingRegisterOtp", otp);
+            session.setAttribute("pendingRegisterOtpExpiry", System.currentTimeMillis() + otpExpirationMs);
+
+            redirectAttributes.addFlashAttribute("success", "Da gui OTP den email cua ban. Hay nhap OTP de hoan tat dang ky.");
+            redirectAttributes.addFlashAttribute("registerStep", "verify");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Khong gui duoc OTP. Kiem tra lai cau hinh SMTP.");
+            redirectAttributes.addFlashAttribute("registerStep", "input");
+        }
+        return "redirect:/dangnhap";
+    }
+
+    @PostMapping("/dangky/xac-nhan")
+    public String confirmRegisterOtp(@RequestParam String otp,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        String pendingOtp = (String) session.getAttribute("pendingRegisterOtp");
+        Long pendingOtpExpiry = (Long) session.getAttribute("pendingRegisterOtpExpiry");
+
+        if (pendingOtp == null || pendingOtpExpiry == null) {
+            redirectAttributes.addFlashAttribute("error", "Phien dang ky da het han. Vui long dang ky lai.");
+            redirectAttributes.addFlashAttribute("registerStep", "input");
+            return "redirect:/dangnhap";
+        }
+
+        if (System.currentTimeMillis() > pendingOtpExpiry) {
+            clearPendingRegister(session);
+            redirectAttributes.addFlashAttribute("error", "OTP da het han. Vui long gui lai OTP.");
+            redirectAttributes.addFlashAttribute("registerStep", "input");
+            return "redirect:/dangnhap";
+        }
+
+        if (!pendingOtp.equals(otp)) {
+            redirectAttributes.addFlashAttribute("error", "OTP khong dung.");
+            redirectAttributes.addFlashAttribute("registerStep", "verify");
+            return "redirect:/dangnhap";
+        }
+
+        String tenNguoiDung = (String) session.getAttribute("pendingRegisterTenNguoiDung");
+        String tenDangNhap = (String) session.getAttribute("pendingRegisterTenDangNhap");
+        String matKhau = (String) session.getAttribute("pendingRegisterMatKhau");
+        String email = (String) session.getAttribute("pendingRegisterEmail");
+        String sdt = (String) session.getAttribute("pendingRegisterSdt");
+        String diaChi = (String) session.getAttribute("pendingRegisterDiaChi");
+
+        if (tenNguoiDung == null || tenDangNhap == null || matKhau == null || email == null || sdt == null || diaChi == null) {
+            clearPendingRegister(session);
+            redirectAttributes.addFlashAttribute("error", "Khong tim thay du lieu dang ky tam thoi. Vui long dang ky lai.");
+            redirectAttributes.addFlashAttribute("registerStep", "input");
+            return "redirect:/dangnhap";
+        }
+
+        StringBuilder thongBao = new StringBuilder();
+        boolean thanhCong = dangKyService.dangKyTaiKhoan(
+                tenDangNhap, matKhau, matKhau,
+                email, sdt, diaChi, tenNguoiDung, thongBao);
+
+        clearPendingRegister(session);
+
+        if (thanhCong) {
+            redirectAttributes.addFlashAttribute("success", "Dang ky thanh cong. Vui long dang nhap de tiep tuc.");
+            return "redirect:/dangnhap";
+        }
+
+        redirectAttributes.addFlashAttribute("error", thongBao.toString());
+        redirectAttributes.addFlashAttribute("registerStep", "input");
+        return "redirect:/dangnhap";
+    }
+
+    private void clearPendingRegister(HttpSession session) {
+        session.removeAttribute("pendingRegisterTenNguoiDung");
+        session.removeAttribute("pendingRegisterTenDangNhap");
+        session.removeAttribute("pendingRegisterMatKhau");
+        session.removeAttribute("pendingRegisterEmail");
+        session.removeAttribute("pendingRegisterSdt");
+        session.removeAttribute("pendingRegisterDiaChi");
+        session.removeAttribute("pendingRegisterOtp");
+        session.removeAttribute("pendingRegisterOtpExpiry");
+    }
+
+    @GetMapping("/quen-mat-khau")
+    public String showForgotPasswordPage(@RequestParam(value = "step", required = false) String step, Model model) {
+        if (!model.containsAttribute("step")) {
+            model.addAttribute("step", step == null ? "send" : step);
+        }
+        return "clientTemplate/quen-mat-khau";
+    }
+
+    @PostMapping("/quen-mat-khau/gui-ma")
+    public String sendForgotPasswordCode(@RequestParam String email,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        Optional<NguoiDung> optionalNguoiDung = nguoiDungRepo.findByEmail(email);
+        if (optionalNguoiDung.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Email khong ton tai trong he thong.");
+            redirectAttributes.addFlashAttribute("step", "send");
+            return "redirect:/quen-mat-khau";
+        }
+
+        try {
+            String verificationCode = passwordResetService.generateVerificationCode();
+            passwordResetService.sendVerificationCode(email, verificationCode);
+
+            session.setAttribute("resetEmail", email);
+            session.setAttribute("resetCode", verificationCode);
+            session.setAttribute("resetCodeExpiry", System.currentTimeMillis() + otpExpirationMs);
+
+            redirectAttributes.addFlashAttribute("success", "Da gui ma xac nhan den email cua ban. Vui long kiem tra ca thu muc spam.");
+            redirectAttributes.addFlashAttribute("step", "verify");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Khong gui duoc email xac nhan. Kiem tra lai cau hinh SMTP.");
+            redirectAttributes.addFlashAttribute("step", "send");
+        }
+        return "redirect:/quen-mat-khau";
+    }
+
+    @PostMapping("/quen-mat-khau/xac-nhan")
+    public String confirmForgotPassword(@RequestParam String maXacNhan,
+            @RequestParam String matKhauMoi,
+            @RequestParam String xacNhanMatKhauMoi,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        String resetEmail = (String) session.getAttribute("resetEmail");
+        String resetCode = (String) session.getAttribute("resetCode");
+        Long resetCodeExpiry = (Long) session.getAttribute("resetCodeExpiry");
+
+        if (resetEmail == null || resetCode == null || resetCodeExpiry == null) {
+            redirectAttributes.addFlashAttribute("error", "Phien dat lai mat khau da het han. Vui long yeu cau ma moi.");
+            redirectAttributes.addFlashAttribute("step", "send");
+            return "redirect:/quen-mat-khau";
+        }
+
+        if (System.currentTimeMillis() > resetCodeExpiry) {
+            session.removeAttribute("resetEmail");
+            session.removeAttribute("resetCode");
+            session.removeAttribute("resetCodeExpiry");
+            redirectAttributes.addFlashAttribute("error", "Ma xac nhan da het han. Vui long yeu cau ma moi.");
+            redirectAttributes.addFlashAttribute("step", "send");
+            return "redirect:/quen-mat-khau";
+        }
+
+        if (!resetCode.equals(maXacNhan)) {
+            redirectAttributes.addFlashAttribute("error", "Ma xac nhan khong dung.");
+            redirectAttributes.addFlashAttribute("step", "verify");
+            return "redirect:/quen-mat-khau";
+        }
+
+        if (!matKhauMoi.equals(xacNhanMatKhauMoi)) {
+            redirectAttributes.addFlashAttribute("error", "Xac nhan mat khau moi khong khop.");
+            redirectAttributes.addFlashAttribute("step", "verify");
+            return "redirect:/quen-mat-khau";
+        }
+
+        Optional<NguoiDung> optionalNguoiDung = nguoiDungRepo.findByEmail(resetEmail);
+        if (optionalNguoiDung.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Khong tim thay tai khoan can cap nhat.");
+            redirectAttributes.addFlashAttribute("step", "send");
+            return "redirect:/quen-mat-khau";
+        }
+
+        NguoiDung nguoiDung = optionalNguoiDung.get();
+        nguoiDung.setMatKhau(matKhauMoi);
+        nguoiDungRepo.save(nguoiDung);
+
+        session.removeAttribute("resetEmail");
+        session.removeAttribute("resetCode");
+        session.removeAttribute("resetCodeExpiry");
+
+        redirectAttributes.addFlashAttribute("success", "Dat lai mat khau thanh cong. Vui long dang nhap lai.");
+        return "redirect:/dangnhap";
+    }
+
+    @PostMapping("/dangnhap")
+    public String login(@RequestParam String tenDangNhap,
+            @RequestParam String matKhau,
+            HttpSession session,
+            Model model) {
+        Optional<NguoiDung> optionalNguoiDung = nguoiDungRepo.findByTenDangNhapAndMatKhau(tenDangNhap, matKhau);
+        if (optionalNguoiDung.isPresent()) {
+            NguoiDung nguoiDung = optionalNguoiDung.get();
+            session.setAttribute("nguoiDung", nguoiDung); // Lưu thông tin người dùng vào session
+
+            // Kiểm tra vai trò của người dùng
+            Optional<KhachHang> optionalKhachHang = khachHangRepo.findByNguoiDung_Id(nguoiDung.getId());
+            Optional<NhanVien> optionalNhanVien = nhanVienRepo.findByNguoiDung_Id(nguoiDung.getId());
+
+            if (optionalKhachHang.isPresent()) {
+                session.setAttribute("khachHang", optionalKhachHang.get()); // Tạo session khách hàng
+                return "redirect:/"; // Chuyển đến trang chủ
+            } else if (optionalNhanVien.isPresent()) {
+                session.setAttribute("nhanVien", optionalNhanVien.get()); // Tạo session nhân viên
+                return "redirect:/admin/trangchu"; // Chuyển đến trang admin
+            } else {
+                model.addAttribute("error", "Tài khoản không thuộc vai trò hợp lệ.");
+                return "clientTemplate/dangnhap";
+            }
+        } else {
+            model.addAttribute("error", "Sai tên đăng nhập hoặc mật khẩu.");
+            return "clientTemplate/dangnhap";
+        }
+    }
+
+    // Tim kiem san pham
+    @GetMapping("/timkiem")
+    public String timKiem(@RequestParam("q") String keyword,
+            @RequestParam(value = "sort", required = false) String sort,
+            Model model) {
+        List<SanPham> ketQua;
+
+        if ("asc".equals(sort)) {
+            ketQua = sanPhamService.timKiemTheoGiaTangDan(keyword);
+        } else if ("desc".equals(sort)) {
+            ketQua = sanPhamService.timKiemTheoGiaGiamDan(keyword);
+        } else {
+            ketQua = sanPhamService.timKiemSanPham(keyword);
+        }
+
+        model.addAttribute("ketQua", ketQua);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("sort", sort);
+
+        return "clientTemplate/timkiem";
+    }
+
+    @GetMapping("/dangxuat")
+    public String logout(HttpSession session) {
+        session.invalidate(); // Xóa toàn bộ session
+        return "redirect:/"; // hoặc "redirect:/" nếu bạn muốn về trang chủ
+    }
+
+    @Controller
+    @RequestMapping("/thongtincanhan")
+    public class ThongTinCaNhanController {
+
+        @Autowired
+        private NguoiDungRepository nguoiDungRepo;
+
+        @Autowired
+        private KhachHangRepository khachHangRepo;
+
+        @Autowired
+        private NguoiDungService nguoiDungService;
+
+        @GetMapping
+        public String thongTinCaNhan(HttpSession session, Model model) {
+            NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
+            if (nguoiDung == null)
+                return "redirect:/dangnhap";
+
+            model.addAttribute("nguoiDung", nguoiDung);
+            boolean isKhachHang = khachHangRepo.findByNguoiDung_Id(nguoiDung.getId()).isPresent();
+            boolean isNhanVien = nhanVienRepo.findByNguoiDung_Id(nguoiDung.getId()).isPresent();
+            System.out.println("isKhachHang: " + isKhachHang);
+            System.out.println("isNhanVien: " + isNhanVien);
+            System.out.println("Co nguoi dung: " + nguoiDung.getTenNguoiDung());
+            model.addAttribute("isKhachHang", isKhachHang);
+            model.addAttribute("isNhanVien", isNhanVien);
+            return "/thongtincanhan";
+        }
+
+        @PostMapping("/capnhat")
+        public String capNhatThongTin(HttpSession session,
+                @RequestParam String sdt,
+                @RequestParam String diaChi,
+                RedirectAttributes redirectAttributes) {
+            NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
+            if (nguoiDung == null)
+                return "redirect:/dangnhap";
+
+            nguoiDungService.capNhatThongTin(nguoiDung.getTenDangNhap(), sdt, diaChi);
+
+            // Cập nhật session
+            nguoiDung.setSdt(sdt);
+            nguoiDung.setDiaChi(diaChi);
+            session.setAttribute("nguoiDung", nguoiDung);
+
+            // Gửi thông báo thành công
+            redirectAttributes.addFlashAttribute("thongBaoCapNhat", "Cập nhật thông tin thành công!");
+
+            return "redirect:/thongtincanhan";
+        }
+
+        @PostMapping("/doimatkhau")
+        public String doiMatKhau(HttpSession session,
+                @RequestParam String matKhauCu,
+                @RequestParam String matKhauMoi,
+                @RequestParam String xacNhanMatKhauMoi,
+                RedirectAttributes redirectAttributes) {
+            NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
+            if (nguoiDung == null)
+                return "redirect:/dangnhap";
+
+            String thongBao = nguoiDungService.doiMatKhau(
+                    nguoiDung.getTenDangNhap(), matKhauCu, matKhauMoi, xacNhanMatKhauMoi);
+
+            redirectAttributes.addFlashAttribute("thongBaoDoiMatKhau", thongBao);
+            return "redirect:/thongtincanhan";
+        }
+    }
+
+    @Controller
+    @RequestMapping("/dangky")
+    public class DangKyController {
+
+        @Autowired
+        private DangKyService dangKyService;
+
+        @GetMapping
+        public String hienFormDangKy() {
+            return "dangky"; // trang giao diện Thymeleaf
+        }
+
+        @PostMapping
+        public String xuLyDangKy(@RequestParam String tenDangNhap,
+                @RequestParam String matKhau,
+                @RequestParam String nhapLaiMatKhau,
+                @RequestParam String email,
+                @RequestParam String sdt,
+                @RequestParam String diaChi,
+                @RequestParam String tenNguoiDung,
+                RedirectAttributes redirectAttributes,
+                Model model) {
+            StringBuilder thongBao = new StringBuilder();
+            boolean thanhCong = dangKyService.dangKyTaiKhoan(
+                    tenDangNhap, matKhau, nhapLaiMatKhau,
+                    email, sdt, diaChi, tenNguoiDung, thongBao);
+
+            if (thanhCong) {
+                redirectAttributes.addFlashAttribute("success", thongBao.toString());
+                return "redirect:/dangnhap";
+            } else {
+                redirectAttributes.addFlashAttribute("error", thongBao.toString());
+                return "clientTemplate/dangnhap";
+            }
+        }
+    }
+
+}

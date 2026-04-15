@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PGearShop - Xem Hóa Đơn</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+  <style>
+    .receiver-modal-dialog {
+      max-width: 1000px;
+    }
+
+    #editReceiverModal .modal-dialog {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    #editReceiverModal .modal-content {
+      max-height: calc(100vh - 2rem);
+    }
+
+    #editReceiverModal .modal-body {
+      overflow-y: auto;
+    }
+
+    .receiver-table {
+      table-layout: auto;
+    }
+
+    .receiver-name-col,
+    .receiver-name-cell {
+      min-width: 140px;
+      white-space: nowrap;
+    }
+
+    .receiver-email-col,
+    .receiver-email-cell {
+      min-width: 260px;
+      white-space: nowrap;
+    }
+
+    .receiver-phone-col,
+    .receiver-phone-cell {
+      min-width: 140px;
+      white-space: nowrap;
+    }
+
+    .receiver-address-col {
+      min-width: 220px;
+      max-width: 260px;
+    }
+
+    .receiver-address-text {
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+
+    .receiver-action-col,
+    .receiver-action-cell {
+      min-width: 170px;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .receiver-row-selected {
+      background-color: #fff4d8;
+    }
+
+    .receiver-action-group {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .searchable-select {
+      position: relative;
+    }
+
+    .searchable-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      width: 100%;
+      max-height: 220px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.12);
+      z-index: 1200;
+    }
+
+    .searchable-dropdown-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+
+    .searchable-dropdown-item:hover {
+      background-color: #fff3d0;
+    }
+
+    .searchable-dropdown-empty {
+      padding: 8px 12px;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header class="bg-dark text-white py-3">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a class="fs-3 fw-bold text-white text-decoration-none" th:href="@{/}">PGearShop</a>
+      <form class="flex-grow-1 mx-3" action="/timkiem" method="get">
+        <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm…" />
+      </form>
+      <div class="d-flex align-items-center">
+        <div class="dropdown" th:if="${nguoiDung != null}">
+          <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <span th:text="'Xin chào, ' + ${nguoiDung.tenNguoiDung}">Xin chào</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
+            <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
+          </ul>
+        </div>
+        <a th:if="${nguoiDung == null}" href="/dangnhap" class="btn btn-outline-light">Đăng nhập</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container my-5">
+    <div class="row">
+      <!-- THÔNG TIN ĐỊA CHỈ NHẬN HÀNG -->
+      <div class="col-md-6 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2>Thông tin địa chỉ nhận hàng</h2>
+          <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#selectReceiverModal">Chọn địa chỉ
+            nhận hàng</button>
+        </div>
+        <form id="orderForm" method="post" th:action="@{/save-order}">
+          <input type="hidden" id="voucherCode" name="voucherCode" value="" />
+          <input type="hidden" id="thongTinNhanHangID" name="thongTinNhanHangID" th:value="${matchedReceiver != null ? matchedReceiver.id : ''}" />
+          <div class="mb-3">
+            <label for="tenNguoiNhan" class="form-label">Tên người nhận</label>
+            <input type="text" id="tenNguoiNhan" name="tenNguoiNhan" class="form-control"
+              th:value="${matchedReceiver != null ? matchedReceiver.tenNguoiNhan : ''}" readonly required />
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" id="email" name="email" class="form-control"
+              th:value="${matchedReceiver != null ? matchedReceiver.email : ''}" readonly required />
+          </div>
+          <div class="mb-3">
+            <label for="sdt" class="form-label">Số điện thoại</label>
+            <input type="text" id="sdt" name="sdt" class="form-control"
+              th:value="${matchedReceiver != null ? matchedReceiver.sdt : ''}" readonly required />
+          </div>
+          <div class="mb-2">
+            <label for="diachi" class="form-label">Địa chỉ</label>
+            <textarea id="diachi" name="diachi" class="form-control" rows="2" readonly required
+              th:text="${matchedReceiver != null ? matchedReceiver.diachi : ''}"></textarea>
+          </div>
+          <!-- <div class="text-center mt-4">
+            <button type="button" id="saveOrderButton" class="btn btn-success">Lưu hóa đơn</button>
+          </div> -->
+        </form>
+      </div>
+
+      <!-- THÔNG TIN CÁC MẶT HÀNG -->
+      <div class="col-md-6 mb-4">
+        <h2>Thông tin các mặt hàng</h2>
+        <table class="table table-bordered mt-3">
+          <thead class="table-dark">
+            <tr>
+              <th>Hình ảnh</th>
+              <th>Sản phẩm</th>
+              <th>Giá</th>
+              <th>Số lượng</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="item : ${cart}">
+              <td><img th:src="${item.image}" style="width:100px" class="img-thumbnail" /></td>
+              <td th:text="${item.name}">Tên SP</td>
+              <td th:text="${#numbers.formatDecimal(item.priceNumeric,0,'COMMA',0,'POINT')}+'₫'">Giá</td>
+              <td th:text="${item.quantity}">SL</td>
+              <td th:text="${#numbers.formatDecimal(item.quantity*item.priceNumeric,0,'COMMA',0,'POINT')}+'₫'">TT</td>
+            </tr>
+          </tbody>
+        </table>
+        <h4 class="text-end">
+          Tổng tiền: <span id="totalPrice"
+            th:text="${#numbers.formatDecimal(totalPrice,0,'COMMA',0,'POINT')}+'₫'"></span>
+        </h4>
+        <div class="mt-3">
+          <label for="voucherSelect" class="form-label">Chọn voucher:</label>
+          <select id="voucherSelect" class="form-select">
+            <option value="" selected>Không sử dụng voucher</option>
+            <option th:each="voucher : ${vouchers}" th:value="${voucher.maVoucher}" th:text="${voucher.tenVoucher}">
+            </option>
+          </select>
+        </div>
+        <h4 class="text-end mt-3">
+          Tổng tiền sau giảm: <span id="discountedTotal">0₫</span>
+        </h4>
+        <div class="text-center mt-4">
+            <button type="button" id="saveOrderButton" class="btn btn-success" onclick="submitOrderForm()">Lưu hóa đơn</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CHỌN ĐỊA CHỈ NHẬN HÀNG -->
+  <div class="modal fade" id="selectReceiverModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog receiver-modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Chọn địa chỉ nhận hàng</h5>
+          <button class="btn btn-success btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#addReceiverModal">
+            <i class="bi bi-plus-lg"></i> Thêm
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <input type="text" id="receiverSearch" class="form-control" placeholder="Tìm theo tên hoặc số điện thoại..." />
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered receiver-table">
+              <thead class="table-dark">
+                <tr>
+                  <th class="receiver-name-col">Tên</th>
+                  <th class="receiver-email-col">Email</th>
+                  <th class="receiver-phone-col">Điện thoại</th>
+                  <th class="receiver-address-col">Địa chỉ</th>
+                  <th class="receiver-action-col">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="receiverTableBody">
+                <tr th:each="r : ${receivers}" th:attr="data-id=${r.id},data-ten=${r.tenNguoiNhan},data-email=${r.email},data-sdt=${r.sdt},data-diachi=${r.diachi}">
+                  <td class="receiver-name-cell" th:text="${r.tenNguoiNhan}"></td>
+                  <td class="receiver-email-cell" th:text="${r.email}"></td>
+                  <td class="receiver-phone-cell" th:text="${r.sdt}"></td>
+                  <td class="receiver-address-text" th:text="${r.diachi}" th:title="${r.diachi}"></td>
+                  <td class="receiver-action-cell">
+                    <div class="receiver-action-group">
+                      <button class="btn btn-primary btn-sm" th:attr="data-id=${r.id}" onclick="selectReceiver(this)">Chọn</button>
+                      <button class="btn btn-outline-secondary btn-sm" th:attr="data-id=${r.id}" onclick="openEditReceiver(this)">Sửa</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SỬA ĐỊA CHỈ NHẬN HÀNG -->
+  <div class="modal fade" id="editReceiverModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Sửa địa chỉ</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="editReceiverForm">
+          <div class="modal-body">
+            <input type="hidden" id="editReceiverId" />
+            <input type="hidden" id="editReceiverEmail" />
+            <div class="mb-3">
+              <label class="form-label">Họ và tên</label>
+              <input id="editTenNguoiNhan" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Số điện thoại</label>
+              <input id="editSdt" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tỉnh / Thành phố</label>
+              <div class="searchable-select">
+                <input id="editTinhThanh" class="form-control" placeholder="Gõ để tìm tỉnh/thành phố" autocomplete="off" required />
+                <div id="editTinhThanhDropdown" class="searchable-dropdown-menu"></div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Phường / Xã</label>
+              <div class="searchable-select">
+                <input id="editPhuongXa" class="form-control" placeholder="Gõ để tìm phường/xã" autocomplete="off" required />
+                <div id="editPhuongXaDropdown" class="searchable-dropdown-menu"></div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tên đường, tòa nhà, số nhà</label>
+              <input id="editStreetLine" class="form-control" placeholder="Ví dụ: Số 12, Tòa A, Đường Lê Lợi" required />
+            </div>
+          </div>
+          <div class="modal-footer d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-danger" id="deleteReceiverBtn">Xóa địa chỉ</button>
+            <div>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+              <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL THÊM NGƯỜI ĐẶT HÀNG -->
+  <div class="modal fade" id="addReceiverModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm thông tin nhận hàng</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="addReceiverForm">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Tên người nhận</label>
+              <input id="newTen" name="tenNguoiNhan" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input id="newEmail" name="email" type="email" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Số điện thoại</label>
+              <input id="newSdt" name="sdt" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tỉnh / Thành phố</label>
+              <div class="searchable-select">
+                <input id="newTinhThanh" class="form-control" placeholder="Gõ để tìm tỉnh/thành phố" autocomplete="off" required />
+                <div id="newTinhThanhDropdown" class="searchable-dropdown-menu"></div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Phường / Xã</label>
+              <div class="searchable-select">
+                <input id="newPhuongXa" class="form-control" placeholder="Gõ để tìm phường/xã" autocomplete="off" required />
+                <div id="newPhuongXaDropdown" class="searchable-dropdown-menu"></div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tên đường, tòa nhà, số nhà</label>
+              <input id="newStreetLine" class="form-control" placeholder="Ví dụ: Số 12, Tòa A, Đường Lê Lợi" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-primary">Lưu</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="successToast" class="toast align-items-center text-bg-success border-0">
+      <div class="d-flex">
+        <div class="toast-body">Thêm thông tin nhận hàng thành công!</div>
+        <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-dark text-light pt-4 mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <h5>PGearShop</h5>
+          <p>Chuyên cung cấp linh kiện máy tính chính hãng.<br />
+            Địa chỉ: Km10 đường Trần Phú, quận Hà Đông, Hà Nội<br />
+            SĐT: 0999 999 999<br />
+            Email: contact@pgearshop.vn
+          </p>
+        </div>
+        <div class="col-md-4 mb-3">
+          <h5>Chính sách đổi trả</h5>
+          <p>Hỗ trợ đổi trả trong vòng <strong>7 ngày</strong> nếu sản phẩm lỗi kỹ thuật hoặc không đúng mô tả.</p>
+        </div>
+        <div class="col-md-4 mb-3">
+          <h5>Bảo hành chính hãng</h5>
+          <p>Tất cả sản phẩm bảo hành từ <strong>6–36 tháng</strong> tùy loại. Hỗ trợ nhanh tại cửa hàng.</p>
+        </div>
+      </div>
+      <div class="text-center py-3 border-top border-secondary">
+        &copy; 2025 PGearShop. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const vietnamProvincesApiBase = 'https://provinces.open-api.vn/api/v2';
+    const provinceCache = new Map();
+    const searchableDropdownState = new Map();
+
+    function safeText(value) {
+      return String(value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function normalizeAddressText(value) {
+      return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/^tinh\s+|^thanh pho\s+|^tp\.?\s+|^quan\s+|^huyen\s+|^phuong\s+|^xa\s+/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function hideSearchableDropdown(dropdownId) {
+      const dropdown = document.getElementById(dropdownId);
+      if (!dropdown) return;
+      dropdown.style.display = 'none';
+    }
+
+    function renderSearchableDropdown(inputId, options, keyword = '') {
+      const state = searchableDropdownState.get(inputId);
+      if (!state) return;
+
+      const dropdown = document.getElementById(state.dropdownId);
+      if (!dropdown) return;
+
+      const normalizedKeyword = normalizeAddressText(keyword);
+      const filtered = normalizedKeyword
+        ? options.filter((name) => normalizeAddressText(name).includes(normalizedKeyword))
+        : options;
+
+      dropdown.innerHTML = '';
+      if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'searchable-dropdown-empty';
+        empty.textContent = 'Không có kết quả';
+        dropdown.appendChild(empty);
+      } else {
+        filtered.forEach((name) => {
+          const item = document.createElement('div');
+          item.className = 'searchable-dropdown-item';
+          item.textContent = name;
+          item.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            const input = document.getElementById(inputId);
+            input.value = name;
+            hideSearchableDropdown(state.dropdownId);
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+          dropdown.appendChild(item);
+        });
+      }
+
+      dropdown.style.display = 'block';
+    }
+
+    function bindSearchableInput(inputId, dropdownId) {
+      const input = document.getElementById(inputId);
+      const dropdown = document.getElementById(dropdownId);
+      if (!input || !dropdown || input.dataset.searchableBound === 'true') return;
+
+      input.addEventListener('focus', () => {
+        const state = searchableDropdownState.get(inputId);
+        if (!state) return;
+        renderSearchableDropdown(inputId, state.options, input.value);
+      });
+
+      input.addEventListener('input', () => {
+        const state = searchableDropdownState.get(inputId);
+        if (!state) return;
+        renderSearchableDropdown(inputId, state.options, input.value);
+      });
+
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          hideSearchableDropdown(dropdownId);
+        }
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!input.parentElement.contains(event.target)) {
+          hideSearchableDropdown(dropdownId);
+        }
+      });
+
+      input.dataset.searchableBound = 'true';
+    }
+
+    function setSearchableOptions(inputId, dropdownId, options) {
+      searchableDropdownState.set(inputId, {
+        dropdownId,
+        options: Array.isArray(options) ? options : []
+      });
+      bindSearchableInput(inputId, dropdownId);
+    }
+
+    async function loadProvinces() {
+      if (provinceCache.size > 0) {
+        return Array.from(provinceCache.values());
+      }
+
+      const response = await fetch(`${vietnamProvincesApiBase}/p/`);
+      if (!response.ok) {
+        throw new Error('Không thể tải danh sách tỉnh/thành phố.');
+      }
+
+      const provinces = await response.json();
+      provinces.forEach((province) => {
+        provinceCache.set(String(province.code), province);
+      });
+      return provinces;
+    }
+
+    async function loadProvinceDetail(provinceCode) {
+      const key = String(provinceCode || '');
+      if (!key) return null;
+
+      const cached = provinceCache.get(key);
+      if (cached && Array.isArray(cached.wards) && cached.wards.length > 0) {
+        return cached;
+      }
+
+      const response = await fetch(`${vietnamProvincesApiBase}/p/${key}?depth=2`);
+      if (!response.ok) {
+        throw new Error('Không thể tải dữ liệu địa chỉ.');
+      }
+
+      const provinceDetail = await response.json();
+      provinceCache.set(key, provinceDetail);
+      return provinceDetail;
+    }
+
+    function findProvinceByName(city, provinces) {
+      const normalizedCity = normalizeAddressText(city);
+      return provinces.find((item) => normalizeAddressText(item.name) === normalizedCity);
+    }
+
+    function parseAddressParts(address) {
+      const parts = String(address || '').split(',').map(p => p.trim()).filter(Boolean);
+      if (parts.length >= 3) {
+        return {
+          streetLine: parts.slice(0, parts.length - 2).join(', '),
+          phuongXa: parts[parts.length - 2] || '',
+          tinhThanh: parts[parts.length - 1] || ''
+        };
+      }
+
+      if (parts.length === 2) {
+        return {
+          streetLine: '',
+          phuongXa: parts[0] || '',
+          tinhThanh: parts[1] || ''
+        };
+      }
+
+      return {
+        streetLine: '',
+        phuongXa: '',
+        tinhThanh: parts[0] || ''
+      };
+    }
+
+    function buildAddress(streetLine, phuongXa, tinhThanh) {
+      return [streetLine, phuongXa, tinhThanh]
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    function normalizeStreetLine(value) {
+      return String(value || '')
+        .replace(/\s*,\s*/g, ', ')
+        .replace(/\s+/g, ' ')
+        .replace(/^,|,$/g, '')
+        .trim();
+    }
+
+    async function fillTinhThanhOptions(inputId, dropdownId, selected = '') {
+      const input = document.getElementById(inputId);
+      const provinces = await loadProvinces();
+      const provinceNames = provinces.map((province) => province.name);
+      setSearchableOptions(inputId, dropdownId, provinceNames);
+
+      const normalizedSelected = normalizeAddressText(selected);
+      let selectedValue = selected || '';
+
+      provinces.forEach((province) => {
+        if (normalizeAddressText(province.name) === normalizedSelected) {
+          selectedValue = province.name;
+        }
+      });
+
+      input.value = selectedValue;
+    }
+
+    async function fillPhuongXaOptions(cityInputId, wardInputId, wardDropdownId, selected = '') {
+      const city = document.getElementById(cityInputId).value;
+      const wardInput = document.getElementById(wardInputId);
+      wardInput.value = '';
+      setSearchableOptions(wardInputId, wardDropdownId, []);
+      if (!city) return;
+
+      const provinces = await loadProvinces();
+      const province = findProvinceByName(city, provinces);
+      if (!province) return;
+
+      const provinceDetail = await loadProvinceDetail(province.code);
+      const wards = provinceDetail?.wards || [];
+      const wardNames = wards.map((ward) => ward.name);
+      setSearchableOptions(wardInputId, wardDropdownId, wardNames);
+
+      const normalizedSelected = normalizeAddressText(selected);
+      let selectedValue = selected || '';
+
+      wards.forEach((ward) => {
+        if (normalizeAddressText(ward.name) === normalizedSelected) {
+          selectedValue = ward.name;
+        }
+      });
+
+      wardInput.value = selectedValue;
+    }
+
+    function updateSelectedReceiverUI(selectedId) {
+      const rows = document.querySelectorAll('#receiverTableBody tr');
+      rows.forEach((row) => {
+        const rowId = row.dataset.id;
+        const selectBtn = row.querySelector('.receiver-action-group button:first-child');
+        if (rowId === String(selectedId)) {
+          row.classList.add('receiver-row-selected');
+          if (selectBtn) {
+            selectBtn.textContent = 'Đã chọn';
+            selectBtn.classList.remove('btn-primary');
+            selectBtn.classList.add('btn-success');
+          }
+        } else {
+          row.classList.remove('receiver-row-selected');
+          if (selectBtn) {
+            selectBtn.textContent = 'Chọn';
+            selectBtn.classList.remove('btn-success');
+            selectBtn.classList.add('btn-primary');
+          }
+        }
+      });
+    }
+
+    function appendReceiverRow(receiver, prepend = true) {
+      const tbody = document.getElementById('receiverTableBody');
+      const tr = document.createElement('tr');
+      tr.dataset.id = receiver.id;
+      tr.dataset.ten = receiver.tenNguoiNhan || '';
+      tr.dataset.email = receiver.email || '';
+      tr.dataset.sdt = receiver.sdt || '';
+      tr.dataset.diachi = receiver.diachi || '';
+      tr.innerHTML = `
+        <td class="receiver-name-cell">${safeText(receiver.tenNguoiNhan)}</td>
+        <td class="receiver-email-cell">${safeText(receiver.email)}</td>
+        <td class="receiver-phone-cell">${safeText(receiver.sdt)}</td>
+        <td class="receiver-address-text" title="${safeText(receiver.diachi)}">${safeText(receiver.diachi)}</td>
+        <td class="receiver-action-cell">
+          <div class="receiver-action-group">
+            <button class="btn btn-primary btn-sm" data-id="${receiver.id}" onclick="selectReceiver(this)">Chọn</button>
+            <button class="btn btn-outline-secondary btn-sm" data-id="${receiver.id}" onclick="openEditReceiver(this)">Sửa</button>
+          </div>
+        </td>`;
+      if (prepend && tbody.firstChild) {
+        tbody.insertBefore(tr, tbody.firstChild);
+      } else {
+        tbody.appendChild(tr);
+      }
+      return tr;
+    }
+
+    function fillMainForm(receiver) {
+      document.getElementById('tenNguoiNhan').value = receiver.tenNguoiNhan || '';
+      document.getElementById('email').value = receiver.email || '';
+      document.getElementById('sdt').value = receiver.sdt || '';
+      document.getElementById('diachi').value = receiver.diachi || '';
+      document.getElementById('thongTinNhanHangID').value = receiver.id || '';
+      updateSelectedReceiverUI(receiver.id);
+    }
+
+    function selectReceiver(btn) {
+      const id = btn.dataset.id;
+      if (!id) {
+        alert('Không tìm thấy ID địa chỉ nhận hàng. Vui lòng chọn lại.');
+        return;
+      }
+
+      fetch(`/receivers/${id}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+        .then(response => response.json())
+        .then(receiver => {
+          fillMainForm(receiver);
+          bootstrap.Modal.getInstance(document.getElementById('selectReceiverModal')).hide();
+        })
+        .catch(error => console.error('Lỗi khi lấy thông tin địa chỉ nhận hàng:', error));
+    }
+
+    function openEditReceiver(btn) {
+      const id = btn.dataset.id;
+      fetch(`/receivers/${id}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+        .then(response => response.json())
+        .then(async receiver => {
+          document.getElementById('editReceiverId').value = receiver.id;
+          document.getElementById('editReceiverEmail').value = receiver.email || '';
+          document.getElementById('editTenNguoiNhan').value = receiver.tenNguoiNhan || '';
+          document.getElementById('editSdt').value = receiver.sdt || '';
+
+          const parts = parseAddressParts(receiver.diachi);
+          document.getElementById('editStreetLine').value = parts.streetLine || '';
+          await fillTinhThanhOptions('editTinhThanh', 'editTinhThanhDropdown', parts.tinhThanh);
+          await fillPhuongXaOptions('editTinhThanh', 'editPhuongXa', 'editPhuongXaDropdown', parts.phuongXa);
+
+          new bootstrap.Modal(document.getElementById('editReceiverModal')).show();
+        })
+        .catch(error => alert('Không thể tải thông tin địa chỉ để sửa: ' + error.message));
+    }
+
+    document.getElementById('editTinhThanh').addEventListener('change', async function () {
+      await fillPhuongXaOptions('editTinhThanh', 'editPhuongXa', 'editPhuongXaDropdown');
+    });
+
+    document.getElementById('newTinhThanh').addEventListener('change', async function () {
+      await fillPhuongXaOptions('newTinhThanh', 'newPhuongXa', 'newPhuongXaDropdown');
+    });
+
+    document.getElementById('receiverSearch').addEventListener('input', function () {
+      const keyword = this.value.trim().toLowerCase();
+      const rows = document.querySelectorAll('#receiverTableBody tr');
+      rows.forEach((row) => {
+        const ten = (row.dataset.ten || '').toLowerCase();
+        const sdt = (row.dataset.sdt || '').toLowerCase();
+        row.style.display = (ten.includes(keyword) || sdt.includes(keyword)) ? '' : 'none';
+      });
+    });
+
+    document.getElementById('addReceiverForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const tenNguoiNhan = document.getElementById('newTen').value.trim();
+      const email = document.getElementById('newEmail').value.trim();
+      const sdt = document.getElementById('newSdt').value.trim();
+      const tinhThanh = document.getElementById('newTinhThanh').value;
+      const phuongXa = document.getElementById('newPhuongXa').value;
+      const streetLine = normalizeStreetLine(document.getElementById('newStreetLine').value);
+
+      if (!tenNguoiNhan || !email || !sdt || !tinhThanh || !phuongXa || !streetLine) {
+        alert('Vui lòng nhập đầy đủ thông tin địa chỉ.');
+        return;
+      }
+
+      const fullAddress = buildAddress(streetLine, phuongXa, tinhThanh);
+
+      const data = {
+        tenNguoiNhan,
+        email,
+        sdt,
+        diachi: fullAddress
+      };
+
+      fetch('/receivers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+        .then(async r => {
+          const payload = await r.json().catch(() => null);
+          if (!r.ok) {
+            throw new Error(payload?.message || 'Không thể thêm thông tin nhận hàng.');
+          }
+          return payload;
+        })
+        .then(result => {
+          const receiver = result.data || result;
+          if (!receiver.diachi || !normalizeAddressText(receiver.diachi).includes(normalizeAddressText(streetLine))) {
+            receiver.diachi = fullAddress;
+          }
+          appendReceiverRow(receiver, true);
+          bootstrap.Modal.getInstance(document.getElementById('addReceiverModal')).hide();
+          document.getElementById('addReceiverForm').reset();
+          setSearchableOptions('newPhuongXa', 'newPhuongXaDropdown', []);
+          new bootstrap.Toast(document.getElementById('successToast')).show();
+        })
+        .catch(error => alert(error.message || 'Lỗi khi thêm mới thông tin nhận hàng.'));
+    });
+
+    document.getElementById('editReceiverForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const id = document.getElementById('editReceiverId').value;
+      const tenNguoiNhan = document.getElementById('editTenNguoiNhan').value.trim();
+      const sdt = document.getElementById('editSdt').value.trim();
+      const email = document.getElementById('editReceiverEmail').value.trim();
+      const tinhThanh = document.getElementById('editTinhThanh').value;
+      const phuongXa = document.getElementById('editPhuongXa').value;
+      const streetLine = normalizeStreetLine(document.getElementById('editStreetLine').value);
+
+      if (!tenNguoiNhan || !sdt || !tinhThanh || !phuongXa || !streetLine) {
+        alert('Vui lòng nhập đầy đủ thông tin địa chỉ.');
+        return;
+      }
+
+      const fullAddress = buildAddress(streetLine, phuongXa, tinhThanh);
+
+      const payload = {
+        tenNguoiNhan,
+        sdt,
+        email,
+        diachi: fullAddress
+      };
+
+      fetch(`/receivers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(async r => {
+          const data = await r.json().catch(() => null);
+          if (!r.ok || !data?.success) {
+            throw new Error(data?.message || 'Không thể cập nhật địa chỉ.');
+          }
+          return data.data;
+        })
+        .then(updated => {
+          if (!updated.diachi || !normalizeAddressText(updated.diachi).includes(normalizeAddressText(streetLine))) {
+            updated.diachi = fullAddress;
+          }
+          const row = document.querySelector(`#receiverTableBody tr[data-id="${updated.id}"]`);
+          if (row) {
+            row.dataset.ten = updated.tenNguoiNhan || '';
+            row.dataset.email = updated.email || '';
+            row.dataset.sdt = updated.sdt || '';
+            row.dataset.diachi = updated.diachi || '';
+            row.children[0].textContent = updated.tenNguoiNhan || '';
+            row.children[1].textContent = updated.email || '';
+            row.children[2].textContent = updated.sdt || '';
+            row.children[3].textContent = updated.diachi || '';
+            row.children[3].title = updated.diachi || '';
+          }
+
+          if (document.getElementById('thongTinNhanHangID').value === String(updated.id)) {
+            fillMainForm(updated);
+          }
+
+          bootstrap.Modal.getInstance(document.getElementById('editReceiverModal')).hide();
+          new bootstrap.Toast(document.getElementById('successToast')).show();
+        })
+        .catch(error => alert(error.message || 'Không thể cập nhật địa chỉ.'));
+    });
+
+    document.getElementById('deleteReceiverBtn').addEventListener('click', function () {
+      const id = document.getElementById('editReceiverId').value;
+      if (!id) return;
+      if (!confirm('Bạn chắc chắn muốn xóa địa chỉ này?')) return;
+
+      fetch(`/receivers/${id}`, { method: 'DELETE' })
+        .then(async r => {
+          const data = await r.json().catch(() => null);
+          if (!r.ok || !data?.success) {
+            throw new Error(data?.message || 'Không thể xóa địa chỉ.');
+          }
+        })
+        .then(() => {
+          const row = document.querySelector(`#receiverTableBody tr[data-id="${id}"]`);
+          if (row) row.remove();
+
+          if (document.getElementById('thongTinNhanHangID').value === String(id)) {
+            document.getElementById('thongTinNhanHangID').value = '';
+            document.getElementById('tenNguoiNhan').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('sdt').value = '';
+            document.getElementById('diachi').value = '';
+          }
+
+          bootstrap.Modal.getInstance(document.getElementById('editReceiverModal')).hide();
+          new bootstrap.Toast(document.getElementById('successToast')).show();
+        })
+        .catch(error => alert(error.message || 'Không thể xóa địa chỉ.'));
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      Promise.all([
+        fillTinhThanhOptions('editTinhThanh', 'editTinhThanhDropdown'),
+        fillTinhThanhOptions('newTinhThanh', 'newTinhThanhDropdown')
+      ]).catch((error) => console.error(error));
+
+      const selectedId = document.getElementById('thongTinNhanHangID').value;
+      if (selectedId) {
+        updateSelectedReceiverUI(selectedId);
+      }
+
+      const voucherSelect = document.getElementById('voucherSelect');
+      const selectedVoucher = voucherSelect.value;
+
+      const totalPriceElement = document.getElementById('totalPrice');
+      const totalPrice = parseFloat(totalPriceElement.textContent.replace(/[₫,]/g, ''));
+
+      let discountedTotal = totalPrice;
+
+      if (selectedVoucher) {
+        fetch(`/vouchers/${selectedVoucher}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        })
+          .then(response => response.json())
+          .then(voucher => {
+            if (voucher.giamGiaTheoPhanTram) {
+              discountedTotal -= (totalPrice * voucher.giamGiaTheoPhanTram / 100);
+            }
+            discountedTotal = Math.max(discountedTotal, 0);
+            document.getElementById('discountedTotal').textContent = discountedTotal.toLocaleString('vi-VN') + '₫';
+          })
+          .catch(error => console.error('Lỗi khi lấy thông tin voucher:', error));
+      } else {
+        document.getElementById('discountedTotal').textContent = totalPriceElement.textContent;
+      }
+    });
+
+    document.getElementById('voucherSelect').addEventListener('change', function () {
+      const selectedVoucher = this.value;
+
+      if (!selectedVoucher) {
+        // Không sử dụng voucher
+        document.getElementById('discountedTotal').textContent = document.getElementById('totalPrice').textContent;
+        return;
+      }
+
+      // Gửi yêu cầu đến backend để lấy thông tin voucher
+      fetch(`/vouchers/${selectedVoucher}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+        .then(response => response.json())
+        .then(voucher => {
+          const totalPriceElement = document.getElementById('totalPrice');
+          const totalPrice = parseFloat(totalPriceElement.textContent.replace(/[₫,]/g, ''));
+          let discountedTotal = totalPrice;
+          console.log('Voucher được chọn:', voucher);
+
+          // Áp dụng giảm giá theo phần trăm
+          if (voucher.giamGiaTheoPhanTram) {
+            discountedTotal -= (totalPrice * voucher.giamGiaTheoPhanTram / 100);
+          }
+
+          // Đảm bảo tổng tiền không âm
+          discountedTotal = Math.max(discountedTotal, 0);
+
+          // Cập nhật tổng tiền sau giảm
+          document.getElementById('discountedTotal').textContent = discountedTotal.toLocaleString('vi-VN') + '₫';
+        })
+        .catch(error => console.error('Lỗi khi lấy thông tin voucher:', error));
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Lấy giá trị voucher đã chọn (nếu có)
+      const voucherSelect = document.getElementById('voucherSelect');
+      const selectedVoucher = voucherSelect.value;
+
+      const totalPriceElement = document.getElementById('totalPrice');
+      const totalPrice = parseFloat(totalPriceElement.textContent.replace(/[₫,]/g, ''));
+
+      let discountedTotal = totalPrice;
+
+      if (selectedVoucher) {
+        // Gửi yêu cầu đến backend để lấy thông tin voucher
+        fetch(`/vouchers/${selectedVoucher}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        })
+          .then(response => response.json())
+          .then(voucher => {
+            console.log('Voucher được chọn:', voucher);
+
+            // Áp dụng giảm giá theo phần trăm
+            if (voucher.giamGiaTheoPhanTram) {
+              discountedTotal -= (totalPrice * voucher.giamGiaTheoPhanTram / 100);
+            }
+
+            // Đảm bảo tổng tiền không âm
+            discountedTotal = Math.max(discountedTotal, 0);
+
+            // Cập nhật tổng tiền sau giảm
+            document.getElementById('discountedTotal').textContent = discountedTotal.toLocaleString('vi-VN') + '₫';
+          })
+          .catch(error => console.error('Lỗi khi lấy thông tin voucher:', error));
+      } else {
+        // Không sử dụng voucher
+        document.getElementById('discountedTotal').textContent = totalPriceElement.textContent;
+      }
+    });
+
+    function submitOrderForm() {
+      const thongTinNhanHangID = document.getElementById('thongTinNhanHangID').value;
+      if (!thongTinNhanHangID) {
+        alert('Vui lòng chọn địa chỉ nhận hàng trước khi lưu hóa đơn.');
+        return;
+      }
+
+      // Lấy giá trị của trường voucherCode
+      const voucherCode = document.getElementById('voucherSelect').value;
+      // Gán giá trị cho trường ẩn voucherCode trong form
+      document.getElementById('voucherCode').value = voucherCode;
+
+      // Gửi form
+      document.getElementById('orderForm').submit();
+    }
+  </script>
+</body>
+
+</html>
