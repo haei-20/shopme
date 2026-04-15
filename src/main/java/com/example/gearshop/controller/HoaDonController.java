@@ -14,7 +14,6 @@ import com.example.gearshop.model.HoaDon;
 import com.example.gearshop.model.KhachHang;
 import com.example.gearshop.model.Voucher;
 import com.example.gearshop.service.HoaDonService;
-import com.example.gearshop.service.ThongTinNhanHangService;
 import com.example.gearshop.service.VoucherService;
 
 import jakarta.servlet.http.HttpSession;
@@ -23,15 +22,13 @@ import jakarta.servlet.http.HttpSession;
 public class HoaDonController {
 
     @Autowired
-    private ThongTinNhanHangService thongTinNhanHangService;
-
-    @Autowired
     private HoaDonService hoaDonService;
 
     @Autowired
     private VoucherService voucherService;
 
     @PostMapping("/save-order")
+    @SuppressWarnings("unchecked")
     public String saveOrder(HttpSession session,
                             @RequestParam(required = false) Integer thongTinNhanHangID,
                             @RequestParam(required = false) String voucherCode,
@@ -64,9 +61,23 @@ public class HoaDonController {
         // Áp dụng giảm giá từ voucher (nếu có)
         double tongGiaSauGiam = tongGia;
         if (voucherCode != null && !voucherCode.isEmpty()) {
-            Voucher voucher = voucherService.getVoucherByMaVoucher(voucherCode);
-            if (voucher != null) {
+            Voucher voucher;
+            try {
+                voucher = voucherService.getVoucherByMaVoucher(voucherCode);
+            } catch (IllegalArgumentException ex) {
+                redirectAttributes.addFlashAttribute("error", ex.getMessage());
+                return "redirect:/order";
+            }
+
+            if (!voucherService.isVoucherAvailableForCustomer(voucher, khachHang)) {
+                redirectAttributes.addFlashAttribute("error", "Voucher này không áp dụng cho khách hàng của bạn.");
+                return "redirect:/order";
+            }
+
+            if (voucher.getGiamGiaTheoPhanTram() != null) {
                 tongGiaSauGiam -= (tongGia * voucher.getGiamGiaTheoPhanTram() / 100);
+            } else if (voucher.getGiamGiaCuThe() != null) {
+                tongGiaSauGiam -= voucher.getGiamGiaCuThe().doubleValue();
             }
         }
 
@@ -93,6 +104,11 @@ public class HoaDonController {
             int sanPhamID = Integer.parseInt(sanPhamIDObj.toString());
 
             hoaDonService.createHoaDonChiTiet("HDCT", hoaDon.getId(), sanPhamID, quantity, quantity * price);
+        }
+
+        if (voucherCode != null && !voucherCode.isEmpty()) {
+            Voucher voucher = voucherService.getVoucherByMaVoucher(voucherCode);
+            voucherService.markVoucherAsUsed(voucher, khachHang);
         }
         System.out.println("Đã lưu chi tiết hóa đơn với ID: " + hoaDon.getId());
 

@@ -1,6 +1,7 @@
 package com.example.gearshop.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,6 +15,12 @@ import jakarta.transaction.Transactional;
 public interface VoucherKhachHangRepository extends JpaRepository<VoucherKhachHang, Integer> {
 
     List<VoucherKhachHang> findByVoucherId(Integer voucherId);
+
+    Optional<VoucherKhachHang> findByVoucherIdAndKhachHang_Id(Integer voucherId, Integer khachHangId);
+
+    long countByVoucherIdAndDaDungTrue(Integer voucherId);
+
+    long countByVoucherId(Integer voucherId);
 
     @Modifying
     @Transactional

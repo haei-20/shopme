@@ -404,11 +404,11 @@
         <div class="row">
             <!-- Thông tin shop -->
             <div class="col-md-4 mb-3">
-                <h5>PGearShop</h5>
+                <h5 th:text="${shopInfo.tenShop}">PGearShop</h5>
                 <p>Chuyên cung cấp linh kiện máy tính chính hãng.<br />
-                    Địa chỉ: Km10 đường Trần Phú, quận Hà Đông, thành phố Hà Nội<br />
-                    SĐT: 0999 999 999<br />
-                    Email: contact@pgearshop.vn
+                    <span th:text="'Địa chỉ: ' + ${shopInfo.diaChiShop}">Địa chỉ: Km10 đường Trần Phú, quận Hà Đông, thành phố Hà Nội</span><br />
+                    <span th:text="'SĐT: ' + ${shopInfo.soDienThoaiShop}">SĐT: 0999 999 999</span><br />
+                    <span th:text="'Email: ' + ${shopInfo.emailShop}">Email: contact@pgearshop.vn</span>
                 </p>
             </div>
 
@@ -430,7 +430,7 @@
         </div>
 
         <div class="text-center py-3 border-top border-secondary">
-            &copy; 2025 GearShop. All rights reserved.
+            <span th:text="'© 2025 ' + ${shopInfo.tenShop} + '. All rights reserved.'">© 2025 GearShop. All rights reserved.</span>
         </div>
     </div>
 </footer>

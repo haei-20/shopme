@@ -2,34 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang chủ Admin</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
 <body>
-
-    <header class="bg-dark text-white py-3">
-        <div class="container d-flex align-items-center justify-content-between">
-            <div class="fs-3 fw-bold"><a class="no-underline" href="/admin/trangchu">PGearShop Administrator</a></div>
-
-            <div class="d-flex align-items-center">
-
-                <!-- Nếu đã đăng nhập -->
-                <div class="dropdown" th:if="${nguoiDung != null}">
-                    <a class="custom-dropdown dropdown-toggle no-underline" href="#" role="button" id="userDropdown"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <span th:text="'Xin chào, ' + ${nguoiDung.tenNguoiDung}">Xin chào, Tên</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
-                        <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </header>
+    <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('nguoidung')"></th:block>
 
     <div class="container mt-5">
         <div class="d-flex justify-content-end mb-3">

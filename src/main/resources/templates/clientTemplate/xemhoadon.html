@@ -313,6 +313,21 @@
             <div>
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
               <button type="submit" class="btn btn-primary">Lưu</button>
+              function calculateVoucherDiscount(voucher, totalPrice) {
+                let discountAmount = 0;
+
+                if (voucher.giamGiaTheoPhanTram) {
+                  discountAmount = totalPrice * voucher.giamGiaTheoPhanTram / 100;
+                  if (voucher.giamGiaToiDa != null) {
+                    discountAmount = Math.min(discountAmount, Number(voucher.giamGiaToiDa));
+                  }
+                } else if (voucher.giamGiaCuThe) {
+                  discountAmount = Number(voucher.giamGiaCuThe);
+                }
+
+                return discountAmount;
+              }
+
             </div>
           </div>
         </form>
@@ -385,11 +400,11 @@
     <div class="container">
       <div class="row">
         <div class="col-md-4 mb-3">
-          <h5>PGearShop</h5>
+          <h5 th:text="${shopInfo.tenShop}">PGearShop</h5>
           <p>Chuyên cung cấp linh kiện máy tính chính hãng.<br />
-            Địa chỉ: Km10 đường Trần Phú, quận Hà Đông, Hà Nội<br />
-            SĐT: 0999 999 999<br />
-            Email: contact@pgearshop.vn
+            <span th:text="'Địa chỉ: ' + ${shopInfo.diaChiShop}">Địa chỉ: Km10 đường Trần Phú, quận Hà Đông, Hà Nội</span><br />
+            <span th:text="'SĐT: ' + ${shopInfo.soDienThoaiShop}">SĐT: 0999 999 999</span><br />
+            <span th:text="'Email: ' + ${shopInfo.emailShop}">Email: contact@pgearshop.vn</span>
           </p>
         </div>
         <div class="col-md-4 mb-3">
@@ -402,7 +417,7 @@
         </div>
       </div>
       <div class="text-center py-3 border-top border-secondary">
-        &copy; 2025 PGearShop. All rights reserved.
+        <span th:text="'© 2025 ' + ${shopInfo.tenShop} + '. All rights reserved.'">© 2025 PGearShop. All rights reserved.</span>
       </div>
     </div>
   </footer>
@@ -921,15 +936,22 @@
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         })
-          .then(response => response.json())
-          .then(voucher => {
-            if (voucher.giamGiaTheoPhanTram) {
-              discountedTotal -= (totalPrice * voucher.giamGiaTheoPhanTram / 100);
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then((errorBody) => {
+                throw new Error(errorBody.message || 'Voucher không hợp lệ.');
+              });
             }
-            discountedTotal = Math.max(discountedTotal, 0);
+            return response.json();
+          })
+          .then(voucher => {
+            discountedTotal = Math.max(totalPrice - calculateVoucherDiscount(voucher, totalPrice), 0);
             document.getElementById('discountedTotal').textContent = discountedTotal.toLocaleString('vi-VN') + '₫';
           })
-          .catch(error => console.error('Lỗi khi lấy thông tin voucher:', error));
+          .catch(error => {
+            console.error('Lỗi khi lấy thông tin voucher:', error);
+            document.getElementById('discountedTotal').textContent = totalPriceElement.textContent;
+          });
       } else {
         document.getElementById('discountedTotal').textContent = totalPriceElement.textContent;
       }
@@ -949,25 +971,28 @@
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then((errorBody) => {
+              throw new Error(errorBody.message || 'Voucher không hợp lệ.');
+            });
+          }
+          return response.json();
+        })
         .then(voucher => {
           const totalPriceElement = document.getElementById('totalPrice');
           const totalPrice = parseFloat(totalPriceElement.textContent.replace(/[₫,]/g, ''));
-          let discountedTotal = totalPrice;
           console.log('Voucher được chọn:', voucher);
 
-          // Áp dụng giảm giá theo phần trăm
-          if (voucher.giamGiaTheoPhanTram) {
-            discountedTotal -= (totalPrice * voucher.giamGiaTheoPhanTram / 100);
-          }
-
-          // Đảm bảo tổng tiền không âm
-          discountedTotal = Math.max(discountedTotal, 0);
+          const discountedTotal = Math.max(totalPrice - calculateVoucherDiscount(voucher, totalPrice), 0);
 
           // Cập nhật tổng tiền sau giảm
           document.getElementById('discountedTotal').textContent = discountedTotal.toLocaleString('vi-VN') + '₫';
         })
-        .catch(error => console.error('Lỗi khi lấy thông tin voucher:', error));
+        .catch(error => {
+          console.error('Lỗi khi lấy thông tin voucher:', error);
+          document.getElementById('discountedTotal').textContent = document.getElementById('totalPrice').textContent;
+        });
     });
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -986,22 +1011,26 @@
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then((errorBody) => {
+                throw new Error(errorBody.message || 'Voucher không hợp lệ.');
+              });
+            }
+            return response.json();
+          })
           .then(voucher => {
             console.log('Voucher được chọn:', voucher);
 
-            // Áp dụng giảm giá theo phần trăm
-            if (voucher.giamGiaTheoPhanTram) {
-              discountedTotal -= (totalPrice * voucher.giamGiaTheoPhanTram / 100);
-            }
-
-            // Đảm bảo tổng tiền không âm
-            discountedTotal = Math.max(discountedTotal, 0);
+            discountedTotal = Math.max(totalPrice - calculateVoucherDiscount(voucher, totalPrice), 0);
 
             // Cập nhật tổng tiền sau giảm
             document.getElementById('discountedTotal').textContent = discountedTotal.toLocaleString('vi-VN') + '₫';
           })
-          .catch(error => console.error('Lỗi khi lấy thông tin voucher:', error));
+          .catch(error => {
+            console.error('Lỗi khi lấy thông tin voucher:', error);
+            document.getElementById('discountedTotal').textContent = totalPriceElement.textContent;
+          });
       } else {
         // Không sử dụng voucher
         document.getElementById('discountedTotal').textContent = totalPriceElement.textContent;

@@ -6,9 +6,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import com.example.gearshop.model.NguoiDung;
+import com.example.gearshop.model.ThongTinShop;
 import com.example.gearshop.repository.KhachHangRepository;
 import com.example.gearshop.repository.NguoiDungRepository;
 import com.example.gearshop.service.ThongBaoService;
+import com.example.gearshop.service.ThongTinShopService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -22,6 +24,9 @@ public class GlobalControllerAdvice {
 
     @Autowired
     private KhachHangRepository khachHangRepository;
+
+    @Autowired
+    private ThongTinShopService thongTinShopService;
 
     @ModelAttribute("nguoiDung")
     public NguoiDung thongTinNguoiDungDangNhap(HttpSession session) {
@@ -38,5 +43,10 @@ public class GlobalControllerAdvice {
                 model.addAttribute("soLuongThongBaoChuaDoc", thongBaoService.demSoThongBaoChuaDoc(khachHangId));
             });
         }
+    }
+
+    @ModelAttribute("shopInfo")
+    public ThongTinShop thongTinShop() {
+        return thongTinShopService.getOrCreateThongTinShop();
     }
 }

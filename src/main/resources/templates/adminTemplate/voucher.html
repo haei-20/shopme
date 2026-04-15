@@ -2,34 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý voucher</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
 <body>
-
-    <header class="bg-dark text-white py-3">
-        <div class="container d-flex align-items-center justify-content-between">
-            <div class="fs-3 fw-bold"><a class="no-underline" href="/admin/trangchu">PGearShop Administrator</a></div>
-
-            <div class="d-flex align-items-center">
-
-                <!-- Nếu đã đăng nhập -->
-                <div class="dropdown" th:if="${nguoiDung != null}">
-                    <a class="custom-dropdown dropdown-toggle no-underline" href="#" role="button" id="userDropdown"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <span th:text="'Xin chào, ' + ${nguoiDung.tenNguoiDung}">Xin chào, Tên</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
-                        <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </header>
+    <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('voucher')"></th:block>
     <div class="container mt-4">
         <div class="container mt-3">
             <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
@@ -68,9 +51,14 @@
             <table class="table table-bordered table-striped">
                 <thead class="table-dark">
                     <tr>
+                        <th>Mã</th>
                         <th>Tên Voucher</th>
                         <th>Người được cấp</th>
+                        <th>Bắt đầu</th>
                         <th>Thời hạn</th>
+                        <th>Số người dùng</th>
+                        <th>Loại giảm</th>
+                        <th>Giảm tối đa</th>
                         <th>Giảm giá</th>
                         <th>Đơn tối thiểu</th>
                         <th>Thao tác</th>
@@ -78,18 +66,23 @@
                 </thead>
                 <tbody>
                     <tr th:each="v : ${vouchers}">
+                        <td th:text="${v.maVoucher}"></td>
                         <td th:text="${v.tenVoucher}"></td>
                         <td th:text="${nguoiDuocCapMap[v.id]}"></td>
-                        <td th:text="${#temporals.format(v.thoiHan, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td th:text="${v.ngayBatDau != null ? #temporals.format(v.ngayBatDau, 'dd/MM/yyyy HH:mm') : 'N/A'}"></td>
+                        <td th:text="${v.thoiHan != null ? #temporals.format(v.thoiHan, 'dd/MM/yyyy HH:mm') : 'N/A'}"></td>
+                        <td th:text="${v.soLuongNguoiDungToiDa != null ? v.soLuongNguoiDungToiDa : 'Không giới hạn'}"></td>
+                        <td th:text="${v.giamGiaTheoPhanTram != null ? 'Phần trăm' : (v.giamGiaCuThe != null ? 'Cụ thể' : 'N/A')}"></td>
+                        <td th:text="${v.giamGiaToiDa != null ? #numbers.formatDecimal(v.giamGiaToiDa, 0, 'COMMA', 0, 'POINT') + ' ₫' : 'Không giới hạn'}"></td>
                         <td>
                             <span th:if="${v.giamGiaTheoPhanTram != null}">
                                 [[${v.giamGiaTheoPhanTram}]]%
                             </span>
                             <span th:if="${v.giamGiaCuThe != null}">
-                                [[${v.giamGiaCuThe}]] VND
+                                [[${#numbers.formatDecimal(v.giamGiaCuThe, 0, 'COMMA', 0, 'POINT')}]] VND
                             </span>
                         </td>
-                        <td th:text="${v.donToiThieu}"></td>
+                        <td th:text="${v.donToiThieu != null ? #numbers.formatDecimal(v.donToiThieu, 0, 'COMMA', 0, 'POINT') + ' VND' : '0 VND'}"></td>
                         <td>
                             <a th:href="@{'/admin/voucher/chitiet/' + ${v.id}}" class="btn btn-sm btn-info">Chi tiết</a>
                             <a th:href="@{'/admin/voucher/xoa/' + ${v.id}}" class="btn btn-sm btn-danger"

@@ -1,15 +1,18 @@
 package com.example.gearshop.repository;
 
-import com.example.gearshop.model.Voucher;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.gearshop.model.Voucher;
 
 @Repository
 public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
     Optional<Voucher> findByMaVoucher(String maVoucher);
+
+    boolean existsByMaVoucher(String maVoucher);
 
     List<Voucher> findAllByOrderByThoiHanDesc(); // Mới nhất
 

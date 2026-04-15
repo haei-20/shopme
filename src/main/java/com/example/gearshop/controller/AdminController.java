@@ -1,7 +1,7 @@
 package com.example.gearshop.controller;
 
-import java.security.Principal;
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -12,27 +12,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.gearshop.dto.NguoiDungDTO;
+import com.example.gearshop.model.HoaDon;
 import com.example.gearshop.model.KhachHang;
 import com.example.gearshop.model.NguoiDung;
 import com.example.gearshop.model.NhanVien;
 import com.example.gearshop.model.SanPham;
-import com.example.gearshop.model.SanPhamMainBoard;
+import com.example.gearshop.repository.HoaDonRepository;
 import com.example.gearshop.repository.KhachHangRepository;
 import com.example.gearshop.repository.NguoiDungRepository;
 import com.example.gearshop.repository.NhanVienRepository;
+import com.example.gearshop.repository.SanPhamRepository;
+import com.example.gearshop.repository.YeuCauHoanTienRepository;
 import com.example.gearshop.service.NguoiDungService;
-import com.example.gearshop.service.SanPhamService;
-import com.example.gearshop.service.LoaiSanPhamService;
-import com.example.gearshop.service.ThuongHieuService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 
 @Controller
@@ -46,17 +44,101 @@ public class AdminController {
     @Autowired
     private NhanVienRepository nhanVienRepo;
     @Autowired
-    private LoaiSanPhamService loaiSanPhamService;
-    @Autowired
-    private ThuongHieuService thuongHieuService;
-    @Autowired
-    private SanPhamService sanPhamService;
+    private SanPhamRepository sanPhamRepository;
     @Autowired
     private NguoiDungService nguoiDungService;
+    @Autowired
+    private HoaDonRepository hoaDonRepository;
+    @Autowired
+    private YeuCauHoanTienRepository yeuCauHoanTienRepository;
 
     @GetMapping("/trangchu")
-    public String adminHome() {
+    public String adminHome(Model model) {
+        LocalDate today = LocalDate.now();
+        int currentYear = today.getYear();
+
+        List<HoaDon> allHoaDons = hoaDonRepository.findAll();
+        allHoaDons.sort(Comparator.comparing(HoaDon::getNgayTao, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+
+        List<HoaDon> hoaDonsTheoNamHienTai = allHoaDons.stream()
+            .filter(hd -> hd.getNgayTao() != null && hd.getNgayTao().getYear() == currentYear)
+            .toList();
+
+        BigDecimal doanhThuHomNay = BigDecimal.ZERO;
+        int donHangHomNay = 0;
+
+        for (HoaDon hd : allHoaDons) {
+            if (hd.getNgayTao() != null && hd.getNgayTao().toLocalDate().equals(today)) {
+                donHangHomNay++;
+                if (hd.getTongGia() != null) {
+                    doanhThuHomNay = doanhThuHomNay.add(hd.getTongGia());
+                }
+            }
+        }
+
+        List<HoaDon> donGanDay = allHoaDons.size() > 8 ? allHoaDons.subList(0, 8) : allHoaDons;
+
+        List<SanPham> topSanPham = sanPhamRepository.findTop10ByOrderByDaBanDesc();
+        SanPham sanPhamBanChay = topSanPham.isEmpty() ? null : topSanPham.get(0);
+
+        long tongDonHang = allHoaDons.size();
+        long tongKhachHang = khachHangRepo.count();
+        long tongSanPham = sanPhamRepository.count();
+
+        long sanPhamSapHet = sanPhamRepository.findAll().stream()
+                .filter(sp -> sp.getTonKho() != null && sp.getTonKho() <= 5)
+                .count();
+
+        long yeuCauHoanTienMoi = yeuCauHoanTienRepository.findAll().stream()
+                .filter(yc -> yc.getTrangThai() != null && yc.getTrangThai().toLowerCase().contains("chua"))
+                .count();
+
+        int[] donTheoThang = new int[12];
+        for (HoaDon hd : hoaDonsTheoNamHienTai) {
+            if (hd.getNgayTao() != null) {
+                int month = hd.getNgayTao().getMonthValue();
+                donTheoThang[month - 1]++;
+            }
+        }
+
+        BigDecimal[] doanhThuTheoThang = new BigDecimal[12];
+        Arrays.fill(doanhThuTheoThang, BigDecimal.ZERO);
+        for (HoaDon hd : hoaDonsTheoNamHienTai) {
+            if (hd.getNgayTao() != null && hd.getTongGia() != null) {
+                int month = hd.getNgayTao().getMonthValue();
+                doanhThuTheoThang[month - 1] = doanhThuTheoThang[month - 1].add(hd.getTongGia());
+            }
+        }
+
+        List<String> monthLabels = Arrays.asList("T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12");
+        List<Integer> donTheoThangList = Arrays.stream(donTheoThang).boxed().toList();
+        List<BigDecimal> doanhThuTheoThangList = Arrays.asList(doanhThuTheoThang);
+
+        model.addAttribute("doanhThuHomNay", doanhThuHomNay);
+        model.addAttribute("donHangHomNay", donHangHomNay);
+        model.addAttribute("tongDonHang", tongDonHang);
+        model.addAttribute("tongKhachHang", tongKhachHang);
+        model.addAttribute("tongSanPham", tongSanPham);
+        model.addAttribute("sanPhamBanChay", sanPhamBanChay);
+        model.addAttribute("donGanDay", donGanDay);
+        model.addAttribute("monthLabels", monthLabels);
+        model.addAttribute("donTheoThang", donTheoThangList);
+        model.addAttribute("doanhThuTheoThang", doanhThuTheoThangList);
+        model.addAttribute("chartNam", currentYear);
+        model.addAttribute("yeuCauHoanTienMoi", yeuCauHoanTienMoi);
+        model.addAttribute("sanPhamSapHet", sanPhamSapHet);
+
         return "adminTemplate/trangchuadmin";
+    }
+
+    @GetMapping("/hoantien")
+    public String hoanTienRedirect() {
+        return "redirect:/admin/yeucauhoantien";
+    }
+
+    @GetMapping("/quanlyhienthi")
+    public String quanLyHienThi() {
+        return "adminTemplate/quanlyhienthi";
     }
 
     @GetMapping("/nguoidung")
@@ -159,7 +241,6 @@ public class AdminController {
             @RequestParam("ghiChu") String ghiChu) {
         Optional<NguoiDung> nguoiDungOpt = nguoiDungRepo.findById(id);
         if (nguoiDungOpt.isPresent()) {
-            NguoiDung nd = nguoiDungOpt.get();
             if (khachHangRepo.existsByNguoiDung_Id(id)) {
                 KhachHang kh = khachHangRepo.findByNguoiDung_Id(id).get();
                 kh.setGhiChu(ghiChu);

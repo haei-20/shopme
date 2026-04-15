@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý thông tin shop</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('caiDat')"></th:block>
+
+    <div class="container mt-5" style="max-width: 860px;">
+        <h2 class="mb-4">Quản lý thông tin shop</h2>
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+        <form method="post" th:action="@{/admin/thongtinshop}" class="card p-4 shadow-sm">
+            <div class="mb-3">
+                <label class="form-label">Tên shop</label>
+                <input class="form-control" name="tenShop" th:value="${thongTinShop.tenShop}" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Địa chỉ shop</label>
+                <textarea class="form-control" name="diaChiShop" rows="3" required
+                    th:text="${thongTinShop.diaChiShop}"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Số điện thoại shop</label>
+                <input class="form-control" name="soDienThoaiShop" th:value="${thongTinShop.soDienThoaiShop}" required />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Email shop</label>
+                <input type="email" class="form-control" name="emailShop" th:value="${thongTinShop.emailShop}" required />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                <a href="/admin/trangchu" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

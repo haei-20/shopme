@@ -116,7 +116,9 @@ create table voucher(
     tenVoucher nvarchar(30),
     giamGiaTheoPhanTram int,
     giamGiaCuThe decimal(18,0),
+    ngayBatDau datetime,
     thoiHan datetime,
+    soLuongNguoiDungToiDa int,
     donToiThieu decimal(18,0)
 );
 
