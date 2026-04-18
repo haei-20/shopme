@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +33,19 @@ public class HomeDisplayConfigService {
             "banner", "featured", "recommended", "recentlyViewed", "byCategory");
 
     private static final Set<String> HOME_SECTION_KEY_SET = Set.copyOf(HOME_SECTION_KEYS);
+    public static final Map<String, String> CATEGORY_KEY_TO_LABEL = Map.of(
+            "mainboard", "Mainboard",
+            "cpu", "CPU",
+            "ram", "RAM",
+            "vga", "VGA",
+            "ocung", "Ổ cứng",
+            "nguon", "Nguồn",
+            "tannhiet", "Tản nhiệt",
+            "case", "Case",
+            "manhinh", "Màn hình");
+    public static final List<String> CATEGORY_KEYS = List.of(
+            "mainboard", "cpu", "ram", "vga", "ocung", "nguon", "tannhiet", "case", "manhinh");
+    private static final Set<String> CATEGORY_KEY_SET = Set.copyOf(CATEGORY_KEYS);
 
     @Autowired
     private HomeDisplayConfigRepository homeDisplayConfigRepository;
@@ -48,6 +63,13 @@ public class HomeDisplayConfigService {
     }
 
     public String resolveBannerImageUrl(HomeDisplayConfig config) {
+        if ("SLIDER".equalsIgnoreCase(config.getBannerSourceType())) {
+            List<String> urls = getBannerSliderImageUrls(config);
+            if (!urls.isEmpty()) {
+                return urls.get(0);
+            }
+            return DEFAULT_BANNER_URL;
+        }
         if ("PRODUCT".equalsIgnoreCase(config.getBannerSourceType())
                 && config.getBannerProductId() != null) {
             SanPham sanPham = sanPhamRepository.findById(config.getBannerProductId());
@@ -61,6 +83,37 @@ public class HomeDisplayConfigService {
         }
 
         return DEFAULT_BANNER_URL;
+    }
+
+    /** Đường dẫn URL đầy đủ (/images/banner/...) cho từng ảnh trong slider. */
+    public List<String> getBannerSliderImageUrls(HomeDisplayConfig config) {
+        List<String> names = listBannerSliderFilenames(config);
+        List<String> urls = new ArrayList<>();
+        for (String f : names) {
+            urls.add("/images/banner/" + f);
+        }
+        return urls;
+    }
+
+    public List<String> listBannerSliderFilenames(HomeDisplayConfig config) {
+        if (config.getBannerSliderImagesCsv() == null || config.getBannerSliderImagesCsv().isBlank()) {
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        for (String part : config.getBannerSliderImagesCsv().split(",")) {
+            String f = part.trim();
+            if (!f.isEmpty() && isSafeBannerFileName(f)) {
+                out.add(f);
+            }
+        }
+        return out;
+    }
+
+    public static boolean isSafeBannerFileName(String name) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        return !name.contains("..") && !name.contains("/") && !name.contains("\\");
     }
 
     public List<SanPham> sortAndLimitProducts(List<SanPham> sanPhams, HomeDisplayConfig config) {
@@ -136,11 +189,15 @@ public class HomeDisplayConfigService {
         config.setRecentlyViewedNumberOfRows(DEFAULT_NUMBER_OF_ROWS);
         config.setByCategoryProductsPerRow(DEFAULT_PRODUCTS_PER_ROW);
         config.setByCategoryNumberOfRows(DEFAULT_NUMBER_OF_ROWS);
+        config.setByCategoryOrderCsv(String.join(",", CATEGORY_KEYS));
+        config.setByCategoryVisibleCsv(String.join(",", CATEGORY_KEYS));
         config.setOrderBanner(1);
         config.setOrderSectionFeatured(2);
         config.setOrderSectionRecommended(3);
         config.setOrderSectionRecentlyViewed(4);
         config.setOrderSectionByCategory(5);
+        config.setBannerSliderIntervalMs(5000);
+        config.setBannerHeightPx(300);
         return homeDisplayConfigRepository.save(config);
     }
 
@@ -188,23 +245,66 @@ public class HomeDisplayConfigService {
         }
     }
 
+    public List<String> getOrderedCategoryKeys(HomeDisplayConfig config) {
+        return parseCsvKeys(config.getByCategoryOrderCsv(), CATEGORY_KEYS, CATEGORY_KEY_SET);
+    }
+
+    public Set<String> getVisibleCategoryKeys(HomeDisplayConfig config) {
+        List<String> keys = parseCsvSubset(config.getByCategoryVisibleCsv(), CATEGORY_KEYS, CATEGORY_KEY_SET);
+        return new LinkedHashSet<>(keys);
+    }
+
+    public Map<String, String> getCategoryLabelsInOrder(HomeDisplayConfig config) {
+        Map<String, String> ordered = new LinkedHashMap<>();
+        for (String key : getOrderedCategoryKeys(config)) {
+            ordered.put(key, CATEGORY_KEY_TO_LABEL.get(key));
+        }
+        return ordered;
+    }
+
+    public void applyByCategoryOrderCsv(HomeDisplayConfig config, String csv) {
+        List<String> keys = parseCsvKeys(csv, CATEGORY_KEYS, CATEGORY_KEY_SET);
+        config.setByCategoryOrderCsv(String.join(",", keys));
+    }
+
+    public void applyByCategoryVisibleCsv(HomeDisplayConfig config, String csv) {
+        List<String> keys = parseCsvSubset(csv, CATEGORY_KEYS, CATEGORY_KEY_SET);
+        config.setByCategoryVisibleCsv(String.join(",", keys));
+    }
+
     private List<String> parseHomeSectionOrderCsv(String csv) {
+        return parseCsvKeys(csv, HOME_SECTION_KEYS, HOME_SECTION_KEY_SET);
+    }
+
+    private List<String> parseCsvKeys(String csv, List<String> defaultKeys, Set<String> acceptedKeys) {
         if (csv == null || csv.isBlank()) {
-            return HOME_SECTION_KEYS;
+            return defaultKeys;
         }
         List<String> keys = Arrays.stream(csv.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
-        if (keys.size() != HOME_SECTION_KEYS.size() || new HashSet<>(keys).size() != HOME_SECTION_KEYS.size()) {
-            return HOME_SECTION_KEYS;
+        if (keys.size() != defaultKeys.size() || new HashSet<>(keys).size() != defaultKeys.size()) {
+            return defaultKeys;
         }
         for (String k : keys) {
-            if (!HOME_SECTION_KEY_SET.contains(k)) {
-                return HOME_SECTION_KEYS;
+            if (!acceptedKeys.contains(k)) {
+                return defaultKeys;
             }
         }
         return keys;
+    }
+
+    private List<String> parseCsvSubset(String csv, List<String> defaultKeys, Set<String> acceptedKeys) {
+        if (csv == null || csv.isBlank()) {
+            return defaultKeys;
+        }
+        List<String> keys = Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty() && acceptedKeys.contains(s))
+                .distinct()
+                .toList();
+        return keys.isEmpty() ? defaultKeys : keys;
     }
 
     private static int valueOrDefault(Integer value, int defaultValue) {

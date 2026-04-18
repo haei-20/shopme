@@ -29,6 +29,16 @@ public class HomeDisplayConfig {
 
     private Integer bannerProductId;
 
+    /** Nhiều ảnh banner (tên file trong static/images/banner/), cách nhau bởi dấu phẩy — dùng khi bannerSourceType = SLIDER. */
+    @Column(length = 3000)
+    private String bannerSliderImagesCsv;
+
+    /** Thời gian hiển thị mỗi slide (ms), mặc định 5000. */
+    private Integer bannerSliderIntervalMs;
+
+    /** Chiều cao banner trang chủ (px), khoảng 150–400. */
+    private Integer bannerHeightPx;
+
     private String productDisplayOrder;
 
     private Integer productsPerRow;
@@ -44,6 +54,10 @@ public class HomeDisplayConfig {
     private Integer recentlyViewedNumberOfRows;
     private Integer byCategoryProductsPerRow;
     private Integer byCategoryNumberOfRows;
+    @Column(length = 1000)
+    private String byCategoryOrderCsv;
+    @Column(length = 1000)
+    private String byCategoryVisibleCsv;
 
     /** Bật/tắt các khối trên trang chủ (null = mặc định bật khi tải cấu hình cũ). */
     private Boolean showBanner;

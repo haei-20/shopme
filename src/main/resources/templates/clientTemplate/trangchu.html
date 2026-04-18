@@ -14,7 +14,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 
-<body class="with-category-nav">
+<body class="with-category-nav" th:style="|--home-banner-h: ${homeBannerHeightPx}px|">
     <div class="site-top-fixed-stack">
         <header class="bg-dark text-white site-header py-3">
             <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -121,8 +121,34 @@
     <th:block th:each="sectionKey : ${homeSectionOrder}">
         <th:block th:switch="${sectionKey}">
             <th:block th:case="'banner'">
-                <div class="banner" th:if="${displayConfig.showBanner != false}"
-                    th:style="'background-image: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 255, 255, 0.2)), url(' + ${bannerImageUrl} + ');'">
+                <div class="banner banner--slider position-relative overflow-hidden" th:if="${displayConfig.showBanner != false and useBannerSlider}"
+                     th:style="|--home-banner-h: ${homeBannerHeightPx}px; height: var(--home-banner-h); min-height: var(--home-banner-h);|">
+                    <div id="homeBannerCarousel" class="carousel slide carousel-fade position-absolute top-0 start-0 w-100 h-100"
+                         data-bs-ride="carousel"
+                         th:attr="data-bs-interval=${bannerSliderIntervalMs}">
+                        <div class="carousel-inner h-100">
+                            <div th:each="slideUrl, iter : ${bannerSliderUrls}" class="carousel-item h-100"
+                                 th:classappend="${iter.first} ? 'active'">
+                                <div class="banner-slide-bg h-100 w-100"
+                                     th:style="|background-image: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 255, 255, 0.2)), url('${slideUrl}')|"></div>
+                            </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#homeBannerCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Trước</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#homeBannerCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Sau</span>
+                        </button>
+                    </div>
+                    <div class="banner-text position-relative" style="z-index: 2;" th:if="${displayConfig.showBannerOverlayText != false}">
+                        <h1 th:text="${homeBannerTitleCustom != null} ? ${homeBannerTitleCustom} : ('Chào mừng đến với ' + ${shopInfo.tenShop})"></h1>
+                        <p th:text="${homeBannerSubtitleCustom != null} ? ${homeBannerSubtitleCustom} : 'Nơi cung cấp linh kiện máy tính chất lượng và giá tốt nhất!'"></p>
+                    </div>
+                </div>
+                <div class="banner" th:if="${displayConfig.showBanner != false and !useBannerSlider}"
+                    th:style="|--home-banner-h: ${homeBannerHeightPx}px; height: var(--home-banner-h); min-height: var(--home-banner-h); background-image: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 255, 255, 0.2)), url('${bannerImageUrl}');|">
                     <div class="banner-text" th:if="${displayConfig.showBannerOverlayText != false}">
                         <h1 th:text="${homeBannerTitleCustom != null} ? ${homeBannerTitleCustom} : ('Chào mừng đến với ' + ${shopInfo.tenShop})"></h1>
                         <p th:text="${homeBannerSubtitleCustom != null} ? ${homeBannerSubtitleCustom} : 'Nơi cung cấp linh kiện máy tính chất lượng và giá tốt nhất!'"></p>

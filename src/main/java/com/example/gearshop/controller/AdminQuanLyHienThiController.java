@@ -1,5 +1,6 @@
 package com.example.gearshop.controller;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import java.nio.file.Files;
@@ -40,10 +41,16 @@ public class AdminQuanLyHienThiController {
         HomeDisplayConfig config = homeDisplayConfigService.getOrCreateConfig();
         model.addAttribute("displayConfig", config);
         model.addAttribute("bannerImageUrl", homeDisplayConfigService.resolveBannerImageUrl(config));
+        List<String> sliderUrls = homeDisplayConfigService.getBannerSliderImageUrls(config);
+        model.addAttribute("firstBannerSliderUrl", sliderUrls.isEmpty() ? null : sliderUrls.get(0));
+        model.addAttribute("bannerSliderFilenames", homeDisplayConfigService.listBannerSliderFilenames(config));
         model.addAttribute("dsSanPham", sanPhamService.getAllSanPham());
         List<String> sectionOrder = homeDisplayConfigService.sectionKeysSortedByDisplayOrder(config);
         model.addAttribute("homeSectionKeysOrder", sectionOrder);
         model.addAttribute("homeSectionOrderCsv", String.join(",", sectionOrder));
+        model.addAttribute("byCategoryLabels", homeDisplayConfigService.getCategoryLabelsInOrder(config));
+        model.addAttribute("byCategoryOrderCsv", String.join(",", homeDisplayConfigService.getOrderedCategoryKeys(config)));
+        model.addAttribute("byCategoryVisibleCsv", String.join(",", homeDisplayConfigService.getVisibleCategoryKeys(config)));
         return "adminTemplate/quanlyhienthi";
     }
 
@@ -52,6 +59,9 @@ public class AdminQuanLyHienThiController {
             @RequestParam String bannerSourceType,
             @RequestParam(required = false) Integer bannerProductId,
             @RequestParam(name = "bannerImageFile", required = false) MultipartFile bannerImageFile,
+            @RequestParam(name = "bannerSliderFiles", required = false) MultipartFile[] bannerSliderFiles,
+            @RequestParam(name = "bannerSliderIntervalMs", required = false) Integer bannerSliderIntervalMs,
+            @RequestParam(name = "bannerHeightPx", required = false) Integer bannerHeightPx,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
 
@@ -93,6 +103,18 @@ public class AdminQuanLyHienThiController {
         config.setTitleSectionRecentlyViewed(trimToNull(request.getParameter("titleSectionRecentlyViewed")));
         config.setTitleSectionByCategory(trimToNull(request.getParameter("titleSectionByCategory")));
         homeDisplayConfigService.applyHomeSectionOrderCsv(config, request.getParameter("homeSectionOrder"));
+        homeDisplayConfigService.applyByCategoryOrderCsv(config, request.getParameter("byCategoryOrder"));
+        homeDisplayConfigService.applyByCategoryVisibleCsv(config, request.getParameter("byCategoryVisible"));
+
+        if (bannerSliderIntervalMs != null) {
+            config.setBannerSliderIntervalMs(Math.max(2000, Math.min(60000, bannerSliderIntervalMs)));
+        } else if (config.getBannerSliderIntervalMs() == null) {
+            config.setBannerSliderIntervalMs(5000);
+        }
+
+        int hBanner = bannerHeightPx != null ? bannerHeightPx
+                : (config.getBannerHeightPx() != null ? config.getBannerHeightPx() : 300);
+        config.setBannerHeightPx(Math.max(150, Math.min(400, hBanner)));
 
         if ("PRODUCT".equalsIgnoreCase(bannerSourceType)) {
             if (Boolean.TRUE.equals(config.getShowBanner()) && bannerProductId == null) {
@@ -100,6 +122,53 @@ public class AdminQuanLyHienThiController {
                 return "redirect:/admin/quanlyhienthi";
             }
             config.setBannerProductId(bannerProductId);
+        } else if ("SLIDER".equalsIgnoreCase(bannerSourceType)) {
+            try {
+                LinkedHashSet<String> sliderNames = new LinkedHashSet<>(homeDisplayConfigService.listBannerSliderFilenames(config));
+                String[] removeNames = request.getParameterValues("removeBannerSliderImage");
+                if (removeNames != null) {
+                    for (String raw : removeNames) {
+                        if (raw == null) {
+                            continue;
+                        }
+                        String name = raw.trim();
+                        if (HomeDisplayConfigService.isSafeBannerFileName(name) && sliderNames.remove(name)) {
+                            deleteBannerFileFromDisk(name);
+                        }
+                    }
+                }
+                String uploadDir = new ClassPathResource("static/images/banner/").getFile().getAbsolutePath();
+                Path uploadPath = Paths.get(uploadDir);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                if (bannerSliderFiles != null) {
+                    for (MultipartFile mf : bannerSliderFiles) {
+                        if (mf == null || mf.isEmpty()) {
+                            continue;
+                        }
+                        String originalFileName = mf.getOriginalFilename();
+                        String originalName = (originalFileName == null || originalFileName.isBlank())
+                                ? "slide.jpg"
+                                : originalFileName.replaceAll("\\s+", "_");
+                        String savedFileName = LocalDateTime.now().toString().replace(":", "-") + "-" + originalName;
+                        Files.copy(
+                                mf.getInputStream(),
+                                uploadPath.resolve(savedFileName),
+                                StandardCopyOption.REPLACE_EXISTING);
+                        sliderNames.add(savedFileName);
+                    }
+                }
+                config.setBannerSliderImagesCsv(sliderNames.isEmpty() ? null : String.join(",", sliderNames));
+                if (Boolean.TRUE.equals(config.getShowBanner()) && sliderNames.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("errorMessage",
+                            "Chế độ slider cần ít nhất một ảnh. Hãy tải lên hoặc bỏ chọn xóa hết ảnh.");
+                    return "redirect:/admin/quanlyhienthi";
+                }
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Không thể lưu ảnh slider: " + e.getMessage());
+                return "redirect:/admin/quanlyhienthi";
+            }
         } else {
             if (bannerImageFile != null && !bannerImageFile.isEmpty()) {
                 try {
@@ -156,6 +225,18 @@ public class AdminQuanLyHienThiController {
             return Math.max(1, Integer.parseInt(raw.trim()));
         } catch (NumberFormatException ex) {
             return macDinh;
+        }
+    }
+
+    private static void deleteBannerFileFromDisk(String fileName) {
+        if (!HomeDisplayConfigService.isSafeBannerFileName(fileName)) {
+            return;
+        }
+        try {
+            String uploadDir = new ClassPathResource("static/images/banner/").getFile().getAbsolutePath();
+            Files.deleteIfExists(Paths.get(uploadDir).resolve(fileName));
+        } catch (Exception ignored) {
+            // bỏ qua nếu không xóa được file
         }
     }
 }

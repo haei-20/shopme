@@ -77,6 +77,20 @@ public class HomeController {
         HomeDisplayConfig displayConfig = homeDisplayConfigService.getOrCreateConfig();
         model.addAttribute("displayConfig", displayConfig);
         model.addAttribute("bannerImageUrl", homeDisplayConfigService.resolveBannerImageUrl(displayConfig));
+        List<String> bannerSliderUrls = homeDisplayConfigService.getBannerSliderImageUrls(displayConfig);
+        model.addAttribute("bannerSliderUrls", bannerSliderUrls);
+        model.addAttribute("useBannerSlider",
+                displayConfig.getBannerSourceType() != null
+                        && "SLIDER".equalsIgnoreCase(displayConfig.getBannerSourceType())
+                        && !bannerSliderUrls.isEmpty());
+        int bannerSliderMs = displayConfig.getBannerSliderIntervalMs() != null
+                ? displayConfig.getBannerSliderIntervalMs()
+                : 5000;
+        bannerSliderMs = Math.max(2000, Math.min(60000, bannerSliderMs));
+        model.addAttribute("bannerSliderIntervalMs", bannerSliderMs);
+        int homeBannerH = displayConfig.getBannerHeightPx() != null ? displayConfig.getBannerHeightPx() : 300;
+        homeBannerH = Math.max(150, Math.min(400, homeBannerH));
+        model.addAttribute("homeBannerHeightPx", homeBannerH);
         model.addAttribute("homeTitleFeatured",
                 HomeDisplayConfigService.chonTieuDe(displayConfig.getTitleSectionFeatured(), "Sản phẩm nổi bật"));
         model.addAttribute("homeTitleRecommended",
@@ -149,10 +163,14 @@ public class HomeController {
                         featuredProductsPerRow, featuredNumberOfRows));
 
         // Thêm danh mục sản phẩm theo loại vào model
-        List<String> tenLoaiList = List.of("Mainboard", "CPU", "RAM", "VGA", "Ổ cứng", "Nguồn", "Tản nhiệt", "Case",
-                "Màn hình");
+        List<String> orderedCategoryKeys = homeDisplayConfigService.getOrderedCategoryKeys(displayConfig);
+        java.util.Set<String> visibleCategoryKeys = homeDisplayConfigService.getVisibleCategoryKeys(displayConfig);
         Map<String, List<SanPham>> sanPhamTheoLoai = new LinkedHashMap<>();
-        for (String tenLoai : tenLoaiList) {
+        for (String categoryKey : orderedCategoryKeys) {
+            if (!visibleCategoryKeys.contains(categoryKey)) {
+                continue;
+            }
+            String tenLoai = HomeDisplayConfigService.CATEGORY_KEY_TO_LABEL.get(categoryKey);
             LoaiSanPham loai = loaiSPRepo.findByTenLoaiSanPham(tenLoai);
             if (loai != null) {
                 sanPhamTheoLoai.put(tenLoai, homeDisplayConfigService.sortAndLimitProducts(
