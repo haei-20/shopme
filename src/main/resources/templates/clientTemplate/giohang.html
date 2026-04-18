@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PGearShop - Giỏ Hàng</title>
+    <title th:text="${shopInfo.tenShop} + ' - Giỏ Hàng'">PGearShop - Giỏ Hàng</title>
 
     <!-- Bootstrap CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -83,7 +83,7 @@
     <!-- Header -->
     <header class="bg-dark text-white py-3">
         <div class="container d-flex align-items-center justify-content-between">
-            <div class="fs-3 fw-bold"><a class="no-underline" href="/">PGearShop</a></div>
+            <div class="fs-3 fw-bold"><a class="no-underline" href="/" th:text="${shopInfo.tenShop}">PGearShop</a></div>
 
             <form class="flex-grow-1 mx-3" role="search" action="/timkiem" method="get">
                 <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm..." aria-label="Search">
@@ -194,11 +194,12 @@
 
     <!-- Bootstrap JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/cart-storage.js}" th:attr="data-cart-owner=${nguoiDung != null ? 'user-' + nguoiDung.id : 'guest'}"></script>
 
     <!-- Custom JS -->
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        document.addEventListener('DOMContentLoaded', async function () {
+            let cart = [];
             const cartTableBody = document.getElementById('cartTableBody');
             const selectAllCheckbox = document.getElementById('selectAll');
             const totalPriceElement = document.getElementById('totalPrice');
@@ -211,6 +212,12 @@
             const cartNotice = document.getElementById('cartNotice');
             const selectedIds = new Set();
             let noticeTimer = null;
+
+            function persistCart(nextCart) {
+                cart = Array.isArray(nextCart) ? nextCart : [];
+                localStorage.setItem('cart', JSON.stringify(cart));
+                localStorage.setItem('cartItemCount', cart.reduce((total, item) => total + Number(item.quantity || 0), 0));
+            }
 
             function getItemKey(item, index) {
                 if (item.sanPhamID != null) {
@@ -241,6 +248,51 @@
                 noticeTimer = setTimeout(() => {
                     cartNotice.classList.add('d-none');
                 }, 3000);
+            }
+
+            async function fetchJson(url, options) {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Không thể xử lý giỏ hàng.');
+                }
+                return data;
+            }
+
+            async function loadCartFromServer() {
+                const data = await fetchJson('/api/cart');
+                persistCart(data.cart || []);
+                return data;
+            }
+
+            async function updateQuantityOnServer(item, nextQuantity) {
+                const data = await fetchJson('/cart/update-quantity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sanPhamID: Number(item.sanPhamID),
+                        quantity: nextQuantity
+                    })
+                });
+                persistCart(data.cart || []);
+            }
+
+            async function removeItemOnServer(sanPhamID) {
+                const data = await fetchJson('/cart/remove-item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sanPhamID: Number(sanPhamID) })
+                });
+                persistCart(data.cart || []);
+            }
+
+            async function removeSelectedOnServer(sanPhamIds) {
+                const data = await fetchJson('/cart/remove-selected', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sanPhamIds.map(Number))
+                });
+                persistCart(data.cart || []);
             }
 
             function getSelectedItems() {
@@ -274,27 +326,6 @@
                 summaryBox.classList.add('summary-fade');
             }
 
-            async function updateQuantityOnServer(item, nextQuantity) {
-                const response = await fetch('/cart/update-quantity', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sanPhamID: Number(item.sanPhamID),
-                        quantity: nextQuantity
-                    })
-                });
-
-                const data = await response.json();
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Không thể cập nhật số lượng.');
-                }
-                item.quantity = data.quantity;
-                if (typeof data.tonKho === 'number') {
-                    item.tonKho = data.tonKho;
-                }
-                localStorage.setItem('cart', JSON.stringify(cart));
-            }
-
             function setButtonLoading(btn, loading) {
                 if (!btn) return;
                 if (loading) {
@@ -310,8 +341,14 @@
                 }
             }
 
-            // Hàm hiển thị giỏ hàng
             function renderCart() {
+                const availableKeys = new Set(cart.map((item, index) => getItemKey(item, index)));
+                Array.from(selectedIds).forEach((key) => {
+                    if (!availableKeys.has(key)) {
+                        selectedIds.delete(key);
+                    }
+                });
+
                 cartTableBody.innerHTML = '';
                 cart.forEach((item, index) => {
                     const sanPhamKey = getItemKey(item, index);
@@ -332,8 +369,7 @@
                         <td>
                             <div class="d-flex justify-content-center align-items-center gap-2">
                                 <button type="button" class="btn btn-outline-warning btn-sm quantity-minus quantity-btn" data-index="${index}">−</button>
-                                <input type="number" class="form-control quantity-input" value="${item.quantity}" min="1"
-                                    data-index="${index}">
+                                <input type="number" class="form-control quantity-input" value="${item.quantity}" min="1" data-index="${index}">
                                 <button type="button" class="btn btn-outline-warning btn-sm quantity-plus quantity-btn" data-index="${index}" ${plusDisabled ? 'disabled' : ''}>+</button>
                             </div>
                         </td>
@@ -348,9 +384,8 @@
                 updateSummary();
             }
 
-            // Gắn sự kiện cho checkbox, số lượng và nút xóa
             function attachQuantityListeners() {
-                document.querySelectorAll('.select-item').forEach(checkbox => {
+                document.querySelectorAll('.select-item').forEach((checkbox) => {
                     checkbox.addEventListener('change', function () {
                         const itemId = this.getAttribute('data-id');
                         if (this.checked) {
@@ -362,9 +397,9 @@
                     });
                 });
 
-                document.querySelectorAll('.quantity-input').forEach(input => {
+                document.querySelectorAll('.quantity-input').forEach((input) => {
                     input.addEventListener('change', async function () {
-                        const index = this.getAttribute('data-index');
+                        const index = Number(this.getAttribute('data-index'));
                         const item = cart[index];
                         const parsed = parseInt(this.value, 10);
                         const nextQuantity = Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
@@ -385,9 +420,9 @@
                     });
                 });
 
-                document.querySelectorAll('.quantity-plus').forEach(btn => {
+                document.querySelectorAll('.quantity-plus').forEach((btn) => {
                     btn.addEventListener('click', async function () {
-                        const index = this.getAttribute('data-index');
+                        const index = Number(this.getAttribute('data-index'));
                         const item = cart[index];
                         const nextQuantity = Number(item.quantity || 1) + 1;
                         if (item.tonKho != null && nextQuantity > Number(item.tonKho)) {
@@ -406,9 +441,9 @@
                     });
                 });
 
-                document.querySelectorAll('.quantity-minus').forEach(btn => {
+                document.querySelectorAll('.quantity-minus').forEach((btn) => {
                     btn.addEventListener('click', async function () {
-                        const index = this.getAttribute('data-index');
+                        const index = Number(this.getAttribute('data-index'));
                         const item = cart[index];
                         const nextQuantity = Math.max(1, Number(item.quantity || 1) - 1);
                         try {
@@ -423,17 +458,20 @@
                     });
                 });
 
-                document.querySelectorAll('.delete-item').forEach(btn => {
-                    btn.addEventListener('click', function () {
+                document.querySelectorAll('.delete-item').forEach((btn) => {
+                    btn.addEventListener('click', async function () {
                         if (!confirm('Bạn chắc chắn muốn xóa sản phẩm này?')) {
                             return;
                         }
-                        const index = this.getAttribute('data-index');
-                        const itemId = getItemKey(cart[index], Number(index));
-                        selectedIds.delete(itemId);
-                        cart.splice(index, 1);
-                        localStorage.setItem('cart', JSON.stringify(cart));
-                        renderCart();
+                        const index = Number(this.getAttribute('data-index'));
+                        const itemId = getItemKey(cart[index], index);
+                        try {
+                            await removeItemOnServer(cart[index].sanPhamID);
+                            selectedIds.delete(itemId);
+                            renderCart();
+                        } catch (error) {
+                            showNotice(error.message, 'danger');
+                        }
                     });
                 });
             }
@@ -452,7 +490,7 @@
                 updateSummary();
             });
 
-            deleteSelectedBtn.addEventListener('click', function () {
+            deleteSelectedBtn.addEventListener('click', async function () {
                 const selectedItems = getSelectedItems();
                 if (selectedItems.length === 0) {
                     return;
@@ -461,19 +499,13 @@
                     return;
                 }
 
-                const selectedIdSet = new Set();
-                cart.forEach((item, index) => {
-                    const key = getItemKey(item, index);
-                    if (selectedIds.has(key)) {
-                        selectedIdSet.add(key);
-                    }
-                });
-                const remained = cart.filter((item, index) => !selectedIdSet.has(getItemKey(item, index)));
-                cart.length = 0;
-                remained.forEach(item => cart.push(item));
-                selectedIds.clear();
-                localStorage.setItem('cart', JSON.stringify(cart));
-                renderCart();
+                try {
+                    await removeSelectedOnServer(selectedItems.map((item) => item.sanPhamID));
+                    selectedIds.clear();
+                    renderCart();
+                } catch (error) {
+                    showNotice(error.message, 'danger');
+                }
             });
 
             btnCheckout.addEventListener('click', function () {
@@ -504,7 +536,34 @@
                 });
             });
 
-            renderCart();
+            try {
+                await loadCartFromServer();
+                renderCart();
+            } catch (error) {
+                showNotice(error.message, 'danger');
+            }
+
+            window.addEventListener('storage', async function (event) {
+                if (event.key === 'cart') {
+                    try {
+                        await loadCartFromServer();
+                        renderCart();
+                    } catch (error) {
+                        showNotice(error.message, 'danger');
+                    }
+                }
+            });
+
+            document.addEventListener('visibilitychange', async function () {
+                if (!document.hidden) {
+                    try {
+                        await loadCartFromServer();
+                        renderCart();
+                    } catch (error) {
+                        showNotice(error.message, 'danger');
+                    }
+                }
+            });
         });
     </script>
 </body>

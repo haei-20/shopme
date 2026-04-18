@@ -17,6 +17,9 @@ public class GioHangChiTiet {
     private String maGioHangChiTiet;
     private int soLuong;
     private BigDecimal donGia;
+    
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean duocChonThanhToan = false;
 
     @ManyToOne
     @JoinColumn(name = "gioHangID")

@@ -32,7 +32,8 @@ public class HoaDonService {
     @Autowired
     private SanPhamRepository sanPhamRepository;
 
-    public HoaDon createHoaDon(String maHoaDonPrefix, int thongTinNhanHangID, double tongGia) {
+    public HoaDon createHoaDon(String maHoaDonPrefix, int thongTinNhanHangID, double tongGia,
+            String phuongThucThanhToan) {
         String maHoaDon = generateMaHoaDon(maHoaDonPrefix); // Tạo mã hóa đơn tự động
 
         HoaDon hoaDon = new HoaDon();
@@ -41,6 +42,8 @@ public class HoaDonService {
         hoaDon.setNgayTao(java.time.LocalDateTime.now());
         hoaDon.setTongGia(BigDecimal.valueOf(tongGia));
         hoaDon.setTrangThaiDonHang("Unpaid");
+        hoaDon.setPhuongThucThanhToan(
+                "COD".equalsIgnoreCase(phuongThucThanhToan) ? "COD" : "BANK_TRANSFER");
 
         return hoaDonRepository.save(hoaDon); // Lưu vào cơ sở dữ liệu
     }
@@ -90,15 +93,25 @@ public class HoaDonService {
 
     public List<HoaDon> getHoaDonsByKhachHangID(Integer khachHangID, String sortBy, String trangThai) {
         List<HoaDon> hoaDons = hoaDonRepository.findByThongTinNhanHang_KhachHangID(khachHangID);
+        return applyFiltersAndSorting(hoaDons, sortBy, trangThai);
+    }
 
-        // Lọc trạng thái nếu có
+    public List<HoaDon> getHoaDonsByNguoiDungId(Integer nguoiDungId, String sortBy, String trangThai) {
+        List<HoaDon> hoaDons = hoaDonRepository.findByNguoiDungId(nguoiDungId);
+        return applyFiltersAndSorting(hoaDons, sortBy, trangThai);
+    }
+
+    public boolean belongsToNguoiDung(Integer hoaDonId, Integer nguoiDungId) {
+        return hoaDonRepository.existsByIdAndNguoiDungId(hoaDonId, nguoiDungId);
+    }
+
+    private List<HoaDon> applyFiltersAndSorting(List<HoaDon> hoaDons, String sortBy, String trangThai) {
         if (trangThai != null && !trangThai.isEmpty()) {
             hoaDons = hoaDons.stream()
                     .filter(hd -> hd.getTrangThaiDonHang().equalsIgnoreCase(trangThai))
                     .toList();
         }
 
-        // Sắp xếp
         if ("ngayTaoAsc".equals(sortBy)) {
             hoaDons.sort(Comparator.comparing(HoaDon::getNgayTao));
         } else if ("ngayTaoDesc".equals(sortBy)) {
@@ -106,7 +119,6 @@ public class HoaDonService {
         } else if ("tongGia".equals(sortBy)) {
             hoaDons.sort(Comparator.comparing(HoaDon::getTongGia).reversed());
         }
-
         return hoaDons;
     }
 

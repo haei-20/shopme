@@ -9,43 +9,41 @@
     <link rel="stylesheet" th:href="@{/css/sanpham.css}">
 </head>
 
-<body>
-    <header class="bg-dark text-white py-3">
-        <div class="container d-flex align-items-center justify-content-between">
-            <div class="fs-3 fw-bold"><a class="no-underline" href="/">PGearShop</a></div>
+<body class="with-category-nav">
+    <div class="site-top-fixed-stack">
+    <header class="bg-dark text-white site-header py-3">
+        <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="site-brand fs-4 fw-bold mb-0">
+                <a class="no-underline" href="/" th:text="${shopInfo.tenShop}">PGearShop</a>
+            </div>
 
-            <form class="flex-grow-1 mx-3" role="search" action="/timkiem" method="get" style="margin-top: 16px">
-                <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm..."
-                    aria-label="Search">
+            <form class="header-search-form flex-grow-1 mx-md-3" role="search" action="/timkiem" method="get">
+                <div class="input-group header-search-input-group">
+                    <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                    <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm…"
+                        aria-label="Tìm kiếm sản phẩm">
+                    <button type="submit" class="btn header-search-btn" title="Tìm kiếm" aria-label="Tìm kiếm">
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </div>
             </form>
 
             <div class="d-flex align-items-center">
-                <!-- Giỏ hàng dropdown -->
                 <div class="dropdown" th:if="${nguoiDung != null}">
                     <a href="#" class="btn btn-warning position-relative dropdown-toggle" id="cartDropdown"
                         aria-expanded="false">
-                        <i class="bi bi-cart-fill"></i> <!-- Biểu tượng giỏ hàng -->
+                        <i class="bi bi-cart-fill"></i>
                         <span id="cartItemCount"
-                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            0 <!-- Số lượng mặt hàng -->
-                        </span>
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="cartDropdown"
                         style="min-width: 300px;">
-                        <li>
-                            <h6 class="dropdown-header">Giỏ hàng</h6>
-                        </li>
-                        <li>
-                            <div id="cartItems" class="mb-3">
-                                <p class="text-muted">Giỏ hàng của bạn đang trống.</p>
-                            </div>
-                        </li>
-                        <li class="d-flex justify-content-center">
-                            <a href="/cart" class="btn btn-primary btn-sm">Xem giỏ hàng</a>
-                        </li>
+                        <li><h6 class="dropdown-header">Giỏ hàng</h6></li>
+                        <li><div id="cartItems" class="mb-3"><p class="text-muted">Giỏ hàng của bạn đang trống.</p></div></li>
+                        <li class="d-flex justify-content-center"><a href="/cart" class="btn btn-primary btn-sm">Xem giỏ hàng</a></li>
                     </ul>
                 </div>
-                <!-- Thong bao-->
+
                 <div class="dropdown me-3" th:if="${nguoiDung != null}">
                     <a href="#" class="btn btn-light position-relative dropdown-toggle" id="thongBaoDropdown"
                         data-bs-toggle="dropdown" aria-expanded="false">
@@ -55,12 +53,8 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="thongBaoDropdown"
                         style="min-width: 300px;">
-                        <li>
-                            <h6 class="dropdown-header">Thông báo</h6>
-                        </li>
-                        <li th:if="${#lists.isEmpty(thongBaos)}">
-                            <p class="text-muted">Không có thông báo mới.</p>
-                        </li>
+                        <li><h6 class="dropdown-header">Thông báo</h6></li>
+                        <li th:if="${#lists.isEmpty(thongBaos)}"><p class="text-muted">Không có thông báo mới.</p></li>
                         <li th:each="tb : ${thongBaos}">
                             <div class="dropdown-item">
                                 <div th:text="${tb.noiDung}"></div>
@@ -69,7 +63,7 @@
                         </li>
                     </ul>
                 </div>
-                <!-- Nếu đã đăng nhập -->
+
                 <div class="dropdown" th:if="${nguoiDung != null}">
                     <a class="custom-dropdown dropdown-toggle" href="#" role="button" id="userDropdown"
                         data-bs-toggle="dropdown" aria-expanded="false">
@@ -81,11 +75,32 @@
                     </ul>
                 </div>
 
-                <!-- Nếu chưa đăng nhập -->
                 <a href="/dangnhap" th:if="${nguoiDung == null}" class="btn btn-outline-light">Đăng nhập</a>
             </div>
         </div>
     </header>
+    <nav class="navbar navbar-expand-lg navbar-light category-bar">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+                aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav flex-row flex-wrap justify-content-center w-100">
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphammainboard">Mainboard</a></li>
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphamcpu">CPU</a></li>
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphamram">RAM</a></li>
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphamvga">VGA</a></li>
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphamocung">Ổ cứng</a></li>
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphamcooler">Tản nhiệt</a></li>
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphampsu">Nguồn</a></li>
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphamcase">Case</a></li>
+                    <li class="nav-item me-3"><a class="nav-link category-pill" href="/sanphammanhinh">Màn hình</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    </div>
     <nav class="bg-light py-4 border-bottom">
         <div class="container">
             <form method="get" action="/sanphammanhinh" class="row g-3 justify-content-center">
@@ -246,6 +261,7 @@
 </script>
 <!-- Bootstrap JS Bundle CDN -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/cart-storage.js}" th:attr="data-cart-owner=${nguoiDung != null ? 'user-' + nguoiDung.id : 'guest'}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const cartItemsContainer = document.getElementById('cartItems');
@@ -256,7 +272,7 @@
 
         // Cập nhật giao diện giỏ hàng
         function updateCartUI() {
-            cartItemCount.textContent = cart.length;
+            cartItemCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
 
             if (cart.length === 0) {
                 cartItemsContainer.innerHTML = '<p class="text-muted">Giỏ hàng của bạn đang trống.</p>';

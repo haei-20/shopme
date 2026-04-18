@@ -61,6 +61,10 @@ public class SanPhamService {
     private ThuongHieuRepository thuongHieuRepo;
     @Autowired
     private LoaiSanPhamRepository loaiSanPhamRepo;
+    @Autowired
+    private HoaDonChiTietRepository hoaDonChiTietRepository;
+    @Autowired
+    private GioHangChiTietRepository gioHangChiTietRepository;
     private SanPhamVGARepository sanPhamVGARepository;
 
     SanPhamService(SanPhamVGARepository sanPhamVGARepository) {
@@ -340,6 +344,12 @@ public class SanPhamService {
 
     @Transactional
     public void xoaSanPhamVaChiTiet(SanPham sanPham) {
+        if (hoaDonChiTietRepository.existsBySanPhamID(sanPham.getId())) {
+            throw new IllegalStateException("Không thể xóa sản phẩm đã tồn tại trong hóa đơn.");
+        }
+
+        gioHangChiTietRepository.deleteBySanPham(sanPham);
+
         int idLoai = sanPham.getLoaiSanPham().getId();
         switch (idLoai) {
             case 2: // CPU

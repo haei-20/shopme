@@ -15,35 +15,42 @@
 
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('sanpham')"></th:block>
 
-    <div class="container mt-4">
-        <form method="post" enctype="multipart/form-data" th:action="@{/admin/themsanpham}">
+    <div class="container mt-4" style="max-width: 900px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">Thêm sản phẩm</h2>
+            <a th:href="@{/admin/quanlysanpham}" class="btn btn-secondary">Quay lại</a>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <form method="post" enctype="multipart/form-data" th:action="@{/admin/themsanpham}" class="card p-4 shadow-sm">
 
             <!-- ✅ Trường chung -->
-            <div>
-                <label>Tên sản phẩm:</label>
+            <div class="mb-3">
+                <label class="form-label">Tên sản phẩm:</label>
                 <input type="text" name="tenSanPham" required class="form-control" />
 
-                <label>Ảnh sản phẩm:</label>
+                <label class="form-label mt-3">Ảnh sản phẩm:</label>
                 <input type="file" name="hinhAnhFile" required class="form-control" />
 
-                <label>Thương hiệu:</label>
+                <label class="form-label mt-3">Thương hiệu:</label>
                 <select name="thuongHieuID" required class="form-control">
                     <option th:each="th : ${dsThuongHieu}" th:value="${th.id}" th:text="${th.tenThuongHieu}">
                     </option>
                 </select>
 
-                <label>Số lượng tồn kho:</label>
+                <label class="form-label mt-3">Số lượng tồn kho:</label>
                 <input type="number" name="tonKho" required class="form-control" />
 
-                <Label>Giá bán:</label>
+                <label class="form-label mt-3">Giá bán:</label>
                 <input type="number" name="giaBan" required class="form-control" min="0" step="1000" />
             </div>
 
             <!-- ✅ Chọn loại sản phẩm -->
-            <div>
-                <label>Loại sản phẩm:</label>
+            <div class="mb-3">
+                <label class="form-label">Loại sản phẩm:</label>
                 <select id="loaiSPSelect" name="loaiSPID" required class="form-control">
-                    <option value=">-- Chọn loại sản phẩm --</option>
+                    <option value="">-- Chọn loại sản phẩm --</option>
                     <option value="1">Mainboard</option>
                     <option value="2">CPU</option>
                     <option value="3">RAM</option>
@@ -57,7 +64,7 @@
             </div>
 
             <!-- ✅ Các form chi tiết theo loại sản phẩm -->
-            <div id="formMainboard" class="form-detail" style="display:none">
+            <div id="formMainboard" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin Mainboard</h4>
                 <label>Model:</label><input type="text" name="modelMain" class="form-control" />
                 <label>Chipset:</label><input type="text" name="chipSet" class="form-control" />
@@ -67,21 +74,21 @@
                 <label>Mô tả:</label><textarea name="mota" class="form-control"></textarea>
             </div>
 
-            <div id="formCPU" class="form-detail" style="display:none">
+            <div id="formCPU" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin CPU</h4>
                 <label>Loại CPU:</label><input type="text" name="loaiCPU" class="form-control" />
                 <label>Số nhân/số luồng:</label><input type="text" name="soNhansoLuong" class="form-control" />
                 <label>Mô tả:</label><textarea name="mota" class="form-control"></textarea>
             </div>
 
-            <div id="formRAM" class="form-detail" style="display:none">
+            <div id="formRAM" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin RAM</h4>
                 <label>Chuẩn RAM:</label><input type="text" name="chuanRAM" class="form-control" />
                 <label>Dung lượng:</label><input type="text" name="dungLuong" class="form-control" />
                 <label>Mô tả:</label><textarea name="mota" class="form-control"></textarea>
             </div>
 
-            <div id="formVGA" class="form-detail" style="display:none">
+            <div id="formVGA" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin VGA</h4>
                 <label>Kiểu bộ nhớ:</label><input type="text" name="kieuBoNho" class="form-control" />
                 <label>Dung lượng bộ nhớ:</label><input type="text" name="dungLuongBoNho" class="form-control" />
@@ -89,21 +96,21 @@
                 <label>Mô tả:</label><textarea name="mota" class="form-control"></textarea>
             </div>
 
-            <div id="formOCung" class="form-detail" style="display:none">
+            <div id="formOCung" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin ổ cứng</h4>
                 <label>Loại ổ cứng:</label><input type="text" name="loaiOCung" class="form-control" />
                 <label>Dung lượng:</label><input type="text" name="dungLuong" class="form-control" />
                 <label>Mô tả:</label><textarea name="mota" class="form-control"></textarea>
             </div>
 
-            <div id="formPSU" class="form-detail" style="display:none">
+            <div id="formPSU" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin PSU</h4>
                 <label>Công suất:</label><input type="number" name="congSuat" class="form-control" />
                 <label>Điện áp vào:</label><input type="number" name="dienApVao" class="form-control" />
                 <label>Mô tả:</label><textarea name="mota" class="form-control"></textarea>
             </div>
 
-            <div id="formCooler" class="form-detail" style="display:none">
+            <div id="formCooler" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin Tản</h4>
                 <label>Loại tản:</label><input type="text" name="loaiTan" class="form-control" />
                 <label>Có LED:</label>
@@ -114,14 +121,14 @@
                 <label>Mô tả:</label><textarea name="mota" class="form-control"></textarea>
             </div>
 
-            <div id="formCase" class="form-detail" style="display:none">
+            <div id="formCase" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin Case</h4>
                 <label>Hỗ trợ main:</label><input type="text" name="hoTroMain" class="form-control" />
                 <label>Màu Case:</label><input type="text" name="mauCase" class="form-control" />
                 <label>Mô tả:</label><textarea name="mota" class="form-control"></textarea>
             </div>
 
-            <div id="formManHinh" class="form-detail" style="display:none">
+            <div id="formManHinh" class="form-detail border rounded p-3 mb-3" style="display:none">
                 <h4>Thông tin Màn hình</h4>
                 <label>Kích thước (inch):</label><input type="number" name="kichThuoc" class="form-control" />
                 <label>Bề mặt:</label><input type="text" name="beMat" class="form-control" />
@@ -136,28 +143,39 @@
                 <button type="submit" class="btn btn-primary"
                     onclick="return confirm('Bạn có muốn thêm sản phẩm hay không?')">Thêm sản
                     phẩm</button>
-                <a th:href="@{/admin}" class="btn btn-secondary">Hủy</a>
+                <a th:href="@{/admin/quanlysanpham}" class="btn btn-secondary">Hủy</a>
             </div>
         </form>
     </div>
 
     <!-- ✅ Script JS hiện form theo loại -->
     <script>
-        $('#loaiSPSelect').on('change', function () {
-            $('.form-detail').hide();
-            const value = $(this).val();
-            switch (value) {
-                case '1': $('#formMainboard').show(); break;
-                case '2': $('#formCPU').show(); break;
-                case '3': $('#formRAM').show(); break;
-                case '4': $('#formVGA').show(); break;
-                case '5': $('#formOCung').show(); break;
-                case '6': $('#formPSU').show(); break;
-                case '7': $('#formCooler').show(); break;
-                case '8': $('#formCase').show(); break;
-                case '9': $('#formManHinh').show(); break;
+        const loaiSPSelect = document.getElementById('loaiSPSelect');
+        const formDetails = document.querySelectorAll('.form-detail');
+
+        function hienFormChiTiet() {
+            formDetails.forEach(form => form.style.display = 'none');
+
+            const targetMap = {
+                '1': 'formMainboard',
+                '2': 'formCPU',
+                '3': 'formRAM',
+                '4': 'formVGA',
+                '5': 'formOCung',
+                '6': 'formPSU',
+                '7': 'formCooler',
+                '8': 'formCase',
+                '9': 'formManHinh'
+            };
+
+            const targetId = targetMap[loaiSPSelect.value];
+            if (targetId) {
+                document.getElementById(targetId).style.display = 'block';
             }
-        });
+        }
+
+        loaiSPSelect.addEventListener('change', hienFormChiTiet);
+        hienFormChiTiet();
     </script>
 
 </body>

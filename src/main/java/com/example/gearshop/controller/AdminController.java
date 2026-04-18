@@ -136,11 +136,6 @@ public class AdminController {
         return "redirect:/admin/yeucauhoantien";
     }
 
-    @GetMapping("/quanlyhienthi")
-    public String quanLyHienThi() {
-        return "adminTemplate/quanlyhienthi";
-    }
-
     @GetMapping("/nguoidung")
     public String danhSachNguoiDung(
             @RequestParam(name = "roleFilter", defaultValue = "all") String roleFilter,

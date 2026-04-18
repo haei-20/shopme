@@ -14,7 +14,7 @@ public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, In
 
     List<HoaDonChiTiet> findByHoaDonID(Integer hoaDonID);
 
-    Optional findById(Integer id);
+    boolean existsBySanPhamID(Integer sanPhamID);
 
     @Query("SELECT CASE " +
             "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP01%' THEN 'SanPhamMainBoard' " +

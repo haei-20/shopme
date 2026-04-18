@@ -17,6 +17,27 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
 
     List<HoaDon> findByThongTinNhanHang_KhachHangID(Integer khachHangID);
 
+    @Query("""
+            SELECT hd
+            FROM HoaDon hd
+            JOIN FETCH hd.thongTinNhanHang ttnh
+            JOIN KhachHang kh ON ttnh.khachHangID = kh.id
+            JOIN kh.nguoiDung nd
+            WHERE nd.id = :nguoiDungId
+            ORDER BY hd.ngayTao DESC
+            """)
+    List<HoaDon> findByNguoiDungId(@Param("nguoiDungId") Integer nguoiDungId);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(hd) > 0 THEN true ELSE false END
+            FROM HoaDon hd
+            JOIN hd.thongTinNhanHang ttnh
+            JOIN KhachHang kh ON ttnh.khachHangID = kh.id
+            JOIN kh.nguoiDung nd
+            WHERE hd.id = :hoaDonId AND nd.id = :nguoiDungId
+            """)
+    boolean existsByIdAndNguoiDungId(@Param("hoaDonId") Integer hoaDonId, @Param("nguoiDungId") Integer nguoiDungId);
+
     List<HoaDon> findAll();
 
     List<HoaDon> findAll(Sort sort);

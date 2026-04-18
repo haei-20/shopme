@@ -1,19 +1,30 @@
 package com.example.gearshop.controller;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
-
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequestMapping("/chatbot")
 public class ChatBotController {
 
-    private static final String API_KEY = "AIzaSyAHRP3IV0poPc5YJ0dqqeOoyIOXdID5NAM";
-    private static final String API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + API_KEY;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatBotController.class);
+
+    @Value("${OLLAMA_BASE_URL:http://localhost:11434}")
+    private String ollamaBaseUrl;
+
+    @Value("${OLLAMA_MODEL:qwen2.5:7b}")
+    private String ollamaModel;
 
     @PostMapping("/sendMessage")
     public ResponseEntity<?> sendMessage(@RequestBody Map<String, String> input) {
@@ -24,33 +35,29 @@ public class ChatBotController {
         String userMessage = input.get("message").trim();
 
         Map<String, Object> requestData = new HashMap<>();
-        requestData.put("contents", List.of(
-            Map.of("parts", List.of(Map.of("text", userMessage)))
-        ));
+        requestData.put("model", ollamaModel);
+        requestData.put("prompt", userMessage);
+        requestData.put("stream", false);
 
         RestTemplate restTemplate = new RestTemplate();
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(API_URL, requestData, Map.class);
+            String ollamaApiUrl = ollamaBaseUrl + "/api/generate";
+            ResponseEntity<Map> response = restTemplate.postForEntity(ollamaApiUrl, requestData, Map.class);
             if (response.getStatusCode().value() != 200) {
-                return ResponseEntity.status(response.getStatusCode().value()).body(Map.of("error", "Google Gemini API error"));
+                return ResponseEntity.status(response.getStatusCode().value()).body(Map.of("error", "Ollama API error"));
             }
 
             Map<String, Object> responseBody = response.getBody();
-            if (responseBody == null || !responseBody.containsKey("candidates")) {
+            if (responseBody == null || !responseBody.containsKey("response")) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Unexpected API response format"));
             }
 
-            // Sử dụng List thay vì ép kiểu thành mảng
-            List<Map<String, Object>> candidates = (List<Map<String, Object>>) responseBody.get("candidates");
-            Map<String, Object> candidate = candidates.get(0);
-            Map<String, Object> content = (Map<String, Object>) candidate.get("content");
-            List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-            String aiResponse = parts.get(0).get("text").toString().trim();
+            String aiResponse = responseBody.get("response").toString().trim();
 
             return ResponseEntity.ok(Map.of("response", aiResponse));
-        } catch (Exception e) {
-            e.printStackTrace(); // In lỗi chi tiết ra console
-            return ResponseEntity.status(500).body(Map.of("error", "Failed to fetch response from API"));
+        } catch (RestClientException e) {
+            LOGGER.error("Failed to call Ollama API", e);
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to fetch response from Ollama"));
         }
     }
 }

@@ -42,6 +42,7 @@ public class ThanhToanController {
 
         model.addAttribute("qrAmount", qrAmount);
         model.addAttribute("hoaDon", hoaDon);
+        model.addAttribute("paymentMethod", hoaDon.getPhuongThucThanhToan());
 
         return "clientTemplate/thanhtoan";
     }

@@ -76,6 +76,7 @@ create table gioHangChiTiet(
     sanPhamID int,
     soLuong int,
     donGia decimal(18,0),
+    duocChonThanhToan boolean default false,
     foreign key (gioHangID) references gioHang(ID),
     foreign key (sanPhamID) references sanPham(ID)
 );

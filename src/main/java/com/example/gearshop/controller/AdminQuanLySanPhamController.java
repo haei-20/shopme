@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.gearshop.model.NguoiDung;
 import com.example.gearshop.model.NhanVien;
@@ -463,10 +464,18 @@ public class AdminQuanLySanPhamController {
     }
 
     @GetMapping("/xoasanpham/{id}")
-    public String xoaSanPham(@PathVariable Integer id) {
+    public String xoaSanPham(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         SanPham sanPham = sanPhamService.getSanPhamById(id);
         if (sanPham != null) {
-            sanPhamService.xoaSanPhamVaChiTiet(sanPham);
+            try {
+                sanPhamService.xoaSanPhamVaChiTiet(sanPham);
+                redirectAttributes.addFlashAttribute("successMessage", "Đã xóa sản phẩm thành công.");
+            } catch (IllegalStateException e) {
+                redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Không thể xóa sản phẩm do còn dữ liệu liên quan trong hệ thống.");
+            }
         }
         return "redirect:/admin/quanlysanpham";
     }

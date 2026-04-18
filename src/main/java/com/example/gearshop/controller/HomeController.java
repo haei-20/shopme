@@ -19,6 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.gearshop.model.KhachHang;
 import com.example.gearshop.model.LoaiSanPham;
+import com.example.gearshop.model.HomeDisplayConfig;
 import com.example.gearshop.model.NguoiDung;
 import com.example.gearshop.model.NhanVien;
 import com.example.gearshop.model.SanPham;
@@ -28,6 +29,7 @@ import com.example.gearshop.repository.NguoiDungRepository;
 import com.example.gearshop.repository.NhanVienRepository;
 import com.example.gearshop.repository.SanPhamRepository;
 import com.example.gearshop.service.DangKyService;
+import com.example.gearshop.service.HomeDisplayConfigService;
 import com.example.gearshop.service.NguoiDungService;
 import com.example.gearshop.service.PasswordResetService;
 import com.example.gearshop.service.SanPhamService;
@@ -60,11 +62,18 @@ public class HomeController {
     @Autowired
     private PasswordResetService passwordResetService;
 
+    @Autowired
+    private HomeDisplayConfigService homeDisplayConfigService;
+
     @Value("${app.forgot-password.otp-expiration-ms:300000}")
     private long otpExpirationMs;
 
     @GetMapping("/")
     public String homePage(Model model, HttpSession session) {
+        HomeDisplayConfig displayConfig = homeDisplayConfigService.getOrCreateConfig();
+        model.addAttribute("displayConfig", displayConfig);
+        model.addAttribute("bannerImageUrl", homeDisplayConfigService.resolveBannerImageUrl(displayConfig));
+
         // Lấy thông tin người dùng từ session
         NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
         if (nguoiDung != null) {
@@ -84,7 +93,7 @@ public class HomeController {
             danhSachSanPhamDaXem.sort(Comparator.comparingInt(sp -> sanPhamDaXem.indexOf(sp.getId().intValue())));
         }
 
-        model.addAttribute("danhSachSanPhamDaXem", danhSachSanPhamDaXem);
+        model.addAttribute("danhSachSanPhamDaXem", homeDisplayConfigService.limitProducts(danhSachSanPhamDaXem, displayConfig));
 
         SanPham sanPhamMoiXem = (SanPham) session.getAttribute("sanPhamMoiXem");
         List<SanPham> sanPhamGoiY = new ArrayList<>();
@@ -93,9 +102,10 @@ public class HomeController {
             sanPhamGoiY = sanPhamService.getSanPhamTuongTu(sanPhamMoiXem);
         }
 
-        model.addAttribute("sanPhamGoiY", sanPhamGoiY);
+        model.addAttribute("sanPhamGoiY", homeDisplayConfigService.limitProducts(sanPhamGoiY, displayConfig));
         // Thêm các sản phẩm bán chạy vào model
-        model.addAttribute("sanPhamBanChay", sanPhamRepo.findTop10ByOrderByDaBanDesc());
+        model.addAttribute("sanPhamBanChay",
+                homeDisplayConfigService.sortAndLimitProducts(sanPhamRepo.findAll(), displayConfig));
 
         // Thêm danh mục sản phẩm theo loại vào model
         List<String> tenLoaiList = List.of("Mainboard", "CPU", "RAM", "VGA", "Ổ cứng", "Nguồn", "Tản nhiệt", "Case",
@@ -104,7 +114,8 @@ public class HomeController {
         for (String tenLoai : tenLoaiList) {
             LoaiSanPham loai = loaiSPRepo.findByTenLoaiSanPham(tenLoai);
             if (loai != null) {
-                sanPhamTheoLoai.put(tenLoai, sanPhamRepo.findTop10ByLoaiSanPhamOrderByDaBanDesc(loai));
+                sanPhamTheoLoai.put(tenLoai, homeDisplayConfigService.sortAndLimitProducts(
+                        sanPhamRepo.findByLoaiSanPham_TenLoaiSanPham(tenLoai), displayConfig));
             }
         }
         model.addAttribute("sanPhamTheoLoai", sanPhamTheoLoai);

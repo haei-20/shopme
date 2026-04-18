@@ -3,9 +3,20 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 0 20px 20px;
+    /* theme.css: header cố định — dùng cùng biến offset */
+    padding-top: calc(var(--site-header-top-offset) + 12px);
     background: linear-gradient(180deg, var(--theme-cream) 0%, #ffffff 70%);
     color: var(--theme-text);
+}
+
+body.with-category-nav {
+    padding-top: var(--site-body-pad-with-category);
+}
+
+body.with-category-nav > nav.bg-light.py-4.border-bottom {
+    margin-top: 0;
+    padding-top: 0.75rem !important;
 }
 
 .container {

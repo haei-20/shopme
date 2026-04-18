@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PGearShop - Thanh Toán</title>
+    <title th:text="${shopInfo.tenShop} + ' - Cảm Ơn'">PGearShop - Cảm Ơn</title>
 
     <!-- Bootstrap CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -18,7 +18,7 @@
     <!-- Header -->
     <header class="bg-dark text-white py-3">
         <div class="container d-flex align-items-center justify-content-between">
-            <div class="fs-3 fw-bold"><a class="no-underline" href="/">PGearShop</a></div>
+            <div class="fs-3 fw-bold"><a class="no-underline" href="/" th:text="${shopInfo.tenShop}">PGearShop</a></div>
             <form class="flex-grow-1 mx-3" role="search" action="/timkiem" method="get">
                 <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm..."
                     aria-label="Search">
@@ -41,6 +41,28 @@
 
     <!-- Nội dung thanh toán -->
     <div class="container my-5">
+        <div class="text-center border rounded p-4 bg-light mb-4" th:if="${paymentMethod != 'COD'}">
+            <h2 class="text-success mb-3">Cảm ơn bạn đã đặt hàng</h2>
+            <p class="mb-2">
+                Đơn hàng <strong th:text="${hoaDon.maHoaDon}">HD001</strong> đã được tạo thành công.
+            </p>
+            <p class="text-muted mb-4">
+                <span th:text="${paymentMethod == 'COD' ? 'Bạn sẽ thanh toán khi nhận hàng.' : 'Vui lòng hoàn tất thanh toán để đơn hàng được xác nhận nhanh hơn.'}">
+                    Vui lòng hoàn tất thanh toán để đơn hàng được xác nhận nhanh hơn.
+                </span>
+            </p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <a href="/cart" class="btn btn-outline-secondary">Quay lại giỏ hàng</a>
+                <a href="/lichsugiaodich" class="btn btn-primary">Xem danh sách đơn hàng</a>
+            </div>
+        </div>
+
+        <div class="alert alert-light border mb-4">
+            <strong>Phương thức thanh toán:</strong>
+            <span th:text="${paymentMethod == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng'}">
+                Chuyển khoản ngân hàng
+            </span>
+        </div>
 
         <!-- Box hiển thị khi thanh toán thành công (ẩn ban đầu) -->
         <div id="success_pay_box" class="p-2 text-center pt-3 border border-2 mt-5" style="display:none">
@@ -56,17 +78,33 @@
             <p class="text-center text-success">
                 Chúng tôi đã nhận được thanh toán, đơn hàng sẽ được chuyển đến quý khách trong thời gian sớm nhất!
             </p>
-            <button onclick="clearCartAndRedirect()" class="btn btn-primary mt-3">Về trang chủ</button>
+            <div class="d-flex justify-content-center gap-2 flex-wrap mt-3">
+                <a href="/cart" class="btn btn-outline-secondary">Quay lại giỏ hàng</a>
+                <a href="/lichsugiaodich" class="btn btn-primary">Xem danh sách đơn hàng</a>
+            </div>
         </div>
 
         <!-- Box thông báo lỗi/thông báo khác (ẩn ban đầu) -->
         <div id="error_pay_box" class="alert alert-warning mt-4 text-center" style="display:none">
             <!-- Nội dung lỗi sẽ được cập nhật bằng JavaScript -->
-            <button onclick="clearCartAndRedirect()" class="btn btn-primary mt-3">Về trang chủ</button>
+            <div class="d-flex justify-content-center gap-2 flex-wrap mt-3">
+                <a href="/cart" class="btn btn-outline-secondary">Quay lại giỏ hàng</a>
+                <a href="/lichsugiaodich" class="btn btn-primary">Xem danh sách đơn hàng</a>
+            </div>
+        </div>
+
+        <div th:if="${paymentMethod == 'COD'}" class="p-4 text-center border border-2 rounded bg-light mt-5">
+            <h2 class="text-success">Đặt hàng thành công</h2>
+            <p class="mb-2">Đơn hàng của bạn đã được ghi nhận.</p>
+            <p class="mb-4">Bạn sẽ thanh toán khi nhận hàng. Chúng tôi sẽ liên hệ để xác nhận và giao hàng sớm nhất.</p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <a href="/cart" class="btn btn-outline-secondary">Quay lại giỏ hàng</a>
+                <a href="/lichsugiaodich" class="btn btn-primary">Xem danh sách đơn hàng</a>
+            </div>
         </div>
 
         <!-- Phần 1: Thanh toán -->
-        <div class="row mt-5" id="checkout_box">
+        <div class="row mt-5" id="checkout_box" th:if="${paymentMethod != 'COD'}">
             <div class="col-md-6 border text-center p-2">
                 <p class="fw-bold">Cách 1: Mở app ngân hàng và quét mã QR</p>
                 <div class="my-2">
@@ -155,26 +193,24 @@
 
     <!-- Bootstrap JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/cart-storage.js}" th:attr="data-cart-owner=${nguoiDung != null ? 'user-' + nguoiDung.id : 'guest'}"></script>
 
     <!-- API JS -->
     <script src="/js/api.js"></script>
 
     <!-- Custom JS -->
     <script>
-        function clearCartAndRedirect() {
-            // Xóa session giỏ hàng trong localStorage
+        function clearLocalCart() {
             localStorage.removeItem('cart');
             localStorage.removeItem('cartItemCount');
-
-            // Điều hướng về trang chủ
-            window.location.href = 'http://localhost:8181/';
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const cartTableBody = document.getElementById('cartTableBody');
-            const totalPriceProductElement = document.getElementById('totalPriceProduct');
-            const totalPriceTransferElement = document.getElementById('totalPriceTransfer');
+            clearLocalCart();
+            const checkoutBox = document.getElementById('checkout_box');
+            if (!checkoutBox) {
+                return;
+            }
 
             var pay_status = 'unpaid';
 
@@ -225,7 +261,10 @@
                                     document.getElementById('success_pay_box').style.display = 'none';
                                     document.getElementById('error_pay_box').innerHTML =
                                         `<p>Số tiền chuyển khoản thừa: ${(extra * 1000).toLocaleString()}đ. Hệ thống sẽ hoàn lại phần dư cho bạn!</p>
-                                         <button onclick="clearCartAndRedirect()" class="btn btn-primary mt-3">Về trang chủ</button>`;
+                                         <div class="d-flex justify-content-center gap-2 flex-wrap mt-3">
+                                            <a href="/cart" class="btn btn-outline-secondary">Quay lại giỏ hàng</a>
+                                            <a href="/lichsugiaodich" class="btn btn-primary">Xem danh sách đơn hàng</a>
+                                         </div>`;
                                     document.getElementById('error_pay_box').style.display = 'block';
                                     pay_status = 'extra';
                                     break;
@@ -243,7 +282,10 @@
                                     document.getElementById('success_pay_box').style.display = 'none';
                                     document.getElementById('error_pay_box').innerHTML =
                                         `<p>Số tiền chuyển khoản thiếu: ${(missing * 1000).toLocaleString()}đ. Bạn có thể trả phần còn lại khi nhận hàng!</p>
-                                         <button onclick="clearCartAndRedirect()" class="btn btn-primary mt-3">Về trang chủ</button>`;
+                                         <div class="d-flex justify-content-center gap-2 flex-wrap mt-3">
+                                            <a href="/cart" class="btn btn-outline-secondary">Quay lại giỏ hàng</a>
+                                            <a href="/lichsugiaodich" class="btn btn-primary">Xem danh sách đơn hàng</a>
+                                         </div>`;
                                     document.getElementById('error_pay_box').style.display = 'block';
                                     pay_status = 'missing';
                                     break;

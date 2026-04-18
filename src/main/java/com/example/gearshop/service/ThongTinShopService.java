@@ -1,7 +1,11 @@
 package com.example.gearshop.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.gearshop.model.ThongTinShop;
 import com.example.gearshop.repository.ThongTinShopRepository;
@@ -17,13 +21,19 @@ public class ThongTinShopService {
                 .orElseGet(this::createDefaultThongTinShop);
     }
 
+    @Transactional
     public ThongTinShop capNhatThongTinShop(String tenShop, String diaChiShop, String soDienThoaiShop, String emailShop) {
         ThongTinShop thongTinShop = getOrCreateThongTinShop();
         thongTinShop.setTenShop(tenShop);
         thongTinShop.setDiaChiShop(diaChiShop);
         thongTinShop.setSoDienThoaiShop(soDienThoaiShop);
         thongTinShop.setEmailShop(emailShop);
-        return thongTinShopRepository.save(thongTinShop);
+        ThongTinShop saved = thongTinShopRepository.saveAndFlush(thongTinShop);
+        List<ThongTinShop> all = thongTinShopRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        for (int i = 1; i < all.size(); i++) {
+            thongTinShopRepository.delete(all.get(i));
+        }
+        return saved;
     }
 
     private ThongTinShop createDefaultThongTinShop() {

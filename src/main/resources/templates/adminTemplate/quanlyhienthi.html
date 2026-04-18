@@ -9,375 +9,153 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
-        .display-manager-wrap {
-            max-width: 1220px;
-            margin: 0 auto;
-        }
-
-        .display-header {
-            border-radius: 16px;
-            border: 1px solid #e5eaf3;
-            background: linear-gradient(120deg, #f7faff, #ffffff);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            padding: 1.25rem 1.4rem;
-        }
-
-        .section-card {
-            border-radius: 14px;
-            border: 1px solid #e7edf5;
-            box-shadow: 0 7px 20px rgba(15, 23, 42, 0.05);
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .section-card .card-header {
-            background: #fbfdff;
-            border-bottom: 1px solid #edf2f7;
-            font-weight: 700;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: .5rem;
-        }
-
-        .mini-preview {
-            border: 1px dashed #c9d6ea;
-            border-radius: 12px;
-            background: #f9fbff;
-            padding: .8rem;
-        }
-
-        .preview-block {
-            border: 1px solid #dbe6f6;
-            border-radius: 10px;
-            background: #fff;
-            padding: .6rem .75rem;
-            font-size: .92rem;
-            font-weight: 600;
-            color: #25324c;
-        }
-
-        .soft-chip {
-            display: inline-flex;
-            align-items: center;
-            border: 1px solid #dde6f5;
-            background: #f6f9ff;
-            border-radius: 999px;
-            font-size: .78rem;
-            padding: .2rem .55rem;
-            color: #3a4a6a;
-        }
-
-        .w-120 {
-            width: 120px;
-        }
-    </style>
 </head>
 
 <body>
 
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('hienthi')"></th:block>
 
-    <div class="container mt-4 mb-5">
-        <div class="display-manager-wrap">
-            <div class="display-header mb-4 d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                <div>
-                    <h2 class="mb-1">Website Display Manager</h2>
-                    <p class="text-muted mb-0">Quản lý banner, section trang chủ, sản phẩm nổi bật, voucher, danh mục và nội dung hiển thị.</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-secondary"><i class="bi bi-arrow-repeat"></i> Làm mới</button>
-                    <button class="btn btn-primary"><i class="bi bi-floppy2"></i> Lưu cấu hình</button>
-                </div>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-lg-6">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-images me-2"></i>1. Banner / Slider</span>
-                            <span class="soft-chip">Quan trọng</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Ảnh banner</label>
-                                    <input type="file" class="form-control">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Link khi click</label>
-                                    <input type="text" class="form-control" placeholder="/sanpham/123">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Thứ tự</label>
-                                    <input type="number" min="1" class="form-control" value="1">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Vị trí</label>
-                                    <select class="form-select">
-                                        <option>Banner chính</option>
-                                        <option>Banner giữa trang</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4 d-flex align-items-end">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" checked>
-                                        <label class="form-check-label">Hiển thị</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-grid-1x2-fill me-2"></i>2. Bố cục trang chủ</span>
-                            <span class="soft-chip">Bật/tắt section</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-sm align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Section</th>
-                                            <th class="w-120">Thứ tự</th>
-                                            <th class="w-120">Trạng thái</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Sản phẩm mới</td>
-                                            <td><input type="number" class="form-control form-control-sm" value="3"></td>
-                                            <td><input class="form-check-input" type="checkbox" checked></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Flash sale</td>
-                                            <td><input type="number" class="form-control form-control-sm" value="2"></td>
-                                            <td><input class="form-check-input" type="checkbox" checked></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Sản phẩm hot</td>
-                                            <td><input type="number" class="form-control form-control-sm" value="4"></td>
-                                            <td><input class="form-check-input" type="checkbox" checked></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-stars me-2"></i>3. Sản phẩm nổi bật</span>
-                            <span class="soft-chip">Thủ công / tự động</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Chế độ chọn</label>
-                                    <select class="form-select">
-                                        <option>Thủ công</option>
-                                        <option>Bán chạy</option>
-                                        <option>Mới nhất</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Giới hạn số lượng</label>
-                                    <input type="number" min="1" class="form-control" value="8">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">ID sản phẩm thủ công (phân tách bằng dấu phẩy)</label>
-                                    <input type="text" class="form-control" placeholder="12, 40, 85">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-ticket-perforated me-2"></i>4. Voucher hiển thị</span>
-                            <span class="soft-chip">Sắp xếp hiển thị</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-8">
-                                    <label class="form-label">Voucher nổi bật</label>
-                                    <select class="form-select" multiple>
-                                        <option selected>SALE10</option>
-                                        <option selected>FREESHIP50K</option>
-                                        <option>NEWUSER15</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Thứ tự block</label>
-                                    <input type="number" min="1" class="form-control" value="5">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked>
-                                        <label class="form-check-label">Hiển thị</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-list-ul me-2"></i>5. Danh mục hiển thị</span>
-                            <span class="soft-chip">Menu ngoài user</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" checked><label class="form-check-label">CPU</label></div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" checked><label class="form-check-label">Mainboard</label></div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" checked><label class="form-check-label">VGA</label></div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox"><label class="form-check-label">Gaming Chair</label></div>
-                                </div>
-                            </div>
-                            <hr>
-                            <label class="form-label">Thứ tự menu (kéo-thả nâng cao, nhập nhanh theo thứ tự)</label>
-                            <input type="text" class="form-control" value="CPU, Mainboard, VGA, RAM, SSD">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-megaphone me-2"></i>6. Banner phụ / quảng cáo</span>
-                            <span class="soft-chip">Sidebar / giữa trang</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Upload ảnh</label>
-                                    <input type="file" class="form-control">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Vị trí hiển thị</label>
-                                    <select class="form-select">
-                                        <option>Bên phải</option>
-                                        <option>Giữa nội dung</option>
-                                        <option>Footer trên</option>
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Link đích</label>
-                                    <input type="text" class="form-control" placeholder="/khuyen-mai/sieu-sale">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-file-earmark-text me-2"></i>7. Nội dung tĩnh</span>
-                            <span class="soft-chip">Giới thiệu / chính sách / footer</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label">Giới thiệu ngắn</label>
-                                <textarea class="form-control" rows="2">PGearShop - Chuyên linh kiện PC chính hãng.</textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Chính sách đổi trả</label>
-                                <textarea class="form-control" rows="2">Đổi trả trong 7 ngày theo điều kiện bảo hành.</textarea>
-                            </div>
-                            <div>
-                                <label class="form-label">Nội dung footer</label>
-                                <input type="text" class="form-control" value="© 2026 PGearShop. All rights reserved.">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-palette2 me-2"></i>8. Giao diện (basic)</span>
-                            <span class="soft-chip">Branding</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Logo</label>
-                                    <input type="file" class="form-control">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Favicon</label>
-                                    <input type="file" class="form-control">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Màu chủ đạo</label>
-                                    <input type="color" class="form-control form-control-color" value="#1c64f2" title="Chọn màu">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12">
-                    <div class="card section-card">
-                        <div class="card-header">
-                            <span><i class="bi bi-eye me-2"></i>9-12. Trạng thái, thứ tự hiển thị và preview</span>
-                            <span class="soft-chip">Nâng cao</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-lg-6">
-                                    <label class="form-label">Thứ tự tổng trang chủ</label>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">1</span>
-                                        <input type="text" class="form-control" value="Banner chính">
-                                    </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">2</span>
-                                        <input type="text" class="form-control" value="Flash sale">
-                                    </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">3</span>
-                                        <input type="text" class="form-control" value="Sản phẩm mới">
-                                    </div>
-                                    <div class="input-group">
-                                        <span class="input-group-text">4</span>
-                                        <input type="text" class="form-control" value="Sản phẩm nổi bật">
-                                    </div>
-                                </div>
-                                <div class="col-lg-6">
-                                    <label class="form-label">Preview trang chủ (mô phỏng)</label>
-                                    <div class="mini-preview d-grid gap-2">
-                                        <div class="preview-block">[Banner]</div>
-                                        <div class="preview-block">[Section trang chủ: Sản phẩm mới / Flash sale]</div>
-                                        <div class="preview-block">[Sản phẩm nổi bật]</div>
-                                        <div class="preview-block">[Voucher]</div>
-                                        <div class="preview-block">[Danh mục]</div>
-                                        <div class="preview-block">[Nội dung]</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div class="container mt-4 mb-5" style="max-width: 980px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 class="mb-1">Quản lý hiển thị trang chủ</h2>
+                <p class="text-muted mb-0">Chỉ giữ lại các chức năng banner và cách hiển thị sản phẩm.</p>
             </div>
         </div>
+
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <form th:action="@{/admin/quanlyhienthi}" method="post" enctype="multipart/form-data" class="card shadow-sm p-4">
+            <div class="mb-4">
+                <h4 class="mb-3">1. Banner trang chủ</h4>
+
+                <div class="mb-3">
+                    <label class="form-label">Nguồn banner</label>
+                    <select class="form-select" id="bannerSourceType" name="bannerSourceType">
+                        <option value="UPLOAD" th:selected="${displayConfig.bannerSourceType == 'UPLOAD'}">Tải ảnh mới lên</option>
+                        <option value="PRODUCT" th:selected="${displayConfig.bannerSourceType == 'PRODUCT'}">Dùng ảnh sản phẩm có sẵn</option>
+                    </select>
+                </div>
+
+                <div id="uploadBannerBlock" class="mb-3">
+                    <label class="form-label">Ảnh banner tải lên</label>
+                    <input type="file" class="form-control" id="bannerImageFile" name="bannerImageFile" accept="image/*">
+                    <div class="form-text" th:if="${displayConfig.uploadedBannerImage != null}">
+                        Ảnh hiện tại: <span th:text="${displayConfig.uploadedBannerImage}"></span>
+                    </div>
+                </div>
+
+                <div id="productBannerBlock" class="mb-3">
+                    <label class="form-label">Chọn sản phẩm làm banner</label>
+                    <select class="form-select" id="bannerProductId" name="bannerProductId">
+                        <option value="">-- Chọn sản phẩm --</option>
+                        <option th:each="sp : ${dsSanPham}"
+                                th:value="${sp.id}"
+                                th:selected="${displayConfig.bannerProductId == sp.id}"
+                                th:attr="data-image-url=@{/images/product/{img}(img=${sp.hinhAnh})}"
+                                th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label">Xem trước banner</label>
+                    <div class="border rounded p-2 bg-light">
+                        <img id="bannerPreviewImage" th:src="${bannerImageUrl}" alt="Banner preview" class="img-fluid rounded"
+                             style="max-height: 260px; width: 100%; object-fit: cover;">
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+                <h4 class="mb-3">2. Hiển thị sản phẩm</h4>
+
+                <div class="mb-3">
+                    <label class="form-label">Thứ tự hiển thị sản phẩm</label>
+                    <select class="form-select" name="productDisplayOrder">
+                        <option value="BEST_SELLING" th:selected="${displayConfig.productDisplayOrder == 'BEST_SELLING'}">Bán chạy</option>
+                        <option value="NEWEST" th:selected="${displayConfig.productDisplayOrder == 'NEWEST'}">Mới nhất</option>
+                        <option value="PRICE_ASC" th:selected="${displayConfig.productDisplayOrder == 'PRICE_ASC'}">Giá tăng dần</option>
+                        <option value="PRICE_DESC" th:selected="${displayConfig.productDisplayOrder == 'PRICE_DESC'}">Giá giảm dần</option>
+                        <option value="NAME_ASC" th:selected="${displayConfig.productDisplayOrder == 'NAME_ASC'}">Tên A đến Z</option>
+                    </select>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Số lượng sản phẩm 1 hàng</label>
+                        <input type="number" class="form-control" name="productsPerRow" min="1" max="6"
+                               th:value="${displayConfig.productsPerRow}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Số lượng hàng của mỗi mục</label>
+                        <input type="number" class="form-control" name="numberOfRows" min="1" max="6"
+                               th:value="${displayConfig.numberOfRows}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-floppy"></i> Lưu thay đổi
+                </button>
+                <a th:href="@{/admin/trangchu}" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
     </div>
+
+    <script>
+        const bannerSourceType = document.getElementById('bannerSourceType');
+        const uploadBannerBlock = document.getElementById('uploadBannerBlock');
+        const productBannerBlock = document.getElementById('productBannerBlock');
+        const bannerImageFile = document.getElementById('bannerImageFile');
+        const bannerProductId = document.getElementById('bannerProductId');
+        const bannerPreviewImage = document.getElementById('bannerPreviewImage');
+        const initialBannerPreviewSrc = bannerPreviewImage.src;
+
+        function toggleBannerInputs() {
+            const isUpload = bannerSourceType.value === 'UPLOAD';
+            uploadBannerBlock.style.display = isUpload ? 'block' : 'none';
+            productBannerBlock.style.display = isUpload ? 'none' : 'block';
+
+            if (!isUpload) {
+                updateProductBannerPreview();
+            }
+        }
+
+        function updateProductBannerPreview() {
+            const selectedOption = bannerProductId.options[bannerProductId.selectedIndex];
+            const imageUrl = selectedOption ? selectedOption.getAttribute('data-image-url') : null;
+            bannerPreviewImage.src = imageUrl || initialBannerPreviewSrc;
+        }
+
+        bannerImageFile.addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) {
+                if (bannerSourceType.value === 'PRODUCT') {
+                    updateProductBannerPreview();
+                } else {
+                    bannerPreviewImage.src = initialBannerPreviewSrc;
+                }
+                return;
+            }
+
+            bannerPreviewImage.src = URL.createObjectURL(file);
+            bannerSourceType.value = 'UPLOAD';
+            toggleBannerInputs();
+        });
+
+        bannerProductId.addEventListener('change', function () {
+            bannerSourceType.value = 'PRODUCT';
+            toggleBannerInputs();
+        });
+
+        bannerSourceType.addEventListener('change', toggleBannerInputs);
+        toggleBannerInputs();
+    </script>
 
 </body>
 

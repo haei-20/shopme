@@ -1,6 +1,7 @@
 package com.example.gearshop.controller;
 
 import com.example.gearshop.model.*;
+import com.example.gearshop.service.GioHangService;
 import com.example.gearshop.service.SanPhamService;
 
 import jakarta.servlet.http.HttpSession;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import java.util.Map;
@@ -28,6 +30,9 @@ public class ChiTietSanPhamController {
 
     @Autowired
     private SanPhamService sanPhamService;
+
+    @Autowired
+    private GioHangService gioHangService;
 
     @GetMapping("/{id}")
     public String chiTietSanPham(@PathVariable("id") Integer id, Model model, HttpSession session) {
@@ -128,7 +133,7 @@ public class ChiTietSanPhamController {
     }
 
     @PostMapping("/add-to-cart")
-    public ResponseEntity<Void> addToCart(@RequestBody Map<String, Object> product, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> addToCart(@RequestBody Map<String, Object> product, HttpSession session) {
         List<Map<String, Object>> cart = (List<Map<String, Object>>) session.getAttribute("cart");
         if (cart == null) {
             cart = new ArrayList<>();
@@ -149,11 +154,41 @@ public class ChiTietSanPhamController {
             cart.add(product);
         }
 
+        KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
+        if (khachHang != null) {
+            SanPham sanPham = sanPhamService.getSanPhamById(sanPhamID);
+            if (sanPham != null) {
+                gioHangService.addOrUpdateCartItem(khachHang.getId(), sanPham, quantity);
+                cart = buildCartPayloadFromDb(khachHang.getId());
+            }
+        }
+
         // Lưu giỏ hàng vào session
         System.out.println("Cac san pham trong gio hang:");
         cart.forEach(item -> System.out.println(item));
         session.setAttribute("cart", cart);
 
-        return ResponseEntity.ok().build();
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("cart", cart);
+        response.put("cartItemCount", cart.stream()
+                .mapToInt(item -> Integer.parseInt(item.get("quantity").toString()))
+                .sum());
+        return ResponseEntity.ok(response);
+    }
+
+    private List<Map<String, Object>> buildCartPayloadFromDb(Integer khachHangId) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (GioHangChiTiet chiTiet : gioHangService.getCartDetailsByCustomerId(khachHangId)) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("sanPhamID", chiTiet.getSanPham().getId());
+            item.put("name", chiTiet.getSanPham().getTenSanPham());
+            item.put("price", chiTiet.getDonGia());
+            item.put("image", "/images/product/" + chiTiet.getSanPham().getHinhAnh());
+            item.put("tonKho", chiTiet.getSanPham().getTonKho());
+            item.put("quantity", chiTiet.getSoLuong());
+            result.add(item);
+        }
+        return result;
     }
 }

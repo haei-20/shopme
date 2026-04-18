@@ -10,13 +10,21 @@
 </head>
 
 <body>
-    <header class="bg-dark text-white py-3">
-        <div class="container d-flex align-items-center justify-content-between">
-            <div class="fs-3 fw-bold"><a class="no-underline" href="/">PGearShop</a></div>
+    <header class="bg-dark text-white site-header py-3">
+        <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="site-brand fs-4 fw-bold mb-0">
+                <a class="no-underline" href="/" th:text="${shopInfo.tenShop}">PGearShop</a>
+            </div>
 
-            <form class="flex-grow-1 mx-3" role="search" action="/timkiem" method="get">
-                <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm..."
-                    aria-label="Search">
+            <form class="header-search-form flex-grow-1 mx-md-3" role="search" action="/timkiem" method="get">
+                <div class="input-group header-search-input-group">
+                    <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                    <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm…"
+                        th:value="${keyword}" aria-label="Tìm kiếm sản phẩm">
+                    <button type="submit" class="btn header-search-btn" title="Tìm kiếm" aria-label="Tìm kiếm">
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </div>
             </form>
 
             <div class="d-flex align-items-center">
@@ -194,6 +202,7 @@
         }
     });
 </script>
+<script th:src="@{/js/cart-storage.js}" th:attr="data-cart-owner=${nguoiDung != null ? 'user-' + nguoiDung.id : 'guest'}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const cartItemsContainer = document.getElementById('cartItems');

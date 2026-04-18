@@ -18,7 +18,7 @@
     <!-- Header -->
     <header class="bg-dark text-white py-3">
         <div class="container d-flex align-items-center justify-content-between">
-            <div class="fs-3 fw-bold"><a class="no-underline" href="/">PGearShop</a></div>
+            <div class="fs-3 fw-bold"><a class="no-underline" href="/" th:text="${shopInfo.tenShop}">PGearShop</a></div>
 
             <form class="flex-grow-1 mx-3" role="search" action="/timkiem" method="get">
                 <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm..."
@@ -242,6 +242,7 @@
 </script>
 <!-- Bootstrap JS Bundle CDN (Popper + Bootstrap JS) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/cart-storage.js}" th:attr="data-cart-owner=${nguoiDung != null ? 'user-' + nguoiDung.id : 'guest'}"></script>
 
 <!-- Custom JS -->
 <script>
@@ -260,19 +261,6 @@
     document.addEventListener('DOMContentLoaded', function () {
         const cartItemsContainer = document.getElementById('cartItems');
         const cartItemCount = document.getElementById('cartItemCount');
-        // Kiểm tra cờ resetCart trong localStorage
-        const resetCart = localStorage.getItem('resetCart');
-        console.log('Reset Cart:', resetCart);
-
-        if (resetCart === 'true') {
-            // Reset giỏ hàng nếu vừa đăng nhập
-            localStorage.setItem('cart', JSON.stringify([]));
-            localStorage.setItem('cartItemCount', 0);
-
-            // Xóa cờ resetCart ngay sau khi reset giỏ hàng
-            localStorage.removeItem('resetCart');
-        }
-
         // Lấy danh sách mặt hàng từ localStorage
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
@@ -331,6 +319,7 @@
         const chatContainer = document.getElementById('chat-container');
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
+        const shopName = /*[[${shopInfo.tenShop}]]*/ 'GearShop';
 
         // Hiển thị hoặc ẩn khung chatbot khi nhấn vào biểu tượng
         chatbotIcon.addEventListener('click', function (e) {
@@ -368,7 +357,7 @@
                     // Hiển thị phản hồi của chatbot (bên trái)
                     const botMessage = document.createElement('div');
                     botMessage.className = 'bot-message';
-                    botMessage.textContent = data.error ? `Bot: ${data.error}` : `GearShop: ${data.response}`;
+                    botMessage.textContent = data.error ? `Bot: ${data.error}` : `${shopName}: ${data.response}`;
                     chatBox.appendChild(botMessage);
                     userInput.value = '';
                     chatBox.scrollTop = chatBox.scrollHeight;

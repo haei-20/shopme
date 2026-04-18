@@ -12,8 +12,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.gearshop.model.HoaDon;
 import com.example.gearshop.model.KhachHang;
+import com.example.gearshop.model.ThongTinNhanHang;
 import com.example.gearshop.model.Voucher;
+import com.example.gearshop.service.GioHangService;
 import com.example.gearshop.service.HoaDonService;
+import com.example.gearshop.service.ThongTinNhanHangService;
 import com.example.gearshop.service.VoucherService;
 
 import jakarta.servlet.http.HttpSession;
@@ -27,11 +30,18 @@ public class HoaDonController {
     @Autowired
     private VoucherService voucherService;
 
+    @Autowired
+    private ThongTinNhanHangService thongTinNhanHangService;
+
+    @Autowired
+    private GioHangService gioHangService;
+
     @PostMapping("/save-order")
     @SuppressWarnings("unchecked")
     public String saveOrder(HttpSession session,
                             @RequestParam(required = false) Integer thongTinNhanHangID,
                             @RequestParam(required = false) String voucherCode,
+                            @RequestParam(defaultValue = "BANK_TRANSFER") String paymentMethod,
                             Model model,
                             RedirectAttributes redirectAttributes) {
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
@@ -42,6 +52,19 @@ public class HoaDonController {
 
         if (thongTinNhanHangID == null || thongTinNhanHangID <= 0) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng chọn thông tin người nhận hàng trước khi lưu hóa đơn.");
+            return "redirect:/order";
+        }
+
+        ThongTinNhanHang thongTinNhanHang;
+        try {
+            thongTinNhanHang = thongTinNhanHangService.getThongTinNhanHangById(thongTinNhanHangID);
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/order";
+        }
+
+        if (thongTinNhanHang.getKhachHangID() != khachHang.getId()) {
+            redirectAttributes.addFlashAttribute("error", "Thông tin nhận hàng không thuộc tài khoản hiện tại.");
             return "redirect:/order";
         }
 
@@ -84,7 +107,12 @@ public class HoaDonController {
         tongGiaSauGiam = Math.max(tongGiaSauGiam, 0); // Đảm bảo tổng tiền không âm
 
         // Lưu hóa đơn
-        HoaDon hoaDon = hoaDonService.createHoaDon("HD", thongTinNhanHangID, tongGiaSauGiam);
+        if (!"BANK_TRANSFER".equalsIgnoreCase(paymentMethod) && !"COD".equalsIgnoreCase(paymentMethod)) {
+            redirectAttributes.addFlashAttribute("error", "Phương thức thanh toán không hợp lệ.");
+            return "redirect:/order";
+        }
+
+        HoaDon hoaDon = hoaDonService.createHoaDon("HD", thongTinNhanHangID, tongGiaSauGiam, paymentMethod);
         System.out.println("Đã tạo hóa đơn với ID: " + hoaDon.getId());
         System.out.println("Tổng tiền sau giảm: " + hoaDon.getTongGia());
 
@@ -114,6 +142,9 @@ public class HoaDonController {
 
         model.addAttribute("hoaDon", hoaDon);
         session.setAttribute("hoaDon", hoaDon);
+        session.removeAttribute("selectedItems");
+        session.removeAttribute("cart");
+        gioHangService.clearCartByCustomerId(khachHang.getId());
         return "redirect:/checkout";
     }
 }
