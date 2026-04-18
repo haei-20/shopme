@@ -93,6 +93,23 @@ public class HomeDisplayConfigService {
         config.setProductDisplayOrder(DEFAULT_PRODUCT_ORDER);
         config.setProductsPerRow(DEFAULT_PRODUCTS_PER_ROW);
         config.setNumberOfRows(DEFAULT_NUMBER_OF_ROWS);
+        config.setShowBanner(Boolean.TRUE);
+        config.setShowBannerOverlayText(Boolean.TRUE);
+        config.setShowCategoryNav(Boolean.TRUE);
+        config.setShowSectionFeatured(Boolean.TRUE);
+        config.setShowSectionRecommended(Boolean.TRUE);
+        config.setShowSectionRecentlyViewed(Boolean.TRUE);
+        config.setShowSectionByCategory(Boolean.TRUE);
+        config.setShowFooter(Boolean.TRUE);
+        config.setShowChatbot(Boolean.TRUE);
         return homeDisplayConfigRepository.save(config);
+    }
+
+    public static String chonTieuDe(String tuyChon, String macDinh) {
+        if (tuyChon == null) {
+            return macDinh;
+        }
+        String t = tuyChon.trim();
+        return t.isEmpty() ? macDinh : t;
     }
 }

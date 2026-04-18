@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="${shopInfo.tenShop} + ' - Đặt hàng thành công'">Đặt hàng thành công</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+
+<body>
+    <header class="bg-dark text-white py-3">
+        <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="fs-4 fw-bold mb-0">
+                <a class="no-underline text-white" href="/" th:text="${shopInfo.tenShop}">Shop</a>
+            </div>
+            <form class="flex-grow-1 mx-md-3" style="max-width: 420px;" role="search" action="/timkiem" method="get">
+                <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm…" aria-label="Tìm kiếm">
+            </form>
+            <div class="dropdown" th:if="${nguoiDung != null}">
+                <a class="btn btn-light dropdown-toggle" href="#" data-bs-toggle="dropdown">Tài khoản</a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
+                    <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
+                    <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <main class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-3"></i>
+                    <h1 class="h3 mt-3">Đặt hàng thành công</h1>
+                    <p class="text-muted mb-0">Cảm ơn bạn đã mua hàng tại <span th:text="${shopInfo.tenShop}">cửa hàng</span>.</p>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <dl class="row mb-0 small">
+                            <dt class="col-sm-4">Mã đơn hàng</dt>
+                            <dd class="col-sm-8 fw-semibold" th:text="${hoaDon.maHoaDon}">HD001</dd>
+                            <dt class="col-sm-4">Tổng thanh toán</dt>
+                            <dd class="col-sm-8 text-danger fw-bold"
+                                th:text="${#numbers.formatDecimal(hoaDon.tongGia, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</dd>
+                            <dt class="col-sm-4">Người nhận</dt>
+                            <dd class="col-sm-8" th:text="${hoaDon.thongTinNhanHang.tenNguoiNhan}">—</dd>
+                            <dt class="col-sm-4">Phương thức</dt>
+                            <dd class="col-sm-8"
+                                th:text="${hoaDon.phuongThucThanhToan == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng'}">
+                                —</dd>
+                            <dt class="col-sm-4">Trạng thái</dt>
+                            <dd class="col-sm-8">
+                                <th:block th:replace="~{clientTemplate/fragments/trangthaidon :: badge(trangThai=${hoaDon.trangThaiDonHang})}"></th:block>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div th:if="${hoaDon.phuongThucThanhToan == 'COD'}" class="alert alert-info">
+                    <strong><i class="bi bi-info-circle me-1"></i> Bước tiếp theo</strong>
+                    <p class="mb-0 mt-2">Shop sẽ xác nhận đơn và liên hệ giao hàng. Bạn thanh toán khi nhận được hàng.</p>
+                </div>
+
+                <div th:if="${hoaDon.phuongThucThanhToan != null and hoaDon.phuongThucThanhToan != 'COD'}" class="alert alert-warning border-0">
+                    <strong><i class="bi bi-bank me-1"></i> Thanh toán chuyển khoản</strong>
+                    <p class="mb-3 mt-2">Vui lòng hoàn tất chuyển khoản để đơn được xử lý nhanh. Bạn có thể mở trang thanh toán có mã QR và nội dung chuyển khoản theo mã đơn.</p>
+                    <a class="btn btn-primary" th:href="@{/checkout}">
+                        <i class="bi bi-qr-code me-1"></i> Đến trang thanh toán / quét mã QR
+                    </a>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                    <a class="btn btn-outline-secondary" href="/">Tiếp tục mua sắm</a>
+                    <a class="btn btn-primary" th:href="@{/lichsugiaodich/{id}(id=${hoaDon.id})}">
+                        Xem chi tiết đơn hàng
+                    </a>
+                    <a class="btn btn-outline-primary" th:href="@{/lichsugiaodich}">Danh sách đơn hàng</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

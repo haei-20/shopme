@@ -1,5 +1,7 @@
 package com.example.gearshop.model;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,6 +21,8 @@ public class DanhGia {
 
     private int soSao;
     private String noiDung;
+
+    private LocalDateTime ngayDanhGia;
 
     @ManyToOne
     @JoinColumn(name = "khachHangID")

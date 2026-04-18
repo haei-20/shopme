@@ -17,6 +17,8 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
 
     List<HoaDon> findByThongTinNhanHang_KhachHangID(Integer khachHangID);
 
+    boolean existsByIdAndThongTinNhanHang_KhachHangID(Integer id, Integer khachHangID);
+
     @Query("""
             SELECT hd
             FROM HoaDon hd

@@ -1,0 +1,20 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="badge(trangThai)">
+    <span th:switch="${trangThai}">
+        <span th:case="'Chờ xác nhận'" class="badge bg-secondary">Chờ xác nhận</span>
+        <span th:case="'Đang chuẩn bị hàng'" class="badge bg-info text-dark">Đang chuẩn bị hàng</span>
+        <span th:case="'Chờ lấy hàng'" class="badge bg-info text-dark">Đang chuẩn bị hàng</span>
+        <span th:case="'Chờ giao hàng'" class="badge bg-primary">Chờ giao hàng</span>
+        <span th:case="'Đã giao'" class="badge bg-success">Đã giao</span>
+        <span th:case="'Trả hàng'" class="badge bg-warning text-dark">Trả hàng</span>
+        <span th:case="'Đã hủy'" class="badge bg-danger">Đã hủy</span>
+        <span th:case="'Unpaid'" class="badge bg-secondary">Chờ xác nhận</span>
+        <span th:case="'Chưa thanh toán'" class="badge bg-secondary">Chờ xác nhận</span>
+        <span th:case="'Missing'" class="badge bg-secondary">Chờ xác nhận</span>
+        <span th:case="'Thanh toán thiếu'" class="badge bg-secondary">Chờ xác nhận</span>
+        <span th:case="'Paid'" class="badge bg-info text-dark">Đang chuẩn bị hàng</span>
+        <span th:case="'Thanh toán đủ'" class="badge bg-info text-dark">Đang chuẩn bị hàng</span>
+        <span th:case="'Extra'" class="badge bg-info text-dark">Đang chuẩn bị hàng</span>
+        <span th:case="'Thanh toán thừa'" class="badge bg-info text-dark">Đang chuẩn bị hàng</span>
+        <span th:case="*" class="badge bg-light text-dark" th:text="${trangThai}">—</span>
+    </span>
+</th:block>

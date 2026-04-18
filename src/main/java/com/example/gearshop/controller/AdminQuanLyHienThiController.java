@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.example.gearshop.model.HomeDisplayConfig;
 import com.example.gearshop.service.HomeDisplayConfigService;
 import com.example.gearshop.service.SanPhamService;
@@ -48,6 +50,7 @@ public class AdminQuanLyHienThiController {
             @RequestParam Integer productsPerRow,
             @RequestParam Integer numberOfRows,
             @RequestParam(name = "bannerImageFile", required = false) MultipartFile bannerImageFile,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
 
         HomeDisplayConfig config = homeDisplayConfigService.getOrCreateConfig();
@@ -57,8 +60,25 @@ public class AdminQuanLyHienThiController {
         config.setProductsPerRow(Math.max(1, productsPerRow));
         config.setNumberOfRows(Math.max(1, numberOfRows));
 
+        config.setShowBanner(boolParam(request, "showBanner"));
+        config.setShowBannerOverlayText(boolParam(request, "showBannerOverlayText"));
+        config.setShowCategoryNav(boolParam(request, "showCategoryNav"));
+        config.setShowSectionFeatured(boolParam(request, "showSectionFeatured"));
+        config.setShowSectionRecommended(boolParam(request, "showSectionRecommended"));
+        config.setShowSectionRecentlyViewed(boolParam(request, "showSectionRecentlyViewed"));
+        config.setShowSectionByCategory(boolParam(request, "showSectionByCategory"));
+        config.setShowFooter(boolParam(request, "showFooter"));
+        config.setShowChatbot(boolParam(request, "showChatbot"));
+
+        config.setBannerTitleCustom(trimToNull(request.getParameter("bannerTitleCustom")));
+        config.setBannerSubtitleCustom(trimToNull(request.getParameter("bannerSubtitleCustom")));
+        config.setTitleSectionFeatured(trimToNull(request.getParameter("titleSectionFeatured")));
+        config.setTitleSectionRecommended(trimToNull(request.getParameter("titleSectionRecommended")));
+        config.setTitleSectionRecentlyViewed(trimToNull(request.getParameter("titleSectionRecentlyViewed")));
+        config.setTitleSectionByCategory(trimToNull(request.getParameter("titleSectionByCategory")));
+
         if ("PRODUCT".equalsIgnoreCase(bannerSourceType)) {
-            if (bannerProductId == null) {
+            if (Boolean.TRUE.equals(config.getShowBanner()) && bannerProductId == null) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn sản phẩm làm banner.");
                 return "redirect:/admin/quanlyhienthi";
             }
@@ -87,7 +107,8 @@ public class AdminQuanLyHienThiController {
                     redirectAttributes.addFlashAttribute("errorMessage", "Không thể lưu ảnh banner: " + e.getMessage());
                     return "redirect:/admin/quanlyhienthi";
                 }
-            } else if (config.getUploadedBannerImage() == null || config.getUploadedBannerImage().isBlank()) {
+            } else if (Boolean.TRUE.equals(config.getShowBanner())
+                    && (config.getUploadedBannerImage() == null || config.getUploadedBannerImage().isBlank())) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng tải lên ảnh banner.");
                 return "redirect:/admin/quanlyhienthi";
             }
@@ -96,5 +117,17 @@ public class AdminQuanLyHienThiController {
         homeDisplayConfigService.save(config);
         redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật cấu hình hiển thị trang chủ.");
         return "redirect:/admin/quanlyhienthi";
+    }
+
+    private static boolean boolParam(HttpServletRequest req, String name) {
+        return "true".equalsIgnoreCase(req.getParameter(name));
+    }
+
+    private static String trimToNull(String s) {
+        if (s == null) {
+            return null;
+        }
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
 }

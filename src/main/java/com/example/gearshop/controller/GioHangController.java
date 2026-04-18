@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.example.gearshop.model.KhachHang;
-import com.example.gearshop.model.GioHangChiTiet;
 import com.example.gearshop.model.NguoiDung;
 import com.example.gearshop.model.SanPham;
 import com.example.gearshop.model.ThongTinNhanHang;
@@ -39,13 +38,21 @@ public class GioHangController {
     private GioHangService gioHangService;
 
     @PostMapping("/save-selected-items")
-    public ResponseEntity<Void> saveSelectedItems(@RequestBody List<Map<String, Object>> selectedItems, HttpSession session) {
-        // Kiểm tra và log dữ liệu để đảm bảo rằng selectedItems chứa sanPhamID
-        System.out.println("Du lieu selectedItems trong API /save-selected-items:");
-        selectedItems.forEach(item -> System.out.println(item));
-
-        session.setAttribute("selectedItems", selectedItems);
-        return ResponseEntity.ok().build(); // Trả về phản hồi HTTP 200 OK
+    public ResponseEntity<Void> saveSelectedItems(@RequestBody(required = false) List<Map<String, Object>> selectedItems, HttpSession session) {
+        KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
+        if (khachHang != null && selectedItems != null) {
+            List<Integer> ids = new ArrayList<>();
+            for (Map<String, Object> row : selectedItems) {
+                if (row.get("sanPhamID") != null) {
+                    ids.add(Integer.parseInt(row.get("sanPhamID").toString()));
+                }
+            }
+            gioHangService.syncDuocChonThanhToan(khachHang.getId(), ids);
+        }
+        if (selectedItems != null) {
+            session.setAttribute("selectedItems", selectedItems);
+        }
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/cart")
@@ -59,7 +66,7 @@ public class GioHangController {
     public ResponseEntity<Map<String, Object>> getCart(HttpSession session) {
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
         List<Map<String, Object>> cart = khachHang != null
-                ? buildCartPayloadFromDb(khachHang.getId())
+                ? gioHangService.buildSessionCartPayload(khachHang.getId())
                 : getSessionCart(session);
 
         session.setAttribute("cart", cart);
@@ -117,7 +124,7 @@ public class GioHangController {
         if (khachHang != null) {
             try {
                 gioHangService.updateCartItemQuantity(khachHang.getId(), sanPhamID, requestedQuantity);
-                cart = buildCartPayloadFromDb(khachHang.getId());
+                cart = gioHangService.buildSessionCartPayload(khachHang.getId());
             } catch (IllegalArgumentException ex) {
                 result.put("success", false);
                 result.put("message", ex.getMessage());
@@ -158,7 +165,7 @@ public class GioHangController {
 
         if (khachHang != null) {
             gioHangService.removeCartItem(khachHang.getId(), sanPhamID);
-            cart = buildCartPayloadFromDb(khachHang.getId());
+            cart = gioHangService.buildSessionCartPayload(khachHang.getId());
         } else {
             cart = getSessionCart(session);
             cart.removeIf(item -> item.get("sanPhamID") != null
@@ -177,7 +184,7 @@ public class GioHangController {
 
         if (khachHang != null) {
             gioHangService.removeSelectedCartItems(khachHang.getId(), sanPhamIds);
-            cart = buildCartPayloadFromDb(khachHang.getId());
+            cart = gioHangService.buildSessionCartPayload(khachHang.getId());
         } else {
             cart = getSessionCart(session);
             cart.removeIf(item -> item.get("sanPhamID") != null
@@ -223,26 +230,18 @@ public class GioHangController {
         List<Voucher> vouchers = voucherService.getAllVouchers();
         model.addAttribute("vouchers", vouchers);
 
-        // Lấy các sản phẩm đã chọn từ session
-        List<Map<String, Object>> selectedItems = (List<Map<String, Object>>) session.getAttribute("selectedItems");
-        if (selectedItems == null || selectedItems.isEmpty()) {
+        List<Map<String, Object>> selectedItems = gioHangService.buildSelectedLinesForOrder(khachHang.getId());
+        if (selectedItems.isEmpty()) {
             model.addAttribute("error", "Bạn chưa chọn sản phẩm nào.");
             return "redirect:/cart";
         }
 
-        // Xử lý chuyển đổi giá trị price và tính tổng tiền
         double totalPrice = 0;
         for (Map<String, Object> item : selectedItems) {
             int quantity = Integer.parseInt(item.get("quantity").toString());
-            String priceString = item.get("price").toString();
-            double price = Double.parseDouble(priceString.replace(",", "").replace("₫", "").trim()); // Chuyển đổi giá trị để tính toán
-            item.put("priceNumeric", price); // Thêm giá trị đã chuyển đổi vào map
+            double price = Double.parseDouble(item.get("priceNumeric").toString());
             totalPrice += quantity * price;
         }
-
-        // Kiểm tra dữ liệu selectedItems
-        System.out.println("Du lieu selectedItems trong API order:");
-        selectedItems.forEach(item -> System.out.println(item));
 
         model.addAttribute("cart", selectedItems);
         model.addAttribute("totalPrice", totalPrice);
@@ -267,18 +266,4 @@ public class GioHangController {
         return response;
     }
 
-    private List<Map<String, Object>> buildCartPayloadFromDb(Integer khachHangId) {
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (GioHangChiTiet chiTiet : gioHangService.getCartDetailsByCustomerId(khachHangId)) {
-            Map<String, Object> item = new HashMap<>();
-            item.put("sanPhamID", chiTiet.getSanPham().getId());
-            item.put("name", chiTiet.getSanPham().getTenSanPham());
-            item.put("price", chiTiet.getDonGia());
-            item.put("image", "/images/product/" + chiTiet.getSanPham().getHinhAnh());
-            item.put("tonKho", chiTiet.getSanPham().getTonKho());
-            item.put("quantity", chiTiet.getSoLuong());
-            result.add(item);
-        }
-        return result;
-    }
 }

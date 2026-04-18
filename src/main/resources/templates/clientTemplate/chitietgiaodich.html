@@ -84,6 +84,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
                         <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
                     </ul>
                 </div>
@@ -108,12 +109,17 @@
                         th:text="${#numbers.formatDecimal(hoaDon.tongGia, 0, 'COMMA', 2, 'POINT')}"></span></p>
                 <p><strong>Ngày tạo:</strong> <span th:text="${#temporals.format(hoaDon.ngayTao, 'dd/MM/yyyy')}"></span>
                 </p>
-                <p><strong>Trạng thái:</strong> <span class="badge bg-info text-dark"
-                        th:text="${hoaDon.trangThaiDonHang}"></span></p>
+                <p><strong>Trạng thái:</strong>
+                    <th:block th:replace="~{clientTemplate/fragments/trangthaidon :: badge(trangThai=${hoaDon.trangThaiDonHang})}"></th:block>
+                </p>
             </div>
         </div>
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mt-3" role="alert">
             <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            <span th:text="${errorMessage}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         <h5>Danh sách sản phẩm đã mua</h5>
@@ -124,7 +130,7 @@
                     <th>Số lượng</th>
                     <th>Đơn giá</th>
                     <th>Thành tiền</th>
-                    <th>Thao tác</th>
+                    <th>Đánh giá</th>
                 </tr>
             </thead>
             <tbody>
@@ -134,41 +140,17 @@
                     <td th:text="${#numbers.formatDecimal(item.sanPham.gia, 0, 'COMMA', 0, 'POINT')}"></td>
                     <td th:text="${#numbers.formatDecimal(item.hoaDonChiTiet.thanhTien, 0, 'COMMA', 0, 'POINT')}"></td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-danger" th:attr="data-bs-toggle='modal', 
-                     data-bs-target='#modalYeuCauHoanTien' + ${item.hoaDonChiTiet.id}"
-                            th:disabled="${!(hoaDon.trangThaiDonHang == 'Paid' or hoaDon.trangThaiDonHang == 'Extra')}">
-                            Yêu cầu hoàn tiền
-                        </button>
+                        <th:block th:if="${coTheDanhGiaSanPham != null and Boolean.TRUE.equals(coTheDanhGiaSanPham.get(item.sanPham.id))}">
+                            <a th:href="@{/chitietsanpham/{id}(id=${item.sanPham.id})}#danh-gia"
+                                class="btn btn-sm btn-outline-primary"
+                                th:text="${daDanhGiaSanPham != null and Boolean.TRUE.equals(daDanhGiaSanPham.get(item.sanPham.id))} ? 'Sửa đánh giá' : 'Đánh giá'">Đánh giá</a>
+                        </th:block>
+                        <span th:if="${coTheDanhGiaSanPham == null or !Boolean.TRUE.equals(coTheDanhGiaSanPham.get(item.sanPham.id))}"
+                            class="text-muted small">—</span>
                     </td>
                 </tr>
             </tbody>
         </table>
-    </div>
-    <div th:each="item : ${danhSachSanPham}">
-        <div class="modal fade" th:id="'modalYeuCauHoanTien' + ${item.hoaDonChiTiet.id}" tabindex="-1"
-            aria-labelledby="modalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form th:action="@{/yeucauhoantien}" method="post">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalLabel">Yêu cầu hoàn tiền</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <input type="hidden" name="hoaDonChiTietId" th:value="${item.hoaDonChiTiet.id}" />
-                            <div class="mb-3">
-                                <label for="lyDo" class="form-label">Lý do hoàn tiền</label>
-                                <textarea name="loiNhan" id="lyDo" class="form-control" required></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ bỏ</button>
-                            <button type="submit" class="btn btn-primary">Xác nhận</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
     </div>
 </body>
 

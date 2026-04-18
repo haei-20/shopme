@@ -93,6 +93,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
                         <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
                     </ul>
                 </div>
@@ -129,6 +130,14 @@
 
     <!-- Chi tiết sản phẩm -->
     <div class="container my-5">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
         <div class="row">
             <div class="col-md-6 d-flex justify-content-center align-items-center">
                 <img th:src="@{/images/product/{img}(img=${sanPham.hinhAnh})}" alt="Ảnh sản phẩm"
@@ -140,6 +149,15 @@
                 <p class="text-danger fs-4 fw-bold"
                     th:text="${#numbers.formatDecimal(sanPham.gia, 0, 'COMMA', 0, 'POINT')} + '₫'">Giá</p>
                 <p th:text="'Thương hiệu: ' + ${sanPham.thuongHieu.tenThuongHieu}">Thương hiệu</p>
+                <p th:if="${soLuongDanhGia != null and soLuongDanhGia > 0}" class="mb-1">
+                    <span th:each="i : ${#numbers.sequence(1, 5)}">
+                        <i class="bi bi-star-fill text-warning" th:if="${i <= diemTrungBinhDanhGia}"></i>
+                        <i class="bi bi-star text-warning" th:unless="${i <= diemTrungBinhDanhGia}"></i>
+                    </span>
+                    <span class="ms-1 fw-semibold" th:text="${diemTrungBinhDanhGia} + '/5'">4.5/5</span>
+                    <span class="text-muted small" th:text="'(' + ${soLuongDanhGia} + ' đánh giá)'">(12 đánh giá)</span>
+                </p>
+                <p th:if="${soLuongDanhGia == null or soLuongDanhGia == 0}" class="text-muted small mb-1">Chưa có đánh giá</p>
                 <p th:text="'Đã bán: ' + ${sanPham.daBan}">Đã bán</p>
                 <p id="tonKhoValue" th:text="'Tồn kho: ' + ${sanPham.tonKho}">Tồn kho</p>
             </div>
@@ -370,7 +388,64 @@
             </div>
         </div>
 
-        
+        <div id="danh-gia" class="row mt-5">
+            <div class="col-12">
+                <h3 class="mb-3">Đánh giá từ khách hàng</h3>
+
+                <div th:if="${khachHang != null and duocPhepDanhGia}" class="card border-primary mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${danhGiaCuaToi != null} ? 'Sửa đánh giá của bạn' : 'Viết đánh giá'">Viết đánh giá</h5>
+                        <p class="text-muted small mb-3">Chỉ áp dụng khi bạn đã mua và nhận hàng thành công (đơn ở trạng thái <strong>Đã giao</strong>).</p>
+                        <form th:action="@{/danhgia}" method="post">
+                            <input type="hidden" name="sanPhamId" th:value="${sanPham.id}" />
+                            <div class="mb-3">
+                                <label class="form-label">Số sao</label>
+                                <select name="soSao" class="form-select" style="max-width: 200px;" required>
+                                    <option value="5" th:selected="${danhGiaCuaToi != null and danhGiaCuaToi.soSao == 5}">5 sao</option>
+                                    <option value="4" th:selected="${danhGiaCuaToi != null and danhGiaCuaToi.soSao == 4}">4 sao</option>
+                                    <option value="3" th:selected="${danhGiaCuaToi != null and danhGiaCuaToi.soSao == 3}">3 sao</option>
+                                    <option value="2" th:selected="${danhGiaCuaToi != null and danhGiaCuaToi.soSao == 2}">2 sao</option>
+                                    <option value="1" th:selected="${danhGiaCuaToi != null and danhGiaCuaToi.soSao == 1}">1 sao</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="noiDungDanhGia">Nội dung</label>
+                                <textarea id="noiDungDanhGia" name="noiDung" class="form-control" rows="4" maxlength="2000"
+                                    required placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
+                                    th:text="${danhGiaCuaToi != null ? danhGiaCuaToi.noiDung : ''}"> </textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                        </form>
+                    </div>
+                </div>
+
+                <p th:if="${khachHang != null and !duocPhepDanhGia}" class="text-muted small">
+                    Bạn có thể đánh giá sau khi có ít nhất một đơn hàng chứa sản phẩm này ở trạng thái <strong>Đã giao</strong>.
+                </p>
+                <p th:if="${khachHang == null}" class="text-muted small">
+                    <a th:href="@{/dangnhap}">Đăng nhập</a> để xem và gửi đánh giá (nếu đã mua hàng).
+                </p>
+
+                <div th:if="${danhGias == null or #lists.isEmpty(danhGias)}" class="text-muted py-3">
+                    Chưa có đánh giá nào. Hãy là người đầu tiên chia sẻ!
+                </div>
+                <div th:each="dg : ${danhGias}" class="border rounded p-3 mb-3 bg-light">
+                    <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+                        <strong th:text="${dg.khachHang != null and dg.khachHang.nguoiDung != null and dg.khachHang.nguoiDung.tenNguoiDung != null and !#strings.isEmpty(dg.khachHang.nguoiDung.tenNguoiDung)} ? ${#strings.substring(dg.khachHang.nguoiDung.tenNguoiDung, 0, 1)} + '***' : 'Khách hàng'">K***</strong>
+                        <small class="text-muted" th:if="${dg.ngayDanhGia != null}"
+                            th:text="${#temporals.format(dg.ngayDanhGia, 'dd/MM/yyyy HH:mm')}">01/01/2026</small>
+                    </div>
+                    <div class="mb-2">
+                        <span th:each="i : ${#numbers.sequence(1, 5)}">
+                            <i class="bi bi-star-fill text-warning" th:if="${i <= dg.soSao}"></i>
+                            <i class="bi bi-star text-warning" th:unless="${i <= dg.soSao}"></i>
+                        </span>
+                    </div>
+                    <p class="mb-0" th:text="${dg.noiDung}">Nội dung đánh giá</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Toast thông báo -->

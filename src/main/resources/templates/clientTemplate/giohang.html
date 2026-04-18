@@ -99,6 +99,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
                         <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
                     </ul>
                 </div>
@@ -211,6 +212,7 @@
             const summaryBox = document.getElementById('summaryBox');
             const cartNotice = document.getElementById('cartNotice');
             const selectedIds = new Set();
+            let selectionBootstrapped = false;
             let noticeTimer = null;
 
             function persistCart(nextCart) {
@@ -224,6 +226,15 @@
                     return 'id-' + String(item.sanPhamID);
                 }
                 return 'idx-' + String(index);
+            }
+
+            function syncSelectionFromServerCart() {
+                selectedIds.clear();
+                cart.forEach((item, index) => {
+                    if (item.duocChonThanhToan === true || item.duocChonThanhToan === 'true') {
+                        selectedIds.add(getItemKey(item, index));
+                    }
+                });
             }
 
             function parsePrice(price) {
@@ -262,6 +273,10 @@
             async function loadCartFromServer() {
                 const data = await fetchJson('/api/cart');
                 persistCart(data.cart || []);
+                if (!selectionBootstrapped) {
+                    syncSelectionFromServerCart();
+                    selectionBootstrapped = true;
+                }
                 return data;
             }
 

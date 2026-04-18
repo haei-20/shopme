@@ -84,6 +84,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
                         <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
                     </ul>
                 </div>
@@ -110,16 +111,13 @@
             <div class="col-md-4">
                 <label for="trangThai" class="form-label">Trạng thái:</label>
                 <select id="trangThai" name="trangThai" class="form-select">
-                    <option th:selected="${selectedTrangThai == null}" value="">--Tất cả--</option>
-                    <option th:selected="${selectedTrangThai == 'Unpaid'}" value="Unpaid">Chưa thanh
-                        toán</option>
-                    <option th:selected="${selectedTrangThai == 'Missing'}" value="Missing">Thanh toán
-                        thiếu</option>
-                    <option th:selected="${selectedTrangThai == 'Paid'}" value="Paid">Thanh toán đủ
-                    </option>
-                    <option th:selected="${selectedTrangThai == 'Extra'}" value="Extra">Thanh toán
-                        thừa
-                    </option>
+                    <option th:selected="${selectedTrangThai == null}" value="">Tất cả</option>
+                    <option th:selected="${selectedTrangThai == 'Chờ xác nhận'}" value="Chờ xác nhận">Chờ xác nhận</option>
+                    <option th:selected="${selectedTrangThai == 'Đang chuẩn bị hàng'}" value="Đang chuẩn bị hàng">Đang chuẩn bị hàng</option>
+                    <option th:selected="${selectedTrangThai == 'Chờ giao hàng'}" value="Chờ giao hàng">Chờ giao hàng</option>
+                    <option th:selected="${selectedTrangThai == 'Đã giao'}" value="Đã giao">Đã giao</option>
+                    <option th:selected="${selectedTrangThai == 'Trả hàng'}" value="Trả hàng">Trả hàng</option>
+                    <option th:selected="${selectedTrangThai == 'Đã hủy'}" value="Đã hủy">Đã hủy</option>
                 </select>
             </div>
             <div class="col-md-4 d-flex align-items-end">
@@ -149,7 +147,7 @@
                     <td th:text="${#numbers.formatDecimal(hoaDon.tongGia, 0, 'COMMA', 0, 'POINT')}"></td>
                     <td th:text="${#temporals.format(hoaDon.ngayTao, 'dd/MM/yyyy')}"></td>
                     <td>
-                        <span th:text="${hoaDon.trangThaiDonHang}" class="badge bg-info text-dark"></span>
+                        <th:block th:replace="~{clientTemplate/fragments/trangthaidon :: badge(trangThai=${hoaDon.trangThaiDonHang})}"></th:block>
                     </td>
                     <td>
                         <a th:href="@{'/lichsugiaodich/' + ${hoaDon.id}}" class="btn btn-sm btn-primary">Xem chi

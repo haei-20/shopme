@@ -1,88 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:with="pageTitle='Thống kê'">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thống kê Admin</title>
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
-        .stats-page {
-            max-width: 1280px;
-        }
-
-        .stats-hero {
-            background: linear-gradient(135deg, #fffaf0 0%, #ffffff 100%);
-            border: 1px solid #eee3bf;
-            border-radius: 20px;
-            box-shadow: 0 10px 24px rgba(122, 97, 50, 0.08);
-        }
-
-        .stats-card {
-            border: 1px solid #eee4c7;
-            border-radius: 18px;
-            box-shadow: 0 10px 24px rgba(122, 97, 50, 0.06);
-            background: #fff;
-        }
-
-        .summary-card {
-            border: 1px solid #f0e4c3;
-            border-radius: 16px;
-            background: linear-gradient(180deg, #fffdf8 0%, #fff8ea 100%);
-            padding: 1rem 1.1rem;
-            height: 100%;
-        }
-
-        .summary-icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: #f3dfab;
-            color: #6f5423;
-            font-size: 1.2rem;
-        }
-
-        .chart-wrap {
-            position: relative;
-            min-height: 340px;
-        }
-
-        .chart-wrap canvas {
-            max-height: 340px;
-        }
-
-        .stats-table thead th {
-            background: #fbf1d8;
-            color: #6a5225;
-            border-color: #ead9af;
-        }
-
-        .stats-table tbody tr:hover {
-            background: #fffaf0;
-        }
-
-        .nav-tabs .nav-link {
-            border-radius: 999px;
-            color: #7b5c1f;
-            font-weight: 600;
-            border: 1px solid transparent;
-        }
-
-        .nav-tabs .nav-link.active {
-            background: #f1d89d;
-            color: #4f3910;
-            border-color: #e0c47d;
-        }
-    </style>
+<head th:replace="~{adminTemplate/fragments/admin-head :: head(${pageTitle})}">
 </head>
 
-<body>
+<body class="admin-body">
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('thongke')"></th:block>
 
     <div class="container stats-page mt-4 mb-5">
@@ -247,6 +169,8 @@
         </div>
     </div>
 
+    <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script th:inline="javascript">
         const commonCurrencyFormatter = (value) => {
@@ -289,8 +213,8 @@
                 datasets: [{
                     label: 'Doanh thu (VNĐ)',
                     data: [[${ #lists.toList(doanhThuNgay.values()) }]],
-                    backgroundColor: 'rgba(227, 190, 112, 0.75)',
-                    borderColor: 'rgba(176, 133, 38, 1)',
+                    backgroundColor: 'rgba(28, 100, 242, 0.65)',
+                    borderColor: 'rgba(28, 100, 242, 1)',
                     borderWidth: 1,
                     borderRadius: 10,
                     maxBarThickness: 40
@@ -307,8 +231,8 @@
                 datasets: [{
                     label: 'Doanh thu (VNĐ)',
                     data: [[${ #lists.toList(doanhThuThang.values()) }]],
-                    backgroundColor: 'rgba(121, 167, 110, 0.75)',
-                    borderColor: 'rgba(77, 119, 70, 1)',
+                    backgroundColor: 'rgba(79, 70, 229, 0.6)',
+                    borderColor: 'rgba(79, 70, 229, 1)',
                     borderWidth: 1,
                     borderRadius: 10,
                     maxBarThickness: 44
@@ -326,15 +250,15 @@
                     label: 'Doanh thu (VNĐ)',
                     data: [[${ #lists.toList(doanhThuLoaiSP.values()) }]],
                     backgroundColor: [
-                        'rgba(255, 99, 132, 0.5)',
-                        'rgba(255, 206, 86, 0.5)',
-                        'rgba(75, 192, 192, 0.5)',
-                        'rgba(153, 102, 255, 0.5)',
-                        'rgba(54, 162, 235, 0.5)',
-                        'rgba(255, 159, 64, 0.5)',
-                        'rgba(201, 203, 207, 0.5)',
-                        'rgba(255, 205, 86, 0.5)',
-                        'rgba(99, 255, 132, 0.5)'
+                        'rgba(28, 100, 242, 0.75)',
+                        'rgba(59, 130, 246, 0.65)',
+                        'rgba(99, 102, 241, 0.65)',
+                        'rgba(129, 140, 248, 0.6)',
+                        'rgba(148, 163, 184, 0.55)',
+                        'rgba(71, 85, 105, 0.5)',
+                        'rgba(14, 165, 233, 0.55)',
+                        'rgba(79, 70, 229, 0.55)',
+                        'rgba(100, 116, 139, 0.5)'
                     ]
                 }]
             },

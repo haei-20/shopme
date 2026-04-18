@@ -111,6 +111,11 @@ public class AdminQuanLySanPhamController {
 
                 case "gia_asc" -> danhSachSanPham.sort(Comparator.comparing(SanPham::getGia));
                 case "gia_desc" -> danhSachSanPham.sort(Comparator.comparing(SanPham::getGia).reversed());
+
+                case "tonKho_asc" -> danhSachSanPham.sort(Comparator.comparing(
+                        sp -> sp.getTonKho() != null ? sp.getTonKho() : 0));
+                case "tonKho_desc" -> danhSachSanPham.sort(Comparator.comparing(
+                        (SanPham sp) -> sp.getTonKho() != null ? sp.getTonKho() : 0).reversed());
             }
         }
         List<String> loaiSanPhams = Arrays.asList("MainBoard", "CPU", "RAM", "VGA", "Ổ cứng", "PSU", "Tản", "Case",

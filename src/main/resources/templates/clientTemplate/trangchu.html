@@ -76,6 +76,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
+                            <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
                             <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
                         </ul>
                     </div>
@@ -84,7 +85,7 @@
                 </div>
             </div>
         </header>
-        <nav class="navbar navbar-expand-lg navbar-light category-bar">
+        <nav class="navbar navbar-expand-lg navbar-light category-bar" th:if="${displayConfig.showCategoryNav != false}">
             <div class="container">
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
                     aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,18 +108,26 @@
         </nav>
         </div>
 
+    <div th:if="${cartMergeWarning != null}" class="container mt-3">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>Giỏ hàng khi đăng nhập:</strong>
+            <span th:text="${cartMergeWarning}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+    </div>
+
     <!-- Banner -->
-    <div class="banner"
+    <div class="banner" th:if="${displayConfig.showBanner != false}"
         th:style="'background-image: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 255, 255, 0.2)), url(' + ${bannerImageUrl} + ');'">
-        <div class="banner-text">
-            <h1 th:text="'Chào mừng đến với ' + ${shopInfo.tenShop}"></h1>
-            <p>Nơi cung cấp linh kiện máy tính chất lượng và giá tốt nhất!</p>
+        <div class="banner-text" th:if="${displayConfig.showBannerOverlayText != false}">
+            <h1 th:text="${homeBannerTitleCustom != null} ? ${homeBannerTitleCustom} : ('Chào mừng đến với ' + ${shopInfo.tenShop})"></h1>
+            <p th:text="${homeBannerSubtitleCustom != null} ? ${homeBannerSubtitleCustom} : 'Nơi cung cấp linh kiện máy tính chất lượng và giá tốt nhất!'"></p>
         </div>
     </div>
 
     <!-- Sản phẩm bán chạy -->
-    <div class="home-product-section">
-        <h2 class="mb-4 border-bottom border-warning pb-2">Sản phẩm nổi bật</h2>
+    <div class="home-product-section" th:if="${displayConfig.showSectionFeatured != false}">
+        <h2 class="mb-4 border-bottom border-warning pb-2" th:text="${homeTitleFeatured}">Sản phẩm nổi bật</h2>
         <div class="home-product-grid"
             th:style="'--products-per-row:' + ${displayConfig.productsPerRow}">
             <a th:each="sp : ${sanPhamBanChay}" th:href="@{/chitietsanpham/{id}(id=${sp.id})}" class="product-card">
@@ -130,8 +139,9 @@
             </a>
         </div>
     </div>
-    <!-- Danh mục sản phẩm khueyens nghị -->
-    <h2 class="mb-4 border-bottom border-warning pb-2">Danh mục sản phẩm dành cho bạn</h2>
+    <!-- Danh mục gợi ý -->
+    <th:block th:if="${displayConfig.showSectionRecommended != false}">
+    <h2 class="mb-4 border-bottom border-warning pb-2" th:text="${homeTitleRecommended}">Danh mục sản phẩm dành cho bạn</h2>
     <div class="home-product-grid"
         th:style="'--products-per-row:' + ${displayConfig.productsPerRow}">
         <a th:each="sp : ${sanPhamGoiY}" th:href="@{/chitietsanpham/{id}(id=${sp.id})}" class="product-card">
@@ -142,8 +152,10 @@
             </div>
         </a>
     </div>
-    <!-- Danh mục sản phẩm vừa xem -->
-    <h2 class="mb-4 border-bottom border-warning pb-2">Danh mục sản phẩm vừa xem</h2>
+    </th:block>
+    <!-- Danh mục vừa xem -->
+    <th:block th:if="${displayConfig.showSectionRecentlyViewed != false}">
+    <h2 class="mb-4 border-bottom border-warning pb-2" th:text="${homeTitleRecentlyViewed}">Danh mục sản phẩm vừa xem</h2>
     <div class="home-product-grid"
         th:style="'--products-per-row:' + ${displayConfig.productsPerRow}">
         <a th:each="sp : ${danhSachSanPhamDaXem}" th:href="@{/chitietsanpham/{id}(id=${sp.id})}" class="product-card">
@@ -154,8 +166,10 @@
             </div>
         </a>
     </div>
-    <!-- Danh mục sản phẩm theo loại -->
-    <h2 class="mb-4 border-bottom border-warning pb-2">Linh kiện ngon bổ rẻ</h2>
+    </th:block>
+    <!-- Danh mục theo loại -->
+    <th:block th:if="${displayConfig.showSectionByCategory != false}">
+    <h2 class="mb-4 border-bottom border-warning pb-2" th:text="${homeTitleByCategory}">Linh kiện ngon bổ rẻ</h2>
     <section th:each="entry : ${sanPhamTheoLoai}">
         <h3 class="m-4" th:text="${entry.key}">Mainboard</h3>
         <div class="home-product-grid"
@@ -169,8 +183,10 @@
             </a>
         </div>
     </section>
+    </th:block>
 
     <!-- Biểu tượng Chatbot AI -->
+    <th:block th:if="${displayConfig.showChatbot != false}">
     <div id="chatbotIcon" class="position-fixed bottom-0 end-0 m-3">
         <a href="#" class="btn btn-primary rounded-circle"
             style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
@@ -188,8 +204,9 @@
             <button class="btn btn-primary" onclick="sendMessage()">Gửi</button>
         </div>
     </div>
+    </th:block>
 
-    <footer class="bg-dark text-light pt-4 mt-5">
+    <footer class="bg-dark text-light pt-4 mt-5" th:if="${displayConfig.showFooter != false}">
         <div class="container">
             <div class="row">
                 <!-- Thông tin shop -->
@@ -254,8 +271,10 @@
     <script>
         // Giả sử số lượng mặt hàng được lưu trong localStorage
         document.addEventListener('DOMContentLoaded', function () {
-            const cartItemCount = localStorage.getItem('cartItemCount') || 0;
-            document.getElementById('cartItemCount').textContent = cartItemCount;
+            const el = document.getElementById('cartItemCount');
+            if (el) {
+                el.textContent = localStorage.getItem('cartItemCount') || 0;
+            }
         });
 
         // Cập nhật số lượng mặt hàng khi thêm vào giỏ hàng
@@ -267,11 +286,10 @@
         document.addEventListener('DOMContentLoaded', function () {
             const cartItemsContainer = document.getElementById('cartItems');
             const cartItemCount = document.getElementById('cartItemCount');
+            if (!cartItemsContainer || !cartItemCount) return;
 
-            // Lấy danh sách mặt hàng từ localStorage
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-            // Cập nhật giao diện giỏ hàng
             function updateCartUI() {
                 cartItemCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
 
@@ -300,9 +318,9 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             const cartDropdown = document.getElementById('cartDropdown');
-            const dropdownMenu = document.querySelector('.dropdown-menu');
+            const dropdownMenu = cartDropdown ? cartDropdown.closest('.dropdown')?.querySelector('.dropdown-menu') : null;
+            if (!cartDropdown || !dropdownMenu) return;
 
-            // Xử lý sự kiện nhấn vào biểu tượng giỏ hàng
             cartDropdown.addEventListener('click', function (e) {
                 e.preventDefault(); // Ngăn chặn hành vi mặc định
                 dropdownMenu.classList.toggle('show'); // Thêm hoặc xóa class "show"
@@ -326,33 +344,31 @@
             const chatContainer = document.getElementById('chat-container');
             const chatBox = document.getElementById('chat-box');
             const userInput = document.getElementById('user-input');
+            if (!chatbotIcon || !chatContainer || !chatBox || !userInput) {
+                window.sendMessage = function () {};
+                return;
+            }
 
-            // Hiển thị hoặc ẩn khung chatbot khi nhấn vào biểu tượng
             chatbotIcon.addEventListener('click', function (e) {
                 e.preventDefault();
                 chatContainer.style.display = chatContainer.style.display === 'none' ? 'block' : 'none';
             });
 
-            // Ẩn khung chatbot khi nhấn bên ngoài
             document.addEventListener('click', function (e) {
                 if (!chatContainer.contains(e.target) && !chatbotIcon.contains(e.target)) {
                     chatContainer.style.display = 'none';
                 }
             });
 
-            // Hàm gửi tin nhắn
             function sendMessage() {
                 const userMessageText = userInput.value.trim();
-
                 if (userMessageText === "") return;
 
-                // Hiển thị tin nhắn của người dùng (bên phải)
                 const userMessage = document.createElement('div');
                 userMessage.className = 'user-message';
                 userMessage.textContent = userMessageText;
                 chatBox.appendChild(userMessage);
 
-                // Gửi yêu cầu đến API
                 fetch("/chatbot/sendMessage", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -360,7 +376,6 @@
                 })
                     .then(response => response.json())
                     .then(data => {
-                        // Hiển thị phản hồi của chatbot (bên trái)
                         const botMessage = document.createElement('div');
                         botMessage.className = 'bot-message';
                         botMessage.textContent = data.error ? `Bot: ${data.error}` : `GearShop: ${data.response}`;
@@ -376,7 +391,6 @@
                     });
             }
 
-            // Gán hàm sendMessage vào nút gửi
             window.sendMessage = sendMessage;
         });
     </script>

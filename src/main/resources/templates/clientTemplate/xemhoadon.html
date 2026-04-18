@@ -128,6 +128,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
+            <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
             <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
           </ul>
         </div>
@@ -138,6 +139,7 @@
 
   <!-- MAIN CONTENT -->
   <div class="container my-5">
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
     <div class="row">
       <!-- THÔNG TIN ĐỊA CHỈ NHẬN HÀNG -->
       <div class="col-md-6 mb-4">

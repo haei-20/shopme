@@ -37,7 +37,6 @@ public class HoaDonController {
     private GioHangService gioHangService;
 
     @PostMapping("/save-order")
-    @SuppressWarnings("unchecked")
     public String saveOrder(HttpSession session,
                             @RequestParam(required = false) Integer thongTinNhanHangID,
                             @RequestParam(required = false) String voucherCode,
@@ -68,16 +67,16 @@ public class HoaDonController {
             return "redirect:/order";
         }
 
-        List<Map<String, Object>> cart = (List<Map<String, Object>>) session.getAttribute("selectedItems");
-        if (cart == null || cart.isEmpty()) {
-            model.addAttribute("error", "Giỏ hàng của bạn đang trống.");
+        List<Map<String, Object>> cart = gioHangService.buildSelectedLinesForOrder(khachHang.getId());
+        if (cart.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Bạn chưa chọn sản phẩm nào hoặc giỏ đã thay đổi.");
             return "redirect:/order";
         }
 
         double tongGia = 0;
         for (Map<String, Object> item : cart) {
             int quantity = Integer.parseInt(item.get("quantity").toString());
-            double price = Double.parseDouble(item.get("price").toString().replace(",", "").replace("₫", "").trim());
+            double price = Double.parseDouble(item.get("priceNumeric").toString());
             tongGia += quantity * price;
         }
 
@@ -112,39 +111,27 @@ public class HoaDonController {
             return "redirect:/order";
         }
 
-        HoaDon hoaDon = hoaDonService.createHoaDon("HD", thongTinNhanHangID, tongGiaSauGiam, paymentMethod);
-        System.out.println("Đã tạo hóa đơn với ID: " + hoaDon.getId());
-        System.out.println("Tổng tiền sau giảm: " + hoaDon.getTongGia());
-
-        // Lưu chi tiết hóa đơn
-        for (Map<String, Object> item : cart) {
-            Object quantityObj = item.get("quantity");
-            Object priceObj = item.get("priceNumeric");
-            Object sanPhamIDObj = item.get("sanPhamID");
-
-            if (quantityObj == null || priceObj == null || sanPhamIDObj == null) {
-                model.addAttribute("error", "Dữ liệu giỏ hàng không hợp lệ.");
-                return "redirect:/order";
-            }
-
-            int quantity = Integer.parseInt(quantityObj.toString());
-            double price = Double.parseDouble(priceObj.toString().replace(",", "").replace("₫", "").trim());
-            int sanPhamID = Integer.parseInt(sanPhamIDObj.toString());
-
-            hoaDonService.createHoaDonChiTiet("HDCT", hoaDon.getId(), sanPhamID, quantity, quantity * price);
+        final HoaDonService.DatHangKetQua ketQua;
+        try {
+            ketQua = hoaDonService.datHangVaTruTonKho(thongTinNhanHangID, tongGiaSauGiam, paymentMethod, cart);
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/order";
         }
+
+        HoaDon hoaDon = ketQua.hoaDon();
+        List<Integer> purchasedSanPhamIds = ketQua.purchasedSanPhamIds();
 
         if (voucherCode != null && !voucherCode.isEmpty()) {
             Voucher voucher = voucherService.getVoucherByMaVoucher(voucherCode);
             voucherService.markVoucherAsUsed(voucher, khachHang);
         }
-        System.out.println("Đã lưu chi tiết hóa đơn với ID: " + hoaDon.getId());
 
         model.addAttribute("hoaDon", hoaDon);
         session.setAttribute("hoaDon", hoaDon);
         session.removeAttribute("selectedItems");
-        session.removeAttribute("cart");
-        gioHangService.clearCartByCustomerId(khachHang.getId());
-        return "redirect:/checkout";
+        gioHangService.removeSelectedCartItems(khachHang.getId(), purchasedSanPhamIds);
+        session.setAttribute("cart", gioHangService.buildSessionCartPayload(khachHang.getId()));
+        return "redirect:/dat-hang-thanh-cong?hoaDonId=" + hoaDon.getId();
     }
 }

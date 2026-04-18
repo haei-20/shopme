@@ -2,6 +2,7 @@ package com.example.gearshop.controller;
 
 import com.example.gearshop.dto.PaymentRequest;
 import com.example.gearshop.model.HoaDon;
+import com.example.gearshop.model.TrangThaiHoaDonHang;
 import com.example.gearshop.repository.KhachHangRepository;
 import com.example.gearshop.repository.ThongTinNhanHangRepository;
 import com.example.gearshop.service.HoaDonService;
@@ -58,7 +59,7 @@ public class ThanhToanController {
 
             HoaDon hoaDon = hoaDonService.findById(orderId);
             if (hoaDon != null) {
-                hoaDon.setTrangThaiDonHang("Paid");
+                hoaDon.setTrangThaiDonHang(TrangThaiHoaDonHang.DANG_CHUAN_BI_HANG);
                 hoaDonService.save(hoaDon);
             }
 
@@ -94,9 +95,9 @@ public class ThanhToanController {
 
             String statusPay;
             if ("extra".equals(type)) {
-                statusPay = "Extra";
+                statusPay = TrangThaiHoaDonHang.DANG_CHUAN_BI_HANG;
             } else if ("missing".equals(type)) {
-                statusPay = "Missing";
+                statusPay = TrangThaiHoaDonHang.CHO_XAC_NHAN;
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "success", false,

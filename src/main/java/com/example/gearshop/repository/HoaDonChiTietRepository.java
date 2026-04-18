@@ -3,6 +3,7 @@ package com.example.gearshop.repository;
 import com.example.gearshop.model.HoaDonChiTiet;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,6 +16,20 @@ public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, In
     List<HoaDonChiTiet> findByHoaDonID(Integer hoaDonID);
 
     boolean existsBySanPhamID(Integer sanPhamID);
+
+    /** Khách đã có đơn ở trạng thái đã giao chứa sản phẩm (đủ điều kiện đánh giá). */
+    @Query("""
+            SELECT CASE WHEN COUNT(ct) > 0 THEN true ELSE false END
+            FROM HoaDonChiTiet ct, HoaDon hd
+            WHERE ct.hoaDonID = hd.id
+            AND hd.thongTinNhanHang.khachHangID = :khachHangId
+            AND ct.sanPhamID = :sanPhamId
+            AND hd.trangThaiDonHang = :trangThaiDaGiao
+            """)
+    boolean existsDaNhanHangVoiSanPham(
+            @Param("khachHangId") Integer khachHangId,
+            @Param("sanPhamId") Integer sanPhamId,
+            @Param("trangThaiDaGiao") String trangThaiDaGiao);
 
     @Query("SELECT CASE " +
             "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP01%' THEN 'SanPhamMainBoard' " +

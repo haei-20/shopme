@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:with="pageTitle='Quản lý đánh giá'">
+
+<head th:replace="~{adminTemplate/fragments/admin-head :: head(${pageTitle})}">
+</head>
+
+<body class="admin-body">
+    <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('danhgia')"></th:block>
+
+    <main class="admin-page container py-4">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="admin-page-toolbar align-items-start mb-4">
+            <div>
+                <h1 class="h4 mb-1">Quản lý đánh giá sản phẩm</h1>
+                <p class="text-muted small mb-0">Xem và xóa đánh giá từ khách hàng.</p>
+            </div>
+        </div>
+
+        <form class="row g-2 align-items-end mb-4" th:action="@{/admin/danhgia}" method="get">
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-0">Mã SP (ID)</label>
+                <input type="number" name="sanPhamId" class="form-control" placeholder="VD: 12"
+                    th:value="${sanPhamIdLoc}">
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small text-muted mb-0">Tìm theo tên / mã sản phẩm</label>
+                <input type="text" name="tuKhoa" class="form-control" placeholder="Nhập từ khóa…"
+                    th:value="${tuKhoa}">
+            </div>
+            <div class="col-md-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Lọc</button>
+                <a th:href="@{/admin/danhgia}" class="btn btn-outline-secondary">Xóa lọc</a>
+            </div>
+        </form>
+
+        <div class="table-responsive card border-0 shadow-sm">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:70px">ID</th>
+                        <th>Sản phẩm</th>
+                        <th>Khách hàng</th>
+                        <th style="width:100px">Sao</th>
+                        <th>Nội dung</th>
+                        <th style="width:150px">Ngày</th>
+                        <th style="width:100px">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(danhGias)}">
+                        <td colspan="7" class="text-center text-muted py-4">Chưa có đánh giá nào.</td>
+                    </tr>
+                    <tr th:each="dg : ${danhGias}">
+                        <td th:text="${dg.id}">1</td>
+                        <td>
+                            <a th:href="@{/chitietsanpham/{id}(id=${dg.sanPham.id})}" target="_blank" rel="noopener"
+                                class="fw-medium" th:text="${dg.sanPham.tenSanPham}">SP</a>
+                            <div class="small text-muted font-monospace" th:text="${dg.sanPham.maSanPham}">MA</div>
+                        </td>
+                        <td>
+                            <span th:if="${dg.khachHang != null and dg.khachHang.nguoiDung != null}"
+                                th:text="${dg.khachHang.nguoiDung.tenNguoiDung}">Tên</span>
+                            <span th:unless="${dg.khachHang != null and dg.khachHang.nguoiDung != null}">—</span>
+                            <div class="small text-muted" th:if="${dg.khachHang != null}"
+                                th:text="'KH #' + ${dg.khachHang.id}">#</div>
+                        </td>
+                        <td>
+                            <span class="text-warning" th:each="i : ${#numbers.sequence(1, 5)}">
+                                <i class="bi bi-star-fill" th:if="${i <= dg.soSao}"></i>
+                                <i class="bi bi-star" th:unless="${i <= dg.soSao}"></i>
+                            </span>
+                            <span class="small text-muted" th:text="'(' + ${dg.soSao} + '/5)'">(5/5)</span>
+                        </td>
+                        <td>
+                            <div class="text-break small" style="max-width: 360px; max-height: 4.5rem; overflow: auto;"
+                                th:text="${dg.noiDung}">Nội dung</div>
+                        </td>
+                        <td class="small text-muted"
+                            th:text="${dg.ngayDanhGia != null ? #temporals.format(dg.ngayDanhGia, 'dd/MM/yyyy HH:mm') : '—'}">—</td>
+                        <td>
+                            <form th:action="@{/admin/danhgia/xoa/{id}(id=${dg.id})}" method="post" class="d-inline"
+                                onsubmit="return confirm('Xóa đánh giá này?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i> Xóa
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
+</body>
+
+</html>

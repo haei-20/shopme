@@ -29,6 +29,7 @@ import com.example.gearshop.repository.NguoiDungRepository;
 import com.example.gearshop.repository.NhanVienRepository;
 import com.example.gearshop.repository.SanPhamRepository;
 import com.example.gearshop.service.DangKyService;
+import com.example.gearshop.service.GioHangService;
 import com.example.gearshop.service.HomeDisplayConfigService;
 import com.example.gearshop.service.NguoiDungService;
 import com.example.gearshop.service.PasswordResetService;
@@ -65,6 +66,9 @@ public class HomeController {
     @Autowired
     private HomeDisplayConfigService homeDisplayConfigService;
 
+    @Autowired
+    private GioHangService gioHangService;
+
     @Value("${app.forgot-password.otp-expiration-ms:300000}")
     private long otpExpirationMs;
 
@@ -73,6 +77,18 @@ public class HomeController {
         HomeDisplayConfig displayConfig = homeDisplayConfigService.getOrCreateConfig();
         model.addAttribute("displayConfig", displayConfig);
         model.addAttribute("bannerImageUrl", homeDisplayConfigService.resolveBannerImageUrl(displayConfig));
+        model.addAttribute("homeTitleFeatured",
+                HomeDisplayConfigService.chonTieuDe(displayConfig.getTitleSectionFeatured(), "Sản phẩm nổi bật"));
+        model.addAttribute("homeTitleRecommended",
+                HomeDisplayConfigService.chonTieuDe(displayConfig.getTitleSectionRecommended(), "Danh mục sản phẩm dành cho bạn"));
+        model.addAttribute("homeTitleRecentlyViewed",
+                HomeDisplayConfigService.chonTieuDe(displayConfig.getTitleSectionRecentlyViewed(), "Danh mục sản phẩm vừa xem"));
+        model.addAttribute("homeTitleByCategory",
+                HomeDisplayConfigService.chonTieuDe(displayConfig.getTitleSectionByCategory(), "Linh kiện ngon bổ rẻ"));
+        String btc = displayConfig.getBannerTitleCustom();
+        model.addAttribute("homeBannerTitleCustom", btc != null && !btc.isBlank() ? btc.trim() : null);
+        String bst = displayConfig.getBannerSubtitleCustom();
+        model.addAttribute("homeBannerSubtitleCustom", bst != null && !bst.isBlank() ? bst.trim() : null);
 
         // Lấy thông tin người dùng từ session
         NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
@@ -329,10 +345,12 @@ public class HomeController {
     }
 
     @PostMapping("/dangnhap")
+    @SuppressWarnings("unchecked")
     public String login(@RequestParam String tenDangNhap,
             @RequestParam String matKhau,
             HttpSession session,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
         Optional<NguoiDung> optionalNguoiDung = nguoiDungRepo.findByTenDangNhapAndMatKhau(tenDangNhap, matKhau);
         if (optionalNguoiDung.isPresent()) {
             NguoiDung nguoiDung = optionalNguoiDung.get();
@@ -343,8 +361,39 @@ public class HomeController {
             Optional<NhanVien> optionalNhanVien = nhanVienRepo.findByNguoiDung_Id(nguoiDung.getId());
 
             if (optionalKhachHang.isPresent()) {
-                session.setAttribute("khachHang", optionalKhachHang.get()); // Tạo session khách hàng
-                return "redirect:/"; // Chuyển đến trang chủ
+                KhachHang khachHang = optionalKhachHang.get();
+                session.setAttribute("khachHang", khachHang);
+
+                List<Map<String, Object>> sessionCart = (List<Map<String, Object>>) session.getAttribute("cart");
+                if (sessionCart != null && !sessionCart.isEmpty()) {
+                    List<String> loiGopGio = new ArrayList<>();
+                    for (Map<String, Object> item : sessionCart) {
+                        Object idObj = item.get("sanPhamID");
+                        Object qtyObj = item.get("quantity");
+                        if (idObj == null || qtyObj == null) {
+                            continue;
+                        }
+                        int spId = Integer.parseInt(idObj.toString());
+                        int quantity = Integer.parseInt(qtyObj.toString());
+                        SanPham sp = sanPhamService.getSanPhamById(spId);
+                        if (sp != null) {
+                            try {
+                                gioHangService.addOrUpdateCartItem(khachHang.getId(), sp, quantity);
+                            } catch (IllegalArgumentException ex) {
+                                loiGopGio.add(ex.getMessage());
+                            }
+                        }
+                    }
+                    if (!loiGopGio.isEmpty()) {
+                        String msg = loiGopGio.size() == 1
+                                ? loiGopGio.get(0)
+                                : "Có " + loiGopGio.size()
+                                        + " mặt hàng trong giỏ khách không gộp được (hết hoặc không đủ tồn kho). Giỏ đã cập nhật theo kho hiện tại.";
+                        redirectAttributes.addFlashAttribute("cartMergeWarning", msg);
+                    }
+                }
+                session.setAttribute("cart", gioHangService.buildSessionCartPayload(khachHang.getId()));
+                return "redirect:/";
             } else if (optionalNhanVien.isPresent()) {
                 session.setAttribute("nhanVien", optionalNhanVien.get()); // Tạo session nhân viên
                 return "redirect:/admin/trangchu"; // Chuyển đến trang admin

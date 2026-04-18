@@ -1,148 +1,178 @@
-<html lang="en">
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:with="pageTitle='Chi tiết sản phẩm'">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết sản phẩm</title>
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<head th:replace="~{adminTemplate/fragments/admin-head :: head(${pageTitle})}">
 </head>
 
-<body>
+<body class="admin-body">
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('sanpham')"></th:block>
 
-    <main class="container mt-5">
-                <h2 class="mb-3 mt-2">Chi tiết sản phẩm</h2>
+    <main class="admin-page container py-4 admin-product-detail">
+        <div class="admin-page-toolbar align-items-start">
+            <div>
+                <h1 class="h4 mb-1">Chi tiết sản phẩm</h1>
+                <p class="text-muted small mb-0">
+                    <span class="font-monospace" th:text="${sanPham.maSanPham}">MA</span>
+                    <span class="mx-1">·</span>
+                    <span th:text="${sanPham.loaiSanPham.tenLoaiSanPham}">Loại</span>
+                </p>
+            </div>
+        </div>
 
-                <!-- Thông tin chung -->
-                <div class="mb-4 container">
-                        <p><strong>Tên:</strong> <span th:text="${sanPham.tenSanPham}"></span></p>
-                        <p><strong>Giá:</strong> <span
-                                        th:text="${#numbers.formatDecimal(sanPham.gia, 0, 'COMMA', '0', 'POINT')}"></span>
-                                VNĐ</p>
-                        <p><strong>Thương hiệu:</strong> <span th:text="${sanPham.thuongHieu.tenThuongHieu}"></span></p>
-                        <p><strong>Loại sản phẩm:</strong> <span th:text="${sanPham.loaiSanPham.tenLoaiSanPham}"></span>
-                        </p>
-                        <p><strong>Ngày thêm:</strong> <span
-                                        th:text="${#temporals.format(sanPham.ngayThem, 'dd/MM/yyyy HH:mm')}"></span></p>
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                    <div class="card-body d-flex align-items-center justify-content-center bg-light p-4 product-detail-img-wrap">
+                        <img class="product-detail-img img-fluid rounded"
+                            th:src="@{'/images/product/' + ${sanPham.hinhAnh}}"
+                            th:alt="${sanPham.tenSanPham}">
+                    </div>
                 </div>
-                <div class="mb-4 container">
-                        <img th:src="@{'/images/product/' + ${sanPham.hinhAnh}}" alt="Ảnh sản phẩm" width="300"
-                                style="border: 1px solid #ccc; padding: 10px;" />
+            </div>
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 fw-semibold">
+                        <i class="bi bi-info-circle me-2 text-primary"></i>Thông tin chung
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0 small">
+                            <dt class="col-sm-4 col-md-3 text-muted">Tên sản phẩm</dt>
+                            <dd class="col-sm-8 col-md-9 mb-3 fw-medium" th:text="${sanPham.tenSanPham}">—</dd>
+
+                            <dt class="col-sm-4 col-md-3 text-muted">Giá bán</dt>
+                            <dd class="col-sm-8 col-md-9 mb-3">
+                                <span class="text-primary fw-semibold"
+                                    th:text="${#numbers.formatDecimal(sanPham.gia, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                            </dd>
+
+                            <dt class="col-sm-4 col-md-3 text-muted">Thương hiệu</dt>
+                            <dd class="col-sm-8 col-md-9 mb-3" th:text="${sanPham.thuongHieu.tenThuongHieu}">—</dd>
+
+                            <dt class="col-sm-4 col-md-3 text-muted align-self-start pt-1">Số lượng</dt>
+                            <dd class="col-sm-8 col-md-9 mb-3">
+                                <div class="row g-2 product-qty-row">
+                                    <div class="col-sm-6">
+                                        <div class="rounded border px-3 py-2 h-100 product-qty-box product-qty-box--stock">
+                                            <div class="text-muted small mb-0">Tồn kho</div>
+                                            <div class="fs-5 fw-semibold product-qty-value"
+                                                th:text="${sanPham.tonKho != null ? sanPham.tonKho : 0}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="rounded border px-3 py-2 h-100 product-qty-box">
+                                            <div class="text-muted small mb-0">Đã bán</div>
+                                            <div class="fs-5 fw-semibold"
+                                                th:text="${sanPham.daBan != null ? sanPham.daBan : 0}">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </dd>
+
+                            <dt class="col-sm-4 col-md-3 text-muted">Cập nhật lần cuối</dt>
+                            <dd class="col-sm-8 col-md-9 mb-0"
+                                th:text="${sanPham.ngayThem != null ? #temporals.format(sanPham.ngayThem, 'dd/MM/yyyy HH:mm') : '—'}">—</dd>
+                        </dl>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <hr>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom py-3 fw-semibold d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <span><i class="bi bi-sliders me-2 text-primary"></i>Thông số kỹ thuật</span>
+                <span class="badge bg-light text-dark border small fw-normal"
+                    th:text="${sanPham.loaiSanPham.tenLoaiSanPham}">Loại</span>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0 small product-spec-dl">
 
-                <!-- Chi tiết theo loại -->
-                <div class="mb-4 container">
-                        <div th:if="${loaiSanPham == 'Mainboard'}">
-                                <p th:if="${loaiSanPham == 'Mainboard'}"><strong>Model:</strong> <span
-                                                th:text="${chiTietSanPham.modelMain}"></span></p>
-                                <p th:if="${loaiSanPham == 'Mainboard'}"><strong>Chipset:</strong> <span
-                                                th:text="${chiTietSanPham.chipset}"></span></p>
-                                <p th:if="${loaiSanPham == 'Mainboard'}"><strong>Socket:</strong> <span
-                                                th:text="${chiTietSanPham.socketMain}"></span></p>
-                                <p th:if="${loaiSanPham == 'Mainboard'}"><strong>Kích thước:</strong> <span
-                                                th:text="${chiTietSanPham.kichThuoc}"></span></p>
-                                <p th:if="${loaiSanPham == 'Mainboard'}"><strong>Số khe RAM:</strong> <span
-                                                th:text="${chiTietSanPham.soKheRAM}"></span></p>
-                                <p th:if="${loaiSanPham == 'Mainboard'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'Mainboard'}">
+                        <dt class="col-md-4">Model</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.modelMain}">—</dd>
+                        <dt class="col-md-4">Chipset</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.chipset}">—</dd>
+                        <dt class="col-md-4">Socket</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.socketMain}">—</dd>
+                        <dt class="col-md-4">Kích thước</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.kichThuoc}">—</dd>
+                        <dt class="col-md-4">Số khe RAM</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.soKheRAM}">—</dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
 
-                        <div th:if="${loaiSanPham == 'CPU'}">
-                                <p th:if="${loaiSanPham == 'CPU'}"><strong>Loại CPU:</strong> <span
-                                                th:text="${chiTietSanPham.loaiCPU}"></span></p>
-                                <p th:if="${loaiSanPham == 'CPU'}"><strong>Số nhân / luồng:</strong> <span
-                                                th:text="${chiTietSanPham.soNhansoLuong}"></span></p>
-                                <p th:if="${loaiSanPham == 'CPU'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'CPU'}">
+                        <dt class="col-md-4">Loại CPU</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.loaiCPU}">—</dd>
+                        <dt class="col-md-4">Số nhân / luồng</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.soNhansoLuong}">—</dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
 
-                        <div th:if="${loaiSanPham == 'RAM'}">
-                                <p th:if="${loaiSanPham == 'RAM'}"><strong>Chuẩn RAM:</strong> <span
-                                                th:text="${chiTietSanPham.chuanRAM}"></span></p>
-                                <p th:if="${loaiSanPham == 'RAM'}"><strong>Dung lượng:</strong> <span
-                                                th:text="${chiTietSanPham.dungLuong}"></span></p>
-                                <p th:if="${loaiSanPham == 'RAM'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'RAM'}">
+                        <dt class="col-md-4">Chuẩn RAM</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.chuanRAM}">—</dd>
+                        <dt class="col-md-4">Dung lượng</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.dungLuong}">—</dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
 
-                        <div th:if="${loaiSanPham == 'VGA'}">
-                                <p th:if="${loaiSanPham == 'VGA'}"><strong>Chip GPU:</strong> <span
-                                                th:text="${chiTietSanPham.chipGPU}"></span></p>
-                                <p th:if="${loaiSanPham == 'VGA'}"><strong>Kiểu bộ nhớ:</strong> <span
-                                                th:text="${chiTietSanPham.kieuBoNho}"></span></p>
-                                <p th:if="${loaiSanPham == 'VGA'}"><strong>Dung lượng bộ nhớ:</strong> <span
-                                                th:text="${chiTietSanPham.dungLuongBoNho}"></span></p>
-                                <p th:if="${loaiSanPham == 'VGA'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'VGA'}">
+                        <dt class="col-md-4">Chip GPU</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.chipGPU}">—</dd>
+                        <dt class="col-md-4">Kiểu bộ nhớ</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.kieuBoNho}">—</dd>
+                        <dt class="col-md-4">Dung lượng bộ nhớ</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.dungLuongBoNho}">—</dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
 
-                        <div th:if="${loaiSanPham == 'OCung'}">
-                                <p th:if="${loaiSanPham == 'OCung'}"><strong>Loại ổ cứng:</strong> <span
-                                                th:text="${chiTietSanPham.loaiOCung}"></span></p>
-                                <p th:if="${loaiSanPham == 'OCung'}"><strong>Dung lượng:</strong> <span
-                                                th:text="${chiTietSanPham.dungLuong}"></span></p>
-                                <p th:if="${loaiSanPham == 'OCung'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'OCung'}">
+                        <dt class="col-md-4">Loại ổ cứng</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.loaiOCung}">—</dd>
+                        <dt class="col-md-4">Dung lượng</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.dungLuong}">—</dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
 
-                        <div th:if="${loaiSanPham == 'PSU'}">
-                                <p th:if="${loaiSanPham == 'PSU'}"><strong>Công suất:</strong> <span
-                                                th:text="${chiTietSanPham.congSuat}"></span>W</p>
-                                <p th:if="${loaiSanPham == 'PSU'}"><strong>Điện áp vào:</strong> <span
-                                                th:text="${chiTietSanPham.dienApVao}"></span>V</p>
-                                <p th:if="${loaiSanPham == 'PSU'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'PSU'}">
+                        <dt class="col-md-4">Công suất</dt>
+                        <dd class="col-md-8 mb-3"
+                            th:text="${chiTietSanPham.congSuat != null ? chiTietSanPham.congSuat + ' W' : '—'}">—</dd>
+                        <dt class="col-md-4">Điện áp vào</dt>
+                        <dd class="col-md-8 mb-3"
+                            th:text="${chiTietSanPham.dienApVao != null ? chiTietSanPham.dienApVao + ' V' : '—'}">—</dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
 
-                        <div th:if="${loaiSanPham == 'Cooler'}">
-                                <p th:if="${loaiSanPham == 'Cooler'}"><strong>Loại tản:</strong> <span
-                                                th:text="${chiTietSanPham.loaiTan}"></span></p>
-                                <p th:if="${loaiSanPham == 'Cooler'}"><strong>Socket hỗ trợ LED:</strong> <span
-                                                th:text="${chiTietSanPham.coLED} ? 'Có LED' : 'Không LED'"></span></p>
-                                <p th:if="${loaiSanPham == 'Cooler'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'Cooler'}">
+                        <dt class="col-md-4">Loại tản</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.loaiTan}">—</dd>
+                        <dt class="col-md-4">LED</dt>
+                        <dd class="col-md-8 mb-3">
+                            <span th:if="${chiTietSanPham.coLED == true}">Có LED</span>
+                            <span th:if="${chiTietSanPham.coLED == false}">Không LED</span>
+                            <span th:if="${chiTietSanPham.coLED == null}">—</span>
+                        </dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
 
-                        <div th:if="${loaiSanPham == 'Man Hinh'}">
-                                <p th:if="${loaiSanPham == 'Man Hinh'}"><strong>Kích thước:</strong> <span
-                                                th:text="${chiTietSanPham.kichThuoc}"></span></p>
-                                <p th:if="${loaiSanPham == 'Man Hinh'}"><strong>Độ phân giải:</strong> <span
-                                                th:text="${chiTietSanPham.doPhanGiai}"></span></p>
-                                <p th:if="${loaiSanPham == 'Man Hinh'}"><strong>Tấm nền:</strong> <span
-                                                th:text="${chiTietSanPham.tamNen}"></span></p>
-                                <p th:if="${loaiSanPham == 'Man Hinh'}"><strong>Bề mặt:</strong> <span
-                                                th:text="${chiTietSanPham.beMat}"></span></p>
-                                <p th:if="${loaiSanPham == 'Man Hinh'}"><strong>Tần số quét:</strong> <span
-                                                th:text="${chiTietSanPham.tanSoQuet}"></span>Hz</p>
-                                <p th:if="${loaiSanPham == 'Man Hinh'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'Man Hinh'}">
+                        <dt class="col-md-4">Kích thước</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.kichThuoc}">—</dd>
+                        <dt class="col-md-4">Độ phân giải</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.doPhanGiai}">—</dd>
+                        <dt class="col-md-4">Tấm nền</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.tamNen}">—</dd>
+                        <dt class="col-md-4">Bề mặt</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.beMat}">—</dd>
+                        <dt class="col-md-4">Tần số quét</dt>
+                        <dd class="col-md-8 mb-3"
+                            th:text="${chiTietSanPham.tanSoQuet != null ? chiTietSanPham.tanSoQuet + ' Hz' : '—'}">—</dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
 
-                        <div th:if="${loaiSanPham == 'Case'}">
-                                <p th:if="${loaiSanPham == 'Case'}"><strong>Loại case:</strong> <span
-                                                th:text="${chiTietSanPham.loaiCase}"></span></p>
-                                <p th:if="${loaiSanPham == 'Case'}"><strong>Main hỗ trợ:</strong> <span
-                                                th:text="${chiTietSanPham.hoTroMain}"></span></p>
-                                <p th:if="${loaiSanPham == 'Case'}"><strong>Mô tả:</strong> <span
-                                                th:text="${chiTietSanPham.mota}"></span></p>
-                        </div>
+                    <th:block th:if="${loaiSanPham == 'Case'}">
+                        <dt class="col-md-4">Loại case</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.loaiCase}">—</dd>
+                        <dt class="col-md-4">Main hỗ trợ</dt><dd class="col-md-8 mb-3" th:text="${chiTietSanPham.hoTroMain}">—</dd>
+                        <dt class="col-md-4">Mô tả</dt><dd class="col-md-8 mb-0 text-break" th:text="${chiTietSanPham.mota}">—</dd>
+                    </th:block>
+                </dl>
+            </div>
+        </div>
 
-
-                </div>
-
-                <div class="mt-4 mb-3 container">
-                        <a href="/admin/quanlysanpham" class="btn btn-secondary">⬅ Trở lại danh sách</a>
-                        <a th:href="@{'/admin/quanlysanpham/capnhat/' + ${loaiSanPhamRutGon} + '/' + ${sanPham.id}}"
-                                class="btn btn-primary">Cập nhật sản
-                                phẩm</a>
-                </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a th:href="@{/admin/quanlysanpham}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Danh sách sản phẩm
+            </a>
+            <a th:href="@{'/admin/quanlysanpham/capnhat/' + ${loaiSanPhamRutGon} + '/' + ${sanPham.id}}"
+                class="btn btn-primary">
+                <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
+            </a>
+        </div>
     </main>
 
+    <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
 </body>
 
 </html>

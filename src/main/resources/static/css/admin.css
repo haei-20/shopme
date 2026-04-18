@@ -1,11 +1,90 @@
-body {
-    font-family: Arial, sans-serif;
-    padding: 5px;
+/* --- Giao diện admin thống nhất --- */
+:root {
+    --admin-bg: #f0f4f8;
+    --admin-surface: #ffffff;
+    --admin-border: #e2e8f0;
+    --admin-text: #1e293b;
+    --admin-muted: #64748b;
+    --admin-primary: #1c64f2;
+    /* Dashboard / biểu đồ */
+    --admin-accent-soft: #e8f0ff;
+    --admin-warning-soft: #fff7e6;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
+body.admin-body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--admin-bg);
+    color: var(--admin-text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* Vùng nội dung dưới topbar — căn container Bootstrap */
+main.admin-page {
+    background: transparent;
+}
+
+main.admin-page .table {
+    background: var(--admin-surface);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+main.admin-page .table thead th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--admin-muted);
+    text-transform: none;
+    border-bottom-width: 1px;
+}
+
+main.admin-page .card,
+main.admin-page .table-responsive {
+    border-radius: 12px;
+}
+
+main.admin-page h1,
+main.admin-page h2,
+main.admin-page h3,
+main.admin-page h4 {
+    color: var(--admin-text);
+    font-weight: 700;
+}
+
+main.admin-page .form-label {
+    font-weight: 600;
+    color: var(--admin-text);
+}
+
+main.admin-page .alert {
+    border-radius: 10px;
+}
+
+/* Tiêu đề trang + nút (form chung) */
+.admin-page-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-page-toolbar h1,
+.admin-page-toolbar h2,
+.admin-page-toolbar h3,
+.admin-page-toolbar h4 {
+    margin-bottom: 0;
+}
+
+/* Legacy menu (nếu còn trang dùng) */
 .admin-menu ul {
     list-style: none;
-    padding-left: 20%;
+    padding-left: 0;
 }
 
 .admin-menu li {
@@ -14,20 +93,372 @@ body {
 
 .admin-menu a {
     text-decoration: none;
-    color: #2a4d9b;
-    font-weight: bold;
+    color: var(--admin-primary);
+    font-weight: 600;
 }
 
 .no-underline {
     text-decoration: none;
-    color: white;
 }
 
-.btn-primary {
-    background-color: #fbffca !important;
-    color: rgb(0, 0, 0) !important;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+/* --- Trang chi tiết voucher (admin) --- */
+.voucher-detail-wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.voucher-detail-wrap .voucher-header {
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8fbff, #ffffff);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.voucher-code {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.voucher-name {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.detail-card {
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.detail-item {
+    border: 1px solid #eef2f6;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #fff;
+}
+
+.detail-label {
+    color: #6c757d;
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+}
+
+.detail-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+    word-break: break-word;
+}
+
+.customer-list {
+    margin: 0;
+    padding-left: 18px;
+}
+
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .voucher-name {
+        font-size: 1.3rem;
+    }
+}
+
+/* --- Trang thêm voucher --- */
+.voucher-form-wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.voucher-form-wrap .voucher-header {
+    border: 1px solid #e5eaf3;
+    border-radius: 14px;
+    background: linear-gradient(130deg, #f8fbff, #ffffff);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    padding: 1.15rem 1.2rem;
+}
+
+.voucher-section {
+    border: 1px solid #e8edf4;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
+    height: 100%;
+}
+
+.voucher-section .card-header {
+    background: #fbfdff;
+    border-bottom: 1px solid #edf2f7;
+    font-weight: 700;
+}
+
+.discount-radio {
+    border: 1px solid #dfe8f6;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #f9fbff;
+    margin-bottom: 10px;
+}
+
+.customer-summary {
+    border: 1px dashed #cfdcf0;
+    border-radius: 10px;
+    background: #f8fbff;
+    padding: 0.65rem 0.8rem;
+    color: #41526f;
+}
+
+/* --- Trang Dashboard (trangchuadmin) --- */
+main.admin-content {
+    padding: 1.4rem;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.kpi-card {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+.kpi-label {
+    color: var(--admin-muted);
+    font-size: 0.86rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.kpi-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.kpi-sub {
+    margin-top: 0.45rem;
+    font-size: 0.85rem;
+    color: var(--admin-muted);
+}
+
+main.admin-content .panel,
+section.chart-grid .panel,
+section.bottom-grid .panel {
+    background: #fff;
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    padding: 1rem;
+    min-width: 0;
+}
+
+.chart-grid .panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-grid canvas {
+    display: block;
+    width: 100% !important;
+    height: 260px !important;
+    max-height: 260px;
+    flex: 0 0 260px;
+}
+
+.panel-title {
+    margin-bottom: 0.9rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2a44;
+}
+
+.panel-title.chart-title {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.panel-title.chart-title span {
+    flex: 0 0 auto;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.bottom-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+}
+
+.badge-soft {
+    background: var(--admin-accent-soft);
+    color: var(--admin-primary);
+    font-weight: 700;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+}
+
+.notify-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.notify-item {
+    border: 1px solid var(--admin-border);
+    border-left: 4px solid var(--admin-primary);
+    border-radius: 10px;
+    padding: 0.7rem;
+    background: #fff;
+}
+
+.notify-item.warning {
+    border-left-color: #f59e0b;
+    background: var(--admin-warning-soft);
+}
+
+@media (max-width: 1200px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chart-grid,
+    .bottom-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Trang Thống kê (thongke) — cùng tone với admin --- */
+.stats-page {
+    max-width: 1280px;
+}
+
+.stats-hero {
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    border: 1px solid var(--admin-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.stats-card {
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    background: var(--admin-surface);
+}
+
+.summary-card {
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    padding: 1rem 1.1rem;
+    height: 100%;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.summary-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--admin-accent-soft);
+    color: var(--admin-primary);
+    font-size: 1.2rem;
+}
+
+.stats-page .chart-wrap {
+    position: relative;
+    min-height: 340px;
+}
+
+.stats-page .chart-wrap canvas {
+    max-height: 340px;
+}
+
+.stats-table thead th {
+    background: #f1f5f9;
+    color: var(--admin-muted);
+    border-color: var(--admin-border);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.stats-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.stats-page .nav-tabs .nav-link {
+    border-radius: 999px;
+    color: var(--admin-muted);
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.stats-page .nav-tabs .nav-link:hover {
+    color: var(--admin-primary);
+    background: rgba(28, 100, 242, 0.06);
+}
+
+.stats-page .nav-tabs .nav-link.active {
+    background: var(--admin-accent-soft);
+    color: var(--admin-primary);
+    border-color: rgba(28, 100, 242, 0.25);
+}
+
+/* Trang chi tiết sản phẩm (admin) */
+.admin-product-detail .product-detail-img-wrap {
+    min-height: 240px;
+}
+
+.admin-product-detail .product-detail-img {
+    max-height: 360px;
+    width: auto;
+    object-fit: contain;
+}
+
+.admin-product-detail .product-spec-dl dt {
+    color: var(--admin-muted);
+    font-weight: 600;
+}
+
+.admin-product-detail .product-spec-dl dd {
+    color: #0f172a;
+}
+
+.admin-product-detail .product-qty-box {
+    background: #f8fafc;
+    border-color: var(--admin-border) !important;
+}
+
+.admin-product-detail .product-qty-box--stock .product-qty-value {
+    color: var(--admin-primary);
 }

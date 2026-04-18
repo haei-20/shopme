@@ -8,8 +8,10 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.gearshop.model.HoaDon;
+import com.example.gearshop.model.TrangThaiHoaDonHang;
 import com.example.gearshop.model.HoaDonChiTiet;
 import com.example.gearshop.model.KhachHang;
 import com.example.gearshop.model.SanPham;
@@ -82,5 +84,23 @@ public class HoaDonAdminService {
 
     public List<HoaDon> getHoaDonByTenKhachHang(String tenNguoiDung) {
         return hoaDonRepository.findByTenNguoiDungContainingIgnoreCase(tenNguoiDung);
+    }
+
+    /**
+     * Shop cập nhật trạng thái vận đơn (một trong {@link TrangThaiHoaDonHang#danhSachLoc()}).
+     */
+    @Transactional
+    public void capNhatTrangThaiDonHang(Integer hoaDonId, String trangThaiMoi) {
+        if (trangThaiMoi == null || trangThaiMoi.isBlank()) {
+            throw new IllegalArgumentException("Trạng thái không được để trống.");
+        }
+        String trimmed = trangThaiMoi.trim();
+        if (!TrangThaiHoaDonHang.danhSachLoc().contains(trimmed)) {
+            throw new IllegalArgumentException("Trạng thái không hợp lệ: " + trimmed);
+        }
+        HoaDon hoaDon = hoaDonRepository.findById(hoaDonId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn ID: " + hoaDonId));
+        hoaDon.setTrangThaiDonHang(trimmed);
+        hoaDonRepository.save(hoaDon);
     }
 }

@@ -28,7 +28,6 @@ import com.example.gearshop.repository.KhachHangRepository;
 import com.example.gearshop.repository.NguoiDungRepository;
 import com.example.gearshop.repository.NhanVienRepository;
 import com.example.gearshop.repository.SanPhamRepository;
-import com.example.gearshop.repository.YeuCauHoanTienRepository;
 import com.example.gearshop.service.NguoiDungService;
 
 import jakarta.transaction.Transactional;
@@ -49,8 +48,6 @@ public class AdminController {
     private NguoiDungService nguoiDungService;
     @Autowired
     private HoaDonRepository hoaDonRepository;
-    @Autowired
-    private YeuCauHoanTienRepository yeuCauHoanTienRepository;
 
     @GetMapping("/trangchu")
     public String adminHome(Model model) {
@@ -89,10 +86,6 @@ public class AdminController {
                 .filter(sp -> sp.getTonKho() != null && sp.getTonKho() <= 5)
                 .count();
 
-        long yeuCauHoanTienMoi = yeuCauHoanTienRepository.findAll().stream()
-                .filter(yc -> yc.getTrangThai() != null && yc.getTrangThai().toLowerCase().contains("chua"))
-                .count();
-
         int[] donTheoThang = new int[12];
         for (HoaDon hd : hoaDonsTheoNamHienTai) {
             if (hd.getNgayTao() != null) {
@@ -125,15 +118,9 @@ public class AdminController {
         model.addAttribute("donTheoThang", donTheoThangList);
         model.addAttribute("doanhThuTheoThang", doanhThuTheoThangList);
         model.addAttribute("chartNam", currentYear);
-        model.addAttribute("yeuCauHoanTienMoi", yeuCauHoanTienMoi);
         model.addAttribute("sanPhamSapHet", sanPhamSapHet);
 
         return "adminTemplate/trangchuadmin";
-    }
-
-    @GetMapping("/hoantien")
-    public String hoanTienRedirect() {
-        return "redirect:/admin/yeucauhoantien";
     }
 
     @GetMapping("/nguoidung")
