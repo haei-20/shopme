@@ -1,6 +1,8 @@
 package com.example.gearshop.service;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,12 +91,15 @@ public class DanhGiaService {
     }
 
     @Transactional(readOnly = true)
-    public List<DanhGia> adminLayDanhSach(Integer sanPhamIdLoc, String tuKhoa) {
-        String kw = tuKhoa != null ? tuKhoa.trim() : "";
-        if (kw.isEmpty()) {
-            kw = null;
+    public List<DanhGia> adminLayDanhSach(Integer sanPhamIdLoc, String khachHang, Integer soSao, LocalDate tuNgay,
+            LocalDate denNgay) {
+        String kh = khachHang != null ? khachHang.trim() : "";
+        if (kh.isEmpty()) {
+            kh = null;
         }
-        return danhGiaRepository.findAllForAdmin(sanPhamIdLoc, kw);
+        LocalDateTime from = tuNgay != null ? tuNgay.atStartOfDay() : null;
+        LocalDateTime to = denNgay != null ? denNgay.atTime(LocalTime.MAX) : null;
+        return danhGiaRepository.findAllForAdmin(sanPhamIdLoc, kh, soSao, from, to);
     }
 
     @Transactional
@@ -103,5 +108,17 @@ public class DanhGiaService {
             throw new IllegalArgumentException("Không tìm thấy đánh giá.");
         }
         danhGiaRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void adminPhanHoi(Integer id, String phanHoi) {
+        DanhGia dg = danhGiaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đánh giá."));
+        String text = phanHoi != null ? phanHoi.trim() : "";
+        if (text.length() > 2000) {
+            throw new IllegalArgumentException("Phản hồi không quá 2000 ký tự.");
+        }
+        dg.setPhanHoi(text.isEmpty() ? null : text);
+        danhGiaRepository.save(dg);
     }
 }

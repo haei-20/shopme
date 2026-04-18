@@ -138,6 +138,7 @@ public class ChiTietSanPhamController {
         danhGiaService.tinhDiemTrungBinh(id).ifPresent(v -> model.addAttribute("diemTrungBinhDanhGia", Math.round(v * 10.0) / 10.0));
 
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
+        model.addAttribute("isAdminView", session.getAttribute("nhanVien") != null);
         model.addAttribute("khachHang", khachHang);
         if (khachHang != null) {
             model.addAttribute("duocPhepDanhGia", danhGiaService.duocPhepDanhGia(khachHang.getId(), id));

@@ -2,6 +2,7 @@ package com.example.gearshop.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -35,11 +36,33 @@ public interface DanhGiaRepository extends JpaRepository<DanhGia, Integer> {
             JOIN FETCH kh.nguoiDung
             JOIN FETCH d.sanPham sp
             WHERE (:sanPhamId IS NULL OR sp.id = :sanPhamId)
-            AND (:tuKhoa IS NULL OR :tuKhoa = '' OR LOWER(sp.tenSanPham) LIKE LOWER(CONCAT('%', :tuKhoa, '%'))
-                OR LOWER(sp.maSanPham) LIKE LOWER(CONCAT('%', :tuKhoa, '%')))
+            AND (:khachHang IS NULL OR :khachHang = '' OR LOWER(kh.nguoiDung.tenNguoiDung) LIKE LOWER(CONCAT('%', :khachHang, '%')))
+            AND (:soSao IS NULL OR d.soSao = :soSao)
+            AND (:tuNgay IS NULL OR d.ngayDanhGia >= :tuNgay)
+            AND (:denNgay IS NULL OR d.ngayDanhGia <= :denNgay)
             ORDER BY d.ngayDanhGia DESC, d.id DESC
             """)
     List<DanhGia> findAllForAdmin(
             @Param("sanPhamId") Integer sanPhamId,
-            @Param("tuKhoa") String tuKhoa);
+            @Param("khachHang") String khachHang,
+            @Param("soSao") Integer soSao,
+            @Param("tuNgay") LocalDateTime tuNgay,
+            @Param("denNgay") LocalDateTime denNgay);
+
+    @Query("""
+            SELECT d FROM DanhGia d
+            JOIN FETCH d.khachHang kh
+            JOIN FETCH kh.nguoiDung
+            JOIN FETCH d.sanPham sp
+            WHERE (:sanPhamId IS NULL OR sp.id = :sanPhamId)
+            AND (:soSao IS NULL OR d.soSao = :soSao)
+            AND (:tuNgay IS NULL OR d.ngayDanhGia >= :tuNgay)
+            AND (:denNgay IS NULL OR d.ngayDanhGia <= :denNgay)
+            ORDER BY d.ngayDanhGia DESC, d.id DESC
+            """)
+    List<DanhGia> findAllForAdmin(
+            @Param("sanPhamId") Integer sanPhamId,
+            @Param("soSao") Integer soSao,
+            @Param("tuNgay") LocalDateTime tuNgay,
+            @Param("denNgay") LocalDateTime denNgay);
 }

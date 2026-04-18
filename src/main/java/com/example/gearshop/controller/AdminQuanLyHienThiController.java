@@ -1,5 +1,7 @@
 package com.example.gearshop.controller;
 
+import java.util.List;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,6 +41,9 @@ public class AdminQuanLyHienThiController {
         model.addAttribute("displayConfig", config);
         model.addAttribute("bannerImageUrl", homeDisplayConfigService.resolveBannerImageUrl(config));
         model.addAttribute("dsSanPham", sanPhamService.getAllSanPham());
+        List<String> sectionOrder = homeDisplayConfigService.sectionKeysSortedByDisplayOrder(config);
+        model.addAttribute("homeSectionKeysOrder", sectionOrder);
+        model.addAttribute("homeSectionOrderCsv", String.join(",", sectionOrder));
         return "adminTemplate/quanlyhienthi";
     }
 
@@ -46,9 +51,6 @@ public class AdminQuanLyHienThiController {
     public String capNhatHienThi(
             @RequestParam String bannerSourceType,
             @RequestParam(required = false) Integer bannerProductId,
-            @RequestParam String productDisplayOrder,
-            @RequestParam Integer productsPerRow,
-            @RequestParam Integer numberOfRows,
             @RequestParam(name = "bannerImageFile", required = false) MultipartFile bannerImageFile,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
@@ -56,9 +58,23 @@ public class AdminQuanLyHienThiController {
         HomeDisplayConfig config = homeDisplayConfigService.getOrCreateConfig();
 
         config.setBannerSourceType(bannerSourceType);
-        config.setProductDisplayOrder(productDisplayOrder);
-        config.setProductsPerRow(Math.max(1, productsPerRow));
-        config.setNumberOfRows(Math.max(1, numberOfRows));
+        if (config.getProductDisplayOrder() == null || config.getProductDisplayOrder().isBlank()) {
+            config.setProductDisplayOrder("BEST_SELLING");
+        }
+        if (config.getProductsPerRow() == null || config.getProductsPerRow() < 1) {
+            config.setProductsPerRow(5);
+        }
+        if (config.getNumberOfRows() == null || config.getNumberOfRows() < 1) {
+            config.setNumberOfRows(2);
+        }
+        config.setFeaturedProductsPerRow(parseOrder(request.getParameter("featuredProductsPerRow"), config.getProductsPerRow()));
+        config.setFeaturedNumberOfRows(parseOrder(request.getParameter("featuredNumberOfRows"), config.getNumberOfRows()));
+        config.setRecommendedProductsPerRow(parseOrder(request.getParameter("recommendedProductsPerRow"), config.getProductsPerRow()));
+        config.setRecommendedNumberOfRows(parseOrder(request.getParameter("recommendedNumberOfRows"), config.getNumberOfRows()));
+        config.setRecentlyViewedProductsPerRow(parseOrder(request.getParameter("recentlyViewedProductsPerRow"), config.getProductsPerRow()));
+        config.setRecentlyViewedNumberOfRows(parseOrder(request.getParameter("recentlyViewedNumberOfRows"), config.getNumberOfRows()));
+        config.setByCategoryProductsPerRow(parseOrder(request.getParameter("byCategoryProductsPerRow"), config.getProductsPerRow()));
+        config.setByCategoryNumberOfRows(parseOrder(request.getParameter("byCategoryNumberOfRows"), config.getNumberOfRows()));
 
         config.setShowBanner(boolParam(request, "showBanner"));
         config.setShowBannerOverlayText(boolParam(request, "showBannerOverlayText"));
@@ -76,6 +92,7 @@ public class AdminQuanLyHienThiController {
         config.setTitleSectionRecommended(trimToNull(request.getParameter("titleSectionRecommended")));
         config.setTitleSectionRecentlyViewed(trimToNull(request.getParameter("titleSectionRecentlyViewed")));
         config.setTitleSectionByCategory(trimToNull(request.getParameter("titleSectionByCategory")));
+        homeDisplayConfigService.applyHomeSectionOrderCsv(config, request.getParameter("homeSectionOrder"));
 
         if ("PRODUCT".equalsIgnoreCase(bannerSourceType)) {
             if (Boolean.TRUE.equals(config.getShowBanner()) && bannerProductId == null) {
@@ -129,5 +146,16 @@ public class AdminQuanLyHienThiController {
         }
         String t = s.trim();
         return t.isEmpty() ? null : t;
+    }
+
+    private static int parseOrder(String raw, int macDinh) {
+        if (raw == null || raw.isBlank()) {
+            return macDinh;
+        }
+        try {
+            return Math.max(1, Integer.parseInt(raw.trim()));
+        } catch (NumberFormatException ex) {
+            return macDinh;
+        }
     }
 }

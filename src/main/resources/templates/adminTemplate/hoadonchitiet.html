@@ -7,8 +7,13 @@
 <body class="admin-body">
 
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('hoadon')"></th:block>
-    <div class="container mt-5">
-        <h2 class="mb-4">Chi tiết Hóa đơn</h2>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">Chi tiết Hóa đơn</h2>
+            <a href="/admin/hoadon" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại danh sách
+            </a>
+        </div>
 
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
             <span th:text="${successMessage}"></span>
@@ -19,55 +24,70 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
         </div>
 
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-secondary text-white">
-                <i class="bi bi-arrow-repeat"></i> Cập nhật trạng thái đơn (shop)
-            </div>
-            <div class="card-body">
-                <form method="post" th:action="@{/admin/hoadon/chitiet/{id}/trangthai(id=${hoaDon.id})}">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-8">
-                            <label for="trangThaiDonHang" class="form-label">Trạng thái vận đơn</label>
-                            <select id="trangThaiDonHang" name="trangThaiDonHang" class="form-select" required>
-                                <option value="" disabled th:selected="${trangThaiChuan == null}">— Chọn trạng thái —
-                                </option>
-                                <option th:each="tt : ${cacTrangThaiDon}" th:value="${tt}" th:text="${tt}"
-                                    th:selected="${trangThaiChuan != null and trangThaiChuan == tt}"></option>
-                            </select>
-                            <div class="form-text text-muted" th:if="${trangThaiChuan == null}">
-                                Giá trị hiện tại trong hệ thống chưa khớp một trong các trạng thái chuẩn — hãy chọn và lưu để chuẩn hóa.
+        <div class="row g-3">
+            <div class="col-lg-7">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-primary text-white">Thông tin Hóa đơn</div>
+                    <div class="card-body">
+                        <div class="row gy-2">
+                            <div class="col-md-6"><strong>Mã Hóa đơn:</strong> <span th:text="${hoaDon.maHoaDon}"></span></div>
+                            <div class="col-md-6"><strong>Tên khách hàng:</strong> <span th:text="${tenKhachHang}"></span></div>
+                            <div class="col-md-6"><strong>Người nhận:</strong> <span th:text="${hoaDon.thongTinNhanHang.tenNguoiNhan}"></span></div>
+                            <div class="col-md-6"><strong>SĐT:</strong> <span th:text="${hoaDon.thongTinNhanHang.sdt}"></span></div>
+                            <div class="col-md-6"><strong>Email:</strong> <span th:text="${hoaDon.thongTinNhanHang.email}"></span></div>
+                            <div class="col-md-6"><strong>Ngày tạo:</strong> <span th:text="${#temporals.format(hoaDon.ngayTao, 'dd/MM/yyyy HH:mm')}"></span></div>
+                            <div class="col-12"><strong>Địa chỉ:</strong> <span th:text="${hoaDon.thongTinNhanHang.diachi}"></span></div>
+                            <div class="col-md-6"><strong>Tổng giá:</strong>
+                                <span class="text-danger fw-bold"
+                                    th:text="${#numbers.formatDecimal(hoaDon.tongGia, 0, 'COMMA', 0, 'POINT')}"></span> đ
+                            </div>
+                            <div class="col-md-6"><strong>Trạng thái hiện tại:</strong>
+                                <th:block th:replace="~{clientTemplate/fragments/trangthaidon :: badge(trangThai=${hoaDon.trangThaiDonHang})}"></th:block>
+                            </div>
+                            <div class="col-12" th:if="${hoaDon.lyDoHuy != null and !#strings.isEmpty(hoaDon.lyDoHuy)}">
+                                <strong>Lý do hủy:</strong> <span th:text="${hoaDon.lyDoHuy}"></span>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary w-100">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="bi bi-arrow-repeat"></i> Cập nhật trạng thái đơn (shop)
+                    </div>
+                    <div class="card-body">
+                        <form method="post" th:action="@{/admin/hoadon/chitiet/{id}/trangthai(id=${hoaDon.id})}">
+                            <label class="form-label">Chọn trạng thái kế tiếp</label>
+                            <div class="d-grid gap-2">
+                                <div th:if="${#lists.isEmpty(trangThaiTiepTheo)}" class="text-muted small">
+                                    Không có trạng thái kế tiếp hợp lệ.
+                                </div>
+                                <div th:each="tt,st : ${trangThaiTiepTheo}">
+                                    <input type="radio" class="btn-check" name="trangThaiDonHang"
+                                        th:id="${'tt_' + st.index}" th:value="${tt}" autocomplete="off" required>
+                                    <label class="btn btn-outline-primary w-100 text-start"
+                                        th:for="${'tt_' + st.index}" th:text="${tt}">Trạng thái</label>
+                                </div>
+                            </div>
+                            <div id="lyDoHuyWrap" class="mt-3 d-none">
+                                <label for="lyDoHuy" class="form-label">Lý do hủy đơn <span class="text-danger">*</span></label>
+                                <textarea id="lyDoHuy" name="lyDoHuy" class="form-control" rows="3"
+                                    placeholder="Nhập lý do hủy..."></textarea>
+                            </div>
+                            <div class="form-text text-muted mt-2" th:if="${!#lists.isEmpty(trangThaiTiepTheo)}">
+                                Chỉ cho phép cập nhật tuần tự theo quy trình xử lý đơn.
+                            </div>
+                            <div class="form-text text-muted mt-2" th:if="${#lists.isEmpty(trangThaiTiepTheo)}">
+                                Đơn đang ở trạng thái kết thúc, không thể cập nhật tiếp.
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mt-3"
+                                th:disabled="${#lists.isEmpty(trangThaiTiepTheo)}">
                                 <i class="bi bi-check2"></i> Lưu trạng thái
                             </button>
-                        </div>
+                        </form>
                     </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                Thông tin Hóa đơn
-            </div>
-            <div class="card-body">
-                <p><strong>Mã Hóa đơn:</strong> <span th:text="${hoaDon.maHoaDon}"></span></p>
-                <p><strong>Người nhận:</strong> <span th:text="${hoaDon.thongTinNhanHang.tenNguoiNhan}"></span></p>
-                <p><strong>Email:</strong> <span th:text="${hoaDon.thongTinNhanHang.email}"></span></p>
-                <p><strong>SĐT:</strong> <span th:text="${hoaDon.thongTinNhanHang.sdt}"></span></p>
-                <p><strong>Địa chỉ:</strong> <span th:text="${hoaDon.thongTinNhanHang.diachi}"></span></p>
-                <p><strong>Tên khách hàng:</strong> <span th:text="${tenKhachHang}"></span></p>
-                <p><strong>Tổng giá:</strong>
-                    <span class="text-danger fw-bold"
-                        th:text="${#numbers.formatDecimal(hoaDon.tongGia, 0, 'COMMA', 0, 'POINT')}"></span> đ
-                </p>
-                <p><strong>Ngày tạo:</strong> <span
-                        th:text="${#temporals.format(hoaDon.ngayTao, 'dd/MM/yyyy HH:mm')}"></span></p>
-                <p><strong>Trạng thái:</strong>
-                    <th:block th:replace="~{clientTemplate/fragments/trangthaidon :: badge(trangThai=${hoaDon.trangThaiDonHang})}"></th:block>
-                </p>
+                </div>
             </div>
         </div>
 
@@ -96,13 +116,25 @@
                 </div>
             </div>
         </div>
-        <div class="mt-3">
-            <a href="/admin/hoadon" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Quay lại danh sách hóa đơn
-            </a>
-        </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const radios = document.querySelectorAll('input[name="trangThaiDonHang"]');
+            const lyDoWrap = document.getElementById('lyDoHuyWrap');
+            const lyDoInput = document.getElementById('lyDoHuy');
+            if (!radios.length || !lyDoWrap || !lyDoInput) return;
+            function syncLyDo() {
+                const checked = document.querySelector('input[name="trangThaiDonHang"]:checked');
+                const isCancel = checked && checked.value === 'Đã hủy';
+                lyDoWrap.classList.toggle('d-none', !isCancel);
+                lyDoInput.required = !!isCancel;
+                if (!isCancel) lyDoInput.value = '';
+            }
+            radios.forEach(r => r.addEventListener('change', syncLyDo));
+            syncLyDo();
+        });
+    </script>
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
 </body>
 

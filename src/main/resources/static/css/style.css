@@ -6,6 +6,10 @@ body {
     color: var(--theme-text);
 }
 
+body.admin-product-view {
+    padding-top: 0 !important;
+}
+
 .banner {
     position: relative;
     width: 100%;
@@ -392,6 +396,90 @@ footer p {
 .dropdown-item:hover {
     background-color: var(--theme-yellow);
 
+}
+
+/* Dropdown thong bao: de doc, de quet */
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] {
+    min-width: 340px;
+    max-width: 380px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 8px;
+    border-radius: 12px;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .dropdown-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #fff;
+    margin: 0;
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .dropdown-item {
+    border: 1px solid #eceff3;
+    border-radius: 10px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    white-space: normal;
+    line-height: 1.35;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .dropdown-item:hover {
+    background-color: #fff8e1;
+    border-color: #ffe08a;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .dropdown-item > div:first-child {
+    color: #2f2f2f;
+    font-size: 0.92rem;
+    margin-bottom: 4px;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .dropdown-item small {
+    color: #7a7f87;
+    font-size: 0.78rem;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .thong-bao-item {
+    text-decoration: none;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .thong-bao-item.tb-success {
+    border-left: 4px solid #28a745;
+    background: #f3fff6;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .thong-bao-item.tb-status {
+    border-left: 4px solid #0d6efd;
+    background: #f2f7ff;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .thong-bao-item.tb-cancel {
+    border-left: 4px solid #dc3545;
+    background: #fff4f5;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .thong-bao-item.tb-unread {
+    opacity: 1;
+    font-weight: 600;
+    border-left-width: 6px !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(255, 193, 7, 0.2) inset;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .thong-bao-item.tb-read {
+    opacity: 1;
+    font-weight: 400;
+    background: #f6f7f9 !important;
+    border-left-color: #9aa3ad !important;
+    color: #6b7280;
+}
+
+ul.dropdown-menu[aria-labelledby="thongBaoDropdown"] .thong-bao-item.tb-read small {
+    color: #8d96a0 !important;
 }
 
 #chatbotIcon {

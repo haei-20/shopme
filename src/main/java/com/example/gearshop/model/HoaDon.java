@@ -38,9 +38,80 @@ public class HoaDon {
     private BigDecimal tongGia;
 
     private String trangThaiDonHang;
+    private String lyDoHuy;
 
     private String phuongThucThanhToan;
     private Integer nguoiDungId;
 
-    // Getters và Setters
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getMaHoaDon() {
+        return maHoaDon;
+    }
+
+    public void setMaHoaDon(String maHoaDon) {
+        this.maHoaDon = maHoaDon;
+    }
+
+    public ThongTinNhanHang getThongTinNhanHang() {
+        return thongTinNhanHang;
+    }
+
+    public void setThongTinNhanHang(ThongTinNhanHang thongTinNhanHang) {
+        this.thongTinNhanHang = thongTinNhanHang;
+    }
+
+    public LocalDateTime getNgayTao() {
+        return ngayTao;
+    }
+
+    public void setNgayTao(LocalDateTime ngayTao) {
+        this.ngayTao = ngayTao;
+    }
+
+    public BigDecimal getTongGia() {
+        return tongGia;
+    }
+
+    public void setTongGia(BigDecimal tongGia) {
+        this.tongGia = tongGia;
+    }
+
+    public String getTrangThaiDonHang() {
+        return trangThaiDonHang;
+    }
+
+    public void setTrangThaiDonHang(String trangThaiDonHang) {
+        this.trangThaiDonHang = trangThaiDonHang;
+    }
+
+    public String getLyDoHuy() {
+        return lyDoHuy;
+    }
+
+    public void setLyDoHuy(String lyDoHuy) {
+        this.lyDoHuy = lyDoHuy;
+    }
+
+    public String getPhuongThucThanhToan() {
+        return phuongThucThanhToan;
+    }
+
+    public void setPhuongThucThanhToan(String phuongThucThanhToan) {
+        this.phuongThucThanhToan = phuongThucThanhToan;
+    }
+
+    public Integer getNguoiDungId() {
+        return nguoiDungId;
+    }
+
+    public void setNguoiDungId(Integer nguoiDungId) {
+        this.nguoiDungId = nguoiDungId;
+    }
 }

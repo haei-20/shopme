@@ -21,6 +21,8 @@ public class DanhGia {
 
     private int soSao;
     private String noiDung;
+    @Column(length = 2000)
+    private String phanHoi;
 
     private LocalDateTime ngayDanhGia;
 
@@ -32,4 +34,59 @@ public class DanhGia {
     @JoinColumn(name = "sanPhamID")
     private SanPham sanPham;
 
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public int getSoSao() {
+        return soSao;
+    }
+
+    public void setSoSao(int soSao) {
+        this.soSao = soSao;
+    }
+
+    public String getNoiDung() {
+        return noiDung;
+    }
+
+    public void setNoiDung(String noiDung) {
+        this.noiDung = noiDung;
+    }
+
+    public LocalDateTime getNgayDanhGia() {
+        return ngayDanhGia;
+    }
+
+    public void setNgayDanhGia(LocalDateTime ngayDanhGia) {
+        this.ngayDanhGia = ngayDanhGia;
+    }
+
+    public String getPhanHoi() {
+        return phanHoi;
+    }
+
+    public void setPhanHoi(String phanHoi) {
+        this.phanHoi = phanHoi;
+    }
+
+    public KhachHang getKhachHang() {
+        return khachHang;
+    }
+
+    public void setKhachHang(KhachHang khachHang) {
+        this.khachHang = khachHang;
+    }
+
+    public SanPham getSanPham() {
+        return sanPham;
+    }
+
+    public void setSanPham(SanPham sanPham) {
+        this.sanPham = sanPham;
+    }
 }

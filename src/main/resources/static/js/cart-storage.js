@@ -146,3 +146,63 @@
         }
     };
 })();
+
+(function () {
+    function updateUnreadBadgeToZero() {
+        const badge = document.querySelector('#thongBaoDropdown .badge');
+        if (badge) {
+            badge.textContent = '0';
+        }
+    }
+
+    function markItemsAsReadInUI(menu) {
+        menu.querySelectorAll('.thong-bao-item').forEach(function (item) {
+            item.classList.remove('tb-unread');
+            if (!item.classList.contains('tb-read')) {
+                item.classList.add('tb-read');
+            }
+        });
+    }
+
+    function ensureMarkAllButton(menu) {
+        if (!menu || menu.dataset.markBtnBound === '1') return;
+        const header = menu.querySelector('.dropdown-header');
+        if (!header) return;
+
+        const row = document.createElement('div');
+        row.className = 'd-flex justify-content-between align-items-center';
+        const title = document.createElement('span');
+        title.textContent = header.textContent || 'Thong bao';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-outline-secondary';
+        btn.textContent = 'Danh dau tat ca da xem';
+
+        row.appendChild(title);
+        row.appendChild(btn);
+        header.textContent = '';
+        header.appendChild(row);
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fetch('/thongbao/markAsRead?all=true', { method: 'POST' })
+                .then(function () {
+                    markItemsAsReadInUI(menu);
+                    updateUnreadBadgeToZero();
+                });
+        });
+
+        menu.addEventListener('click', function (e) {
+            const link = e.target.closest('.thong-bao-item');
+            if (!link) return;
+            fetch('/thongbao/markAsRead?all=true', { method: 'POST' });
+        });
+
+        menu.dataset.markBtnBound = '1';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const menus = document.querySelectorAll('ul.dropdown-menu[aria-labelledby="thongBaoDropdown"]');
+        menus.forEach(ensureMarkAllButton);
+    });
+})();

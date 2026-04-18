@@ -35,6 +35,16 @@ public class HomeDisplayConfig {
 
     private Integer numberOfRows;
 
+    /** Cấu hình số cột/số hàng riêng cho từng khối sản phẩm. */
+    private Integer featuredProductsPerRow;
+    private Integer featuredNumberOfRows;
+    private Integer recommendedProductsPerRow;
+    private Integer recommendedNumberOfRows;
+    private Integer recentlyViewedProductsPerRow;
+    private Integer recentlyViewedNumberOfRows;
+    private Integer byCategoryProductsPerRow;
+    private Integer byCategoryNumberOfRows;
+
     /** Bật/tắt các khối trên trang chủ (null = mặc định bật khi tải cấu hình cũ). */
     private Boolean showBanner;
     private Boolean showBannerOverlayText;
@@ -59,4 +69,11 @@ public class HomeDisplayConfig {
     private String titleSectionRecentlyViewed;
     @Column(length = 200)
     private String titleSectionByCategory;
+
+    /** Thứ tự xuất hiện các khối ở trang chủ (số nhỏ hiển thị trước). */
+    private Integer orderBanner;
+    private Integer orderSectionFeatured;
+    private Integer orderSectionRecommended;
+    private Integer orderSectionRecentlyViewed;
+    private Integer orderSectionByCategory;
 }

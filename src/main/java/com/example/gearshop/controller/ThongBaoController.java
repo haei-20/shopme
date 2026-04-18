@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -28,7 +29,10 @@ public class ThongBaoController {
 
     @ResponseBody
     @PostMapping("/markAsRead")
-    public ResponseEntity<String> markAsRead() {
+    public ResponseEntity<String> markAsRead(@RequestParam(name = "all", required = false, defaultValue = "false") boolean all) {
+        if (!all) {
+            return ResponseEntity.ok("No action");
+        }
         NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
         if (nguoiDung != null) {
             return khachHangRepository.findByNguoiDung_Id(nguoiDung.getId())

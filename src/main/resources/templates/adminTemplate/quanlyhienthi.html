@@ -68,12 +68,7 @@
                 <p class="text-muted small">Bỏ chọn để ẩn hoàn toàn khối đó trên trang chủ khách. Tiêu đề để trống thì dùng mặc định của shop.</p>
 
                 <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Tiêu đề banner (tùy chọn)</label>
-                        <input type="text" class="form-control" name="bannerTitleCustom" maxlength="300"
-                               th:value="${displayConfig.bannerTitleCustom}" placeholder="Mặc định: Chào mừng đến với [tên shop]">
-                    </div>
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <label class="form-label">Dòng mô tả dưới tiêu đề banner</label>
                         <input type="text" class="form-control" name="bannerSubtitleCustom" maxlength="1000"
                                th:value="${displayConfig.bannerSubtitleCustom}" placeholder="Mặc định: câu giới thiệu ngắn">
@@ -135,56 +130,155 @@
                     </div>
                 </div>
 
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Tiêu đề khối nổi bật</label>
-                        <input type="text" class="form-control" name="titleSectionFeatured" maxlength="200"
-                               th:value="${displayConfig.titleSectionFeatured}" placeholder="Mặc định: Sản phẩm nổi bật">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Tiêu đề khối gợi ý</label>
-                        <input type="text" class="form-control" name="titleSectionRecommended" maxlength="200"
-                               th:value="${displayConfig.titleSectionRecommended}" placeholder="Mặc định: Danh mục sản phẩm dành cho bạn">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Tiêu đề khối vừa xem</label>
-                        <input type="text" class="form-control" name="titleSectionRecentlyViewed" maxlength="200"
-                               th:value="${displayConfig.titleSectionRecentlyViewed}" placeholder="Mặc định: Danh mục sản phẩm vừa xem">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Tiêu đề nhóm theo loại</label>
-                        <input type="text" class="form-control" name="titleSectionByCategory" maxlength="200"
-                               th:value="${displayConfig.titleSectionByCategory}" placeholder="Mặc định: Linh kiện ngon bổ rẻ">
-                    </div>
-                </div>
-            </div>
+                <div class="border rounded p-3 mt-2">
+                    <div class="fw-semibold mb-2">Cấu hình từng danh mục</div>
+                    <p class="text-muted small mb-3">Kéo thả theo <strong>thanh có biểu tượng ≡</strong> để đổi thứ tự hiển thị trên trang chủ. Mỗi khối gồm tiêu đề, số sản phẩm 1 hàng và số hàng.</p>
+                    <input type="hidden" name="homeSectionOrder" id="homeSectionOrder" th:value="${homeSectionOrderCsv}">
 
-            <hr>
+                    <style>
+                        .home-section-sort-list { min-height: 2rem; }
+                        .home-section-sort-item { border: 1px solid #e5eaf3 !important; }
+                        .home-section-sort-handle {
+                            cursor: grab;
+                            user-select: none;
+                            color: #64748b;
+                            padding: 0.35rem 0.6rem;
+                            margin: -0.35rem -0.5rem 0.65rem -0.5rem;
+                            border-radius: 8px 8px 0 0;
+                            background: #f1f5f9;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.35rem;
+                            font-size: 0.8rem;
+                            font-weight: 600;
+                        }
+                        .home-section-sort-handle:active { cursor: grabbing; }
+                        .home-section-sort-item.dragging { opacity: 0.65; }
+                    </style>
 
-            <div class="mb-4">
-                <h4 class="mb-3">3. Hiển thị sản phẩm (lưới)</h4>
-
-                <div class="mb-3">
-                    <label class="form-label">Thứ tự hiển thị sản phẩm</label>
-                    <select class="form-select" name="productDisplayOrder">
-                        <option value="BEST_SELLING" th:selected="${displayConfig.productDisplayOrder == 'BEST_SELLING'}">Bán chạy</option>
-                        <option value="NEWEST" th:selected="${displayConfig.productDisplayOrder == 'NEWEST'}">Mới nhất</option>
-                        <option value="PRICE_ASC" th:selected="${displayConfig.productDisplayOrder == 'PRICE_ASC'}">Giá tăng dần</option>
-                        <option value="PRICE_DESC" th:selected="${displayConfig.productDisplayOrder == 'PRICE_DESC'}">Giá giảm dần</option>
-                        <option value="NAME_ASC" th:selected="${displayConfig.productDisplayOrder == 'NAME_ASC'}">Tên A đến Z</option>
-                    </select>
-                </div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Số lượng sản phẩm 1 hàng</label>
-                        <input type="number" class="form-control" name="productsPerRow" min="1" max="6"
-                               th:value="${displayConfig.productsPerRow}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Số lượng hàng của mỗi mục</label>
-                        <input type="number" class="form-control" name="numberOfRows" min="1" max="6"
-                               th:value="${displayConfig.numberOfRows}">
+                    <div id="homeSectionSortList" class="home-section-sort-list d-flex flex-column gap-2">
+                        <th:block th:each="sectionKey : ${homeSectionKeysOrder}">
+                            <th:block th:switch="${sectionKey}">
+                                <th:block th:case="'banner'">
+                                    <div class="home-section-sort-item card shadow-sm mb-0" data-section-key="banner">
+                                        <div class="card-body pt-2">
+                                            <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Banner (chữ trên banner)</div>
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Tiêu đề banner</label>
+                                                    <input type="text" class="form-control" name="bannerTitleCustom" maxlength="300"
+                                                           th:value="${displayConfig.bannerTitleCustom}" placeholder="Mặc định: Chào mừng đến với [tên shop]">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">SP / hàng</label>
+                                                    <input type="number" class="form-control" min="1" max="6" th:value="${displayConfig.productsPerRow}" disabled>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Số hàng</label>
+                                                    <input type="number" class="form-control" min="1" max="6" th:value="${displayConfig.numberOfRows}" disabled>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th:block>
+                                <th:block th:case="'featured'">
+                                    <div class="home-section-sort-item card shadow-sm mb-0" data-section-key="featured">
+                                        <div class="card-body pt-2">
+                                            <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối nổi bật</div>
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Tiêu đề khối nổi bật</label>
+                                                    <input type="text" class="form-control" name="titleSectionFeatured" maxlength="200"
+                                                           th:value="${displayConfig.titleSectionFeatured}" placeholder="Mặc định: Sản phẩm nổi bật">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">SP / hàng</label>
+                                                    <input type="number" class="form-control" name="featuredProductsPerRow" min="1" max="6"
+                                                           th:value="${displayConfig.featuredProductsPerRow}">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Số hàng</label>
+                                                    <input type="number" class="form-control" name="featuredNumberOfRows" min="1" max="6"
+                                                           th:value="${displayConfig.featuredNumberOfRows}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th:block>
+                                <th:block th:case="'recommended'">
+                                    <div class="home-section-sort-item card shadow-sm mb-0" data-section-key="recommended">
+                                        <div class="card-body pt-2">
+                                            <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối gợi ý</div>
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Tiêu đề khối gợi ý</label>
+                                                    <input type="text" class="form-control" name="titleSectionRecommended" maxlength="200"
+                                                           th:value="${displayConfig.titleSectionRecommended}" placeholder="Mặc định: Danh mục sản phẩm dành cho bạn">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">SP / hàng</label>
+                                                    <input type="number" class="form-control" name="recommendedProductsPerRow" min="1" max="6"
+                                                           th:value="${displayConfig.recommendedProductsPerRow}">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Số hàng</label>
+                                                    <input type="number" class="form-control" name="recommendedNumberOfRows" min="1" max="6"
+                                                           th:value="${displayConfig.recommendedNumberOfRows}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th:block>
+                                <th:block th:case="'recentlyViewed'">
+                                    <div class="home-section-sort-item card shadow-sm mb-0" data-section-key="recentlyViewed">
+                                        <div class="card-body pt-2">
+                                            <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối vừa xem</div>
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Tiêu đề khối vừa xem</label>
+                                                    <input type="text" class="form-control" name="titleSectionRecentlyViewed" maxlength="200"
+                                                           th:value="${displayConfig.titleSectionRecentlyViewed}" placeholder="Mặc định: Danh mục sản phẩm vừa xem">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">SP / hàng</label>
+                                                    <input type="number" class="form-control" name="recentlyViewedProductsPerRow" min="1" max="6"
+                                                           th:value="${displayConfig.recentlyViewedProductsPerRow}">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Số hàng</label>
+                                                    <input type="number" class="form-control" name="recentlyViewedNumberOfRows" min="1" max="6"
+                                                           th:value="${displayConfig.recentlyViewedNumberOfRows}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th:block>
+                                <th:block th:case="'byCategory'">
+                                    <div class="home-section-sort-item card shadow-sm mb-0" data-section-key="byCategory">
+                                        <div class="card-body pt-2">
+                                            <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối theo loại</div>
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Tiêu đề khối theo loại</label>
+                                                    <input type="text" class="form-control" name="titleSectionByCategory" maxlength="200"
+                                                           th:value="${displayConfig.titleSectionByCategory}" placeholder="Mặc định: Linh kiện ngon bổ rẻ">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">SP / hàng</label>
+                                                    <input type="number" class="form-control" name="byCategoryProductsPerRow" min="1" max="6"
+                                                           th:value="${displayConfig.byCategoryProductsPerRow}">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Số hàng</label>
+                                                    <input type="number" class="form-control" name="byCategoryNumberOfRows" min="1" max="6"
+                                                           th:value="${displayConfig.byCategoryNumberOfRows}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th:block>
+                            </th:block>
+                        </th:block>
                     </div>
                 </div>
             </div>
@@ -246,6 +340,67 @@
 
         bannerSourceType.addEventListener('change', toggleBannerInputs);
         toggleBannerInputs();
+
+        (function initSortableHomeSections() {
+            const list = document.getElementById('homeSectionSortList');
+            const hidden = document.getElementById('homeSectionOrder');
+            if (!list || !hidden) return;
+
+            let dragEl = null;
+
+            function syncHomeSectionOrder() {
+                const keys = Array.prototype.map.call(list.querySelectorAll('.home-section-sort-item'), function (el) {
+                    return el.getAttribute('data-section-key');
+                });
+                hidden.value = keys.join(',');
+            }
+
+            function getDragAfterElement(container, y) {
+                const nodes = Array.prototype.slice.call(container.querySelectorAll('.home-section-sort-item:not(.dragging)'));
+                return nodes.reduce(function (closest, child) {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    }
+                    return closest;
+                }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+            }
+
+            list.querySelectorAll('.home-section-sort-item').forEach(function (item) {
+                const handle = item.querySelector('.home-section-sort-handle');
+                if (!handle) return;
+                handle.addEventListener('dragstart', function (e) {
+                    dragEl = item;
+                    try {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', item.getAttribute('data-section-key') || '');
+                    } catch (err) { /* ignore */ }
+                    item.classList.add('dragging');
+                });
+                handle.addEventListener('dragend', function () {
+                    item.classList.remove('dragging');
+                    dragEl = null;
+                    syncHomeSectionOrder();
+                });
+            });
+
+            list.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                if (!dragEl) return;
+                const after = getDragAfterElement(list, e.clientY);
+                if (after == null) {
+                    list.appendChild(dragEl);
+                } else {
+                    list.insertBefore(dragEl, after);
+                }
+            });
+
+            const form = list.closest('form');
+            if (form) {
+                form.addEventListener('submit', syncHomeSectionOrder);
+            }
+        })();
     </script>
 
 

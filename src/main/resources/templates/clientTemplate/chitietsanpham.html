@@ -14,8 +14,8 @@
     <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 
-<body class="with-category-nav">
-    <div class="site-top-fixed-stack">
+<body th:classappend="${isAdminView} ? 'admin-product-view' : 'with-category-nav'">
+    <div class="site-top-fixed-stack" th:if="${!isAdminView}">
     <!-- Header -->
     <header class="bg-dark text-white site-header py-3">
         <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -78,10 +78,12 @@
                             <p class="text-muted">Không có thông báo mới.</p>
                         </li>
                         <li th:each="tb : ${thongBaos}">
-                            <div class="dropdown-item">
-                                <div th:text="${tb.noiDung}"></div>
+                            <a class="dropdown-item thong-bao-item"
+                                th:classappend="${thongBaoLoaiCssById != null ? thongBaoLoaiCssById[tb.id] : 'tb-default'}"
+                                th:href="${thongBaoLinkById != null and thongBaoLinkById[tb.id] != null ? thongBaoLinkById[tb.id] : '#'}">
+                                <div th:text="${thongBaoNoiDungById != null ? thongBaoNoiDungById[tb.id] : tb.noiDung}"></div>
                                 <small th:text="${#temporals.format(tb.ngayThongBao, 'dd/MM/yyyy HH:mm')}"></small>
-                            </div>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -129,7 +131,14 @@
     </div>
 
     <!-- Chi tiết sản phẩm -->
-    <div class="container my-5">
+    <div class="container my-4">
+        <div class="row mb-3" th:if="${isAdminView}">
+            <div class="col-md-12 text-start">
+                <a href="/admin/quanlysanpham" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Quay lại quản lý sản phẩm
+                </a>
+            </div>
+        </div>
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
             <span th:text="${successMessage}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -163,14 +172,15 @@
             </div>
         </div>
         <!-- Nút Thêm vào giỏ hàng -->
-        <div class="row mt-4">
+        <div class="row mt-4" th:if="${!isAdminView}">
             <div class="col-md-12 text-center">
                 <button id="btnAddToCart" class="btn btn-primary">Thêm vào giỏ hàng</button>
             </div>
         </div>
 
         <!-- Modal chọn số lượng -->
-        <div class="modal fade" id="quantityModal" tabindex="-1" aria-labelledby="quantityModalLabel" aria-hidden="true">
+        <div class="modal fade" id="quantityModal" tabindex="-1" aria-labelledby="quantityModalLabel" aria-hidden="true"
+            th:if="${!isAdminView}">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -429,7 +439,8 @@
                 <div th:if="${danhGias == null or #lists.isEmpty(danhGias)}" class="text-muted py-3">
                     Chưa có đánh giá nào. Hãy là người đầu tiên chia sẻ!
                 </div>
-                <div th:each="dg : ${danhGias}" class="border rounded p-3 mb-3 bg-light">
+                <div th:each="dg : ${danhGias}" class="border rounded p-3 mb-3 bg-light"
+                    th:attr="id=${'danh-gia-' + dg.id}">
                     <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
                         <strong th:text="${dg.khachHang != null and dg.khachHang.nguoiDung != null and dg.khachHang.nguoiDung.tenNguoiDung != null and !#strings.isEmpty(dg.khachHang.nguoiDung.tenNguoiDung)} ? ${#strings.substring(dg.khachHang.nguoiDung.tenNguoiDung, 0, 1)} + '***' : 'Khách hàng'">K***</strong>
                         <small class="text-muted" th:if="${dg.ngayDanhGia != null}"
@@ -442,6 +453,38 @@
                         </span>
                     </div>
                     <p class="mb-0" th:text="${dg.noiDung}">Nội dung đánh giá</p>
+                    <div th:if="${dg.phanHoi != null and !#strings.isEmpty(dg.phanHoi)}"
+                        class="mt-3 p-3 border-start border-4 border-primary bg-white rounded">
+                        <div class="fw-semibold text-primary small mb-1">
+                            <i class="bi bi-reply-fill me-1"></i>Phản hồi từ cửa hàng
+                        </div>
+                        <p class="mb-0 small" th:text="${dg.phanHoi}">Nội dung phản hồi</p>
+                    </div>
+                    <div th:if="${isAdminView}" class="mt-3">
+                        <button th:if="${dg.phanHoi != null and !#strings.isEmpty(dg.phanHoi)}" type="button"
+                            class="btn btn-sm btn-outline-secondary mb-2 btn-edit-phanhoi"
+                            th:attr="data-target=${'form-phanhoi-' + dg.id}">
+                            <i class="bi bi-pencil-square"></i> Sửa phản hồi
+                        </button>
+                        <form th:action="@{/admin/danhgia/phanhoi/{id}(id=${dg.id})}" method="post"
+                            th:id="${'form-phanhoi-' + dg.id}"
+                            th:classappend="${dg.phanHoi != null and !#strings.isEmpty(dg.phanHoi)} ? 'd-none' : ''">
+                            <input type="hidden" name="redirectSanPhamId" th:value="${sanPham.id}" />
+                            <label class="form-label small text-muted mb-1">Phản hồi của admin</label>
+                            <textarea name="phanHoi" class="form-control form-control-sm mb-2" rows="2"
+                                maxlength="2000" placeholder="Nhập phản hồi cho đánh giá này..."></textarea>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-send"></i> Gửi phản hồi
+                                </button>
+                                <button th:if="${dg.phanHoi != null and !#strings.isEmpty(dg.phanHoi)}" type="button"
+                                    class="btn btn-sm btn-outline-secondary btn-cancel-phanhoi"
+                                    th:attr="data-target=${'form-phanhoi-' + dg.id}">
+                                    Hủy
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -484,7 +527,7 @@
 
 </body>
 <!-- Footer -->
-<footer class="bg-dark text-light pt-4 mt-5">
+<footer class="bg-dark text-light pt-4 mt-5" th:if="${!isAdminView}">
     <div class="container">
         <div class="row">
             <!-- Thông tin shop -->
@@ -539,6 +582,27 @@
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.btn-edit-phanhoi').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const id = btn.getAttribute('data-target');
+                const form = document.getElementById(id);
+                if (form) form.classList.remove('d-none');
+                btn.classList.add('d-none');
+            });
+        });
+        document.querySelectorAll('.btn-cancel-phanhoi').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const id = btn.getAttribute('data-target');
+                const form = document.getElementById(id);
+                if (!form) return;
+                form.classList.add('d-none');
+                const text = form.querySelector('textarea[name="phanHoi"]');
+                if (text) text.value = '';
+                const editBtn = form.parentElement.querySelector('.btn-edit-phanhoi');
+                if (editBtn) editBtn.classList.remove('d-none');
+            });
+        });
+
         const cartItemsContainer = document.getElementById('cartItems');
         const cartItemCount = document.getElementById('cartItemCount');
         const btnAddToCart = document.getElementById('btnAddToCart');
@@ -546,7 +610,8 @@
         const btnMinus = document.getElementById('btnMinus');
         const btnPlus = document.getElementById('btnPlus');
         const quantityDisplay = document.getElementById('quantityDisplay');
-        const quantityModal = new bootstrap.Modal(document.getElementById('quantityModal'));
+        const quantityModalElement = document.getElementById('quantityModal');
+        const quantityModal = quantityModalElement ? new bootstrap.Modal(quantityModalElement) : null;
 
         let cart = [];
 
@@ -566,6 +631,7 @@
 
         // Cập nhật giao diện giỏ hàng
         function updateCartUI() {
+            if (!cartItemsContainer || !cartItemCount) return;
             syncCartFromStorage();
             cartItemCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
 
@@ -586,6 +652,10 @@
                     )
                     .join('');
             }
+        }
+
+        if (!btnAddToCart || !btnConfirm || !btnMinus || !btnPlus || !quantityDisplay || !quantityModal) {
+            return;
         }
 
         // Mở modal khi nhấn "Thêm vào giỏ hàng"

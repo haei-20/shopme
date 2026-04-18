@@ -25,15 +25,47 @@
         </div>
 
         <form class="row g-2 align-items-end mb-4" th:action="@{/admin/danhgia}" method="get">
-            <div class="col-md-3">
-                <label class="form-label small text-muted mb-0">Mã SP (ID)</label>
-                <input type="number" name="sanPhamId" class="form-control" placeholder="VD: 12"
-                    th:value="${sanPhamIdLoc}">
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-0" for="locSanPhamId">Sản phẩm (ID)</label>
+                <select class="form-select" id="locSanPhamId" name="sanPhamId">
+                    <option value="">Tất cả</option>
+                    <option th:each="sp : ${dsSanPhamLoc}" th:value="${sp.id}"
+                        th:selected="${sanPhamIdLoc != null and sanPhamIdLoc == sp.id}"
+                        th:text="${sp.id}">1</option>
+                </select>
             </div>
-            <div class="col-md-5">
-                <label class="form-label small text-muted mb-0">Tìm theo tên / mã sản phẩm</label>
-                <input type="text" name="tuKhoa" class="form-control" placeholder="Nhập từ khóa…"
-                    th:value="${tuKhoa}">
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-0" for="locSanPhamTen">Tên sản phẩm</label>
+                <select class="form-select" id="locSanPhamTen">
+                    <option value="">Tất cả</option>
+                    <option th:each="sp : ${dsSanPhamLoc}" th:value="${sp.id}"
+                        th:selected="${sanPhamIdLoc != null and sanPhamIdLoc == sp.id}"
+                        th:text="${sp.tenSanPham != null ? sp.tenSanPham : '—'}">Sản phẩm</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-0">Khách hàng</label>
+                <input type="text" name="khachHang" class="form-control" placeholder="Tên đăng nhập"
+                    th:value="${khachHangLoc}">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small text-muted mb-0">Sao</label>
+                <select class="form-select" name="soSao">
+                    <option value="">Tất cả</option>
+                    <option value="5" th:selected="${soSaoLoc == 5}">5</option>
+                    <option value="4" th:selected="${soSaoLoc == 4}">4</option>
+                    <option value="3" th:selected="${soSaoLoc == 3}">3</option>
+                    <option value="2" th:selected="${soSaoLoc == 2}">2</option>
+                    <option value="1" th:selected="${soSaoLoc == 1}">1</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-0">Từ ngày</label>
+                <input type="date" name="tuNgay" class="form-control" th:value="${tuNgayLoc}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted mb-0">Đến ngày</label>
+                <input type="date" name="denNgay" class="form-control" th:value="${denNgayLoc}">
             </div>
             <div class="col-md-auto d-flex gap-2">
                 <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Lọc</button>
@@ -51,7 +83,7 @@
                         <th style="width:100px">Sao</th>
                         <th>Nội dung</th>
                         <th style="width:150px">Ngày</th>
-                        <th style="width:100px">Thao tác</th>
+                        <th style="width:180px">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -86,6 +118,11 @@
                         <td class="small text-muted"
                             th:text="${dg.ngayDanhGia != null ? #temporals.format(dg.ngayDanhGia, 'dd/MM/yyyy HH:mm') : '—'}">—</td>
                         <td>
+                            <a class="btn btn-sm btn-outline-primary mb-1"
+                                th:href="|/chitietsanpham/${dg.sanPham.id}#danh-gia-${dg.id}|"
+                                target="_blank" rel="noopener">
+                                <i class="bi bi-chat-left-text"></i> Xem đánh giá
+                            </a>
                             <form th:action="@{/admin/danhgia/xoa/{id}(id=${dg.id})}" method="post" class="d-inline"
                                 onsubmit="return confirm('Xóa đánh giá này?');">
                                 <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -99,6 +136,15 @@
         </div>
     </main>
 
+    <script>
+        (function () {
+            var idSel = document.getElementById('locSanPhamId');
+            var tenSel = document.getElementById('locSanPhamTen');
+            if (!idSel || !tenSel) return;
+            idSel.addEventListener('change', function () { tenSel.value = idSel.value; });
+            tenSel.addEventListener('change', function () { idSel.value = tenSel.value; });
+        })();
+    </script>
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
 </body>
 

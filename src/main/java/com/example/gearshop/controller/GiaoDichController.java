@@ -1,6 +1,5 @@
 package com.example.gearshop.controller;
 
-import java.nio.file.AccessDeniedException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -93,7 +92,8 @@ public class GiaoDichController {
     @GetMapping("/lichsugiaodich/{id}")
     public String chiTietGiaoDich(@PathVariable Integer id,
             HttpSession session,
-            Model model) throws AccessDeniedException {
+            RedirectAttributes redirectAttributes,
+            Model model) {
 
         NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
         if (nguoiDung == null) {
@@ -102,7 +102,9 @@ public class GiaoDichController {
 
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
         if (khachHang == null || !hoaDonService.belongsToKhachHang(id, khachHang.getId())) {
-            throw new AccessDeniedException("Bạn không có quyền xem giao dịch này.");
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Không tìm thấy đơn hàng hoặc bạn không có quyền xem.");
+            return "redirect:/lichsugiaodich";
         }
 
         HoaDon hoaDon = hoaDonService.getHoaDonById(id);
@@ -114,12 +116,10 @@ public class GiaoDichController {
 
         Map<Integer, Boolean> coTheDanhGiaSanPham = new HashMap<>();
         Map<Integer, Boolean> daDanhGiaSanPham = new HashMap<>();
-        if (khachHang != null) {
-            for (var item : danhSachSanPham) {
-                int spId = item.getSanPham().getId();
-                coTheDanhGiaSanPham.put(spId, danhGiaService.duocPhepDanhGia(khachHang.getId(), spId));
-                daDanhGiaSanPham.put(spId, danhGiaService.daCoDanhGia(khachHang.getId(), spId));
-            }
+        for (var item : danhSachSanPham) {
+            int spId = item.getSanPham() != null ? item.getSanPham().getId() : item.getHoaDonChiTiet().getSanPhamID();
+            coTheDanhGiaSanPham.put(spId, danhGiaService.duocPhepDanhGia(khachHang.getId(), spId));
+            daDanhGiaSanPham.put(spId, danhGiaService.daCoDanhGia(khachHang.getId(), spId));
         }
         model.addAttribute("coTheDanhGiaSanPham", coTheDanhGiaSanPham);
         model.addAttribute("daDanhGiaSanPham", daDanhGiaSanPham);

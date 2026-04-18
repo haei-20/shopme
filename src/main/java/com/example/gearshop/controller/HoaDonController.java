@@ -16,6 +16,7 @@ import com.example.gearshop.model.ThongTinNhanHang;
 import com.example.gearshop.model.Voucher;
 import com.example.gearshop.service.GioHangService;
 import com.example.gearshop.service.HoaDonService;
+import com.example.gearshop.service.ThongBaoService;
 import com.example.gearshop.service.ThongTinNhanHangService;
 import com.example.gearshop.service.VoucherService;
 
@@ -35,6 +36,8 @@ public class HoaDonController {
 
     @Autowired
     private GioHangService gioHangService;
+    @Autowired
+    private ThongBaoService thongBaoService;
 
     @PostMapping("/save-order")
     public String saveOrder(HttpSession session,
@@ -132,6 +135,11 @@ public class HoaDonController {
         session.removeAttribute("selectedItems");
         gioHangService.removeSelectedCartItems(khachHang.getId(), purchasedSanPhamIds);
         session.setAttribute("cart", gioHangService.buildSessionCartPayload(khachHang.getId()));
+        thongBaoService.taoThongBaoDonHang(
+                khachHang.getId(),
+                hoaDon.getId(),
+                ThongBaoService.LOAI_DAT_HANG_THANH_CONG,
+                "Đặt hàng thành công. Mã đơn: " + hoaDon.getMaHoaDon() + ".");
         return "redirect:/dat-hang-thanh-cong?hoaDonId=" + hoaDon.getId();
     }
 }

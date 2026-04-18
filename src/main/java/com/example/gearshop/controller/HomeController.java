@@ -89,6 +89,27 @@ public class HomeController {
         model.addAttribute("homeBannerTitleCustom", btc != null && !btc.isBlank() ? btc.trim() : null);
         String bst = displayConfig.getBannerSubtitleCustom();
         model.addAttribute("homeBannerSubtitleCustom", bst != null && !bst.isBlank() ? bst.trim() : null);
+        model.addAttribute("homeSectionOrder", homeDisplayConfigService.sectionKeysSortedByDisplayOrder(displayConfig));
+        int featuredProductsPerRow = getPositiveOrDefault(displayConfig.getFeaturedProductsPerRow(),
+                displayConfig.getProductsPerRow(), 4);
+        int featuredNumberOfRows = getPositiveOrDefault(displayConfig.getFeaturedNumberOfRows(),
+                displayConfig.getNumberOfRows(), 2);
+        int recommendedProductsPerRow = getPositiveOrDefault(displayConfig.getRecommendedProductsPerRow(),
+                displayConfig.getProductsPerRow(), 4);
+        int recommendedNumberOfRows = getPositiveOrDefault(displayConfig.getRecommendedNumberOfRows(),
+                displayConfig.getNumberOfRows(), 2);
+        int recentlyViewedProductsPerRow = getPositiveOrDefault(displayConfig.getRecentlyViewedProductsPerRow(),
+                displayConfig.getProductsPerRow(), 4);
+        int recentlyViewedNumberOfRows = getPositiveOrDefault(displayConfig.getRecentlyViewedNumberOfRows(),
+                displayConfig.getNumberOfRows(), 2);
+        int byCategoryProductsPerRow = getPositiveOrDefault(displayConfig.getByCategoryProductsPerRow(),
+                displayConfig.getProductsPerRow(), 4);
+        int byCategoryNumberOfRows = getPositiveOrDefault(displayConfig.getByCategoryNumberOfRows(),
+                displayConfig.getNumberOfRows(), 2);
+        model.addAttribute("featuredProductsPerRow", featuredProductsPerRow);
+        model.addAttribute("recommendedProductsPerRow", recommendedProductsPerRow);
+        model.addAttribute("recentlyViewedProductsPerRow", recentlyViewedProductsPerRow);
+        model.addAttribute("byCategoryProductsPerRow", byCategoryProductsPerRow);
 
         // Lấy thông tin người dùng từ session
         NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
@@ -109,7 +130,9 @@ public class HomeController {
             danhSachSanPhamDaXem.sort(Comparator.comparingInt(sp -> sanPhamDaXem.indexOf(sp.getId().intValue())));
         }
 
-        model.addAttribute("danhSachSanPhamDaXem", homeDisplayConfigService.limitProducts(danhSachSanPhamDaXem, displayConfig));
+        model.addAttribute("danhSachSanPhamDaXem",
+                homeDisplayConfigService.limitProducts(danhSachSanPhamDaXem, recentlyViewedProductsPerRow,
+                        recentlyViewedNumberOfRows));
 
         SanPham sanPhamMoiXem = (SanPham) session.getAttribute("sanPhamMoiXem");
         List<SanPham> sanPhamGoiY = new ArrayList<>();
@@ -118,10 +141,12 @@ public class HomeController {
             sanPhamGoiY = sanPhamService.getSanPhamTuongTu(sanPhamMoiXem);
         }
 
-        model.addAttribute("sanPhamGoiY", homeDisplayConfigService.limitProducts(sanPhamGoiY, displayConfig));
+        model.addAttribute("sanPhamGoiY",
+                homeDisplayConfigService.limitProducts(sanPhamGoiY, recommendedProductsPerRow, recommendedNumberOfRows));
         // Thêm các sản phẩm bán chạy vào model
         model.addAttribute("sanPhamBanChay",
-                homeDisplayConfigService.sortAndLimitProducts(sanPhamRepo.findAll(), displayConfig));
+                homeDisplayConfigService.sortAndLimitProducts(sanPhamRepo.findAll(), displayConfig.getProductDisplayOrder(),
+                        featuredProductsPerRow, featuredNumberOfRows));
 
         // Thêm danh mục sản phẩm theo loại vào model
         List<String> tenLoaiList = List.of("Mainboard", "CPU", "RAM", "VGA", "Ổ cứng", "Nguồn", "Tản nhiệt", "Case",
@@ -131,12 +156,19 @@ public class HomeController {
             LoaiSanPham loai = loaiSPRepo.findByTenLoaiSanPham(tenLoai);
             if (loai != null) {
                 sanPhamTheoLoai.put(tenLoai, homeDisplayConfigService.sortAndLimitProducts(
-                        sanPhamRepo.findByLoaiSanPham_TenLoaiSanPham(tenLoai), displayConfig));
+                        sanPhamRepo.findByLoaiSanPham_TenLoaiSanPham(tenLoai), displayConfig.getProductDisplayOrder(),
+                        byCategoryProductsPerRow, byCategoryNumberOfRows));
             }
         }
         model.addAttribute("sanPhamTheoLoai", sanPhamTheoLoai);
 
         return "clientTemplate/trangchu"; // Trả về giao diện trang chủ
+    }
+
+    private int getPositiveOrDefault(Integer value, Integer fallback, int defaultValue) {
+        Integer candidate = value != null ? value : fallback;
+        int resolved = candidate != null ? candidate.intValue() : defaultValue;
+        return Math.max(1, resolved);
     }
 
     @GetMapping("/dangnhap")

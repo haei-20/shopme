@@ -2,6 +2,8 @@ package com.example.gearshop.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -32,19 +34,30 @@ public class AdminHoaDonController {
     public String danhSachHoaDon(
             @RequestParam(value = "sortOrder", required = false, defaultValue = "desc") String sortOrder,
             @RequestParam(value = "tenKhachHang", required = false) String tenKhachHang,
+            @RequestParam(value = "maHoaDon", required = false) String maHoaDon,
+            @RequestParam(value = "trangThai", required = false) String trangThai,
+            @RequestParam(value = "tuNgay", required = false) LocalDate tuNgay,
+            @RequestParam(value = "denNgay", required = false) LocalDate denNgay,
             Model model) {
 
-        List<HoaDon> hoaDons;
-
-        if (tenKhachHang != null && !tenKhachHang.isEmpty()) {
-            hoaDons = hoaDonService.getHoaDonByTenKhachHang(tenKhachHang);
-        } else {
-            hoaDons = hoaDonService.getAllHoaDonsSorted(sortOrder);
+        List<HoaDon> hoaDons = hoaDonService.getHoaDonsByFilters(
+                sortOrder, maHoaDon, tenKhachHang, trangThai, tuNgay, denNgay);
+        Map<Integer, String> tenKhachDatByHoaDonId = new HashMap<>();
+        for (HoaDon hd : hoaDons) {
+            Integer khachHangId = hd.getThongTinNhanHang() != null ? hd.getThongTinNhanHang().getKhachHangID() : null;
+            String ten = khachHangId != null ? hoaDonService.getTenKhachHangByThongTinNhanHangID(khachHangId) : "—";
+            tenKhachDatByHoaDonId.put(hd.getId(), ten);
         }
 
         model.addAttribute("hoaDons", hoaDons);
+        model.addAttribute("tenKhachDatByHoaDonId", tenKhachDatByHoaDonId);
         model.addAttribute("sortOrder", sortOrder);
         model.addAttribute("tenKhachHang", tenKhachHang);
+        model.addAttribute("maHoaDon", maHoaDon);
+        model.addAttribute("trangThai", trangThai);
+        model.addAttribute("tuNgay", tuNgay);
+        model.addAttribute("denNgay", denNgay);
+        model.addAttribute("cacTrangThaiDon", TrangThaiHoaDonHang.danhSachLoc());
         return "adminTemplate/hoadon";
     }
 
@@ -58,12 +71,14 @@ public class AdminHoaDonController {
         String chuan = HoaDonService.chuanHoaTrangThai(hoaDon.getTrangThaiDonHang());
         boolean trongDanhSach = chuan != null && !chuan.isBlank()
                 && TrangThaiHoaDonHang.danhSachLoc().contains(chuan);
+        List<String> trangThaiTiepTheo = hoaDonService.layTrangThaiTiepTheoHopLe(chuan);
 
         model.addAttribute("hoaDon", hoaDon);
         model.addAttribute("tenKhachHang", tenKhachHang);
         model.addAttribute("sanPhamList", sanPhamTrongHoaDon);
         model.addAttribute("cacTrangThaiDon", TrangThaiHoaDonHang.danhSachLoc());
         model.addAttribute("trangThaiChuan", trongDanhSach ? chuan : null);
+        model.addAttribute("trangThaiTiepTheo", trangThaiTiepTheo);
         return "adminTemplate/hoadonchitiet";
     }
 
@@ -71,9 +86,10 @@ public class AdminHoaDonController {
     @PostMapping(value = "/chitiet/{id}/trangthai", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String capNhatTrangThaiForm(@PathVariable Integer id,
             @RequestParam("trangThaiDonHang") String trangThaiDonHang,
+            @RequestParam(value = "lyDoHuy", required = false) String lyDoHuy,
             RedirectAttributes redirectAttributes) {
         try {
-            hoaDonService.capNhatTrangThaiDonHang(id, trangThaiDonHang);
+            hoaDonService.capNhatTrangThaiDonHang(id, trangThaiDonHang, lyDoHuy);
             redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật trạng thái đơn hàng.");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -88,13 +104,14 @@ public class AdminHoaDonController {
             @RequestBody(required = false) CapNhatTrangThaiDonBody body) {
         try {
             String tt = body != null ? body.trangThaiDonHang() : null;
-            hoaDonService.capNhatTrangThaiDonHang(id, tt);
+            String lyDoHuy = body != null ? body.lyDoHuy() : null;
+            hoaDonService.capNhatTrangThaiDonHang(id, tt, lyDoHuy);
             return ResponseEntity.ok(Map.of("success", true, "message", "Đã cập nhật trạng thái đơn hàng."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
-    public record CapNhatTrangThaiDonBody(String trangThaiDonHang) {
+    public record CapNhatTrangThaiDonBody(String trangThaiDonHang, String lyDoHuy) {
     }
 }

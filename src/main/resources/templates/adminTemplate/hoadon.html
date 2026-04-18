@@ -10,21 +10,44 @@
         <div class="container mt-5">
             <h2 class="mb-3">Quản lý Hóa đơn</h2>
 
-            <form class="row mb-3" method="get" action="#" th:action="@{/admin/hoadon}">
-                <div class="col-md-4">
-                    <input type="text" name="tenKhachHang" class="form-control" placeholder="Tìm theo tên khách hàng..."
+            <form class="row g-2 mb-3" method="get" action="#" th:action="@{/admin/hoadon}">
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-0">Mã hóa đơn</label>
+                    <input type="text" name="maHoaDon" class="form-control" placeholder="VD: HD001" th:value="${maHoaDon}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-0">Tên khách hàng</label>
+                    <input type="text" name="tenKhachHang" class="form-control" placeholder="Tên khách đặt hàng"
                         th:value="${tenKhachHang}">
                 </div>
-                <div class="col-md-4">
-                    <select name="sortOrder" class="form-select">
-                        <option value="desc" th:selected="${sortOrder == 'desc'}">Ngày mới nhất</option>
-                        <option value="asc" th:selected="${sortOrder == 'asc'}">Ngày cũ nhất</option>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-0">Trạng thái</label>
+                    <select name="trangThai" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option th:each="tt : ${cacTrangThaiDon}" th:value="${tt}" th:text="${tt}"
+                            th:selected="${trangThai == tt}">Trạng thái</option>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-0">Từ ngày</label>
+                    <input type="date" name="tuNgay" class="form-control" th:value="${tuNgay}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-0">Đến ngày</label>
+                    <input type="date" name="denNgay" class="form-control" th:value="${denNgay}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-0">Sắp xếp ngày</label>
+                    <select name="sortOrder" class="form-select">
+                        <option value="desc" th:selected="${sortOrder == 'desc'}">Mới nhất</option>
+                        <option value="asc" th:selected="${sortOrder == 'asc'}">Cũ nhất</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex gap-2 align-items-end">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-search"></i> Lọc/Sắp xếp
+                        <i class="bi bi-search"></i> Lọc
                     </button>
+                    <a th:href="@{/admin/hoadon}" class="btn btn-outline-secondary">Xóa lọc</a>
                 </div>
             </form>
             <div class="table-responsive">
@@ -32,7 +55,7 @@
                     <thead class="table-primary">
                         <tr>
                             <th scope="col">Mã Hóa đơn</th>
-                            <th scope="col">Người nhận</th>
+                            <th scope="col">Khách hàng đặt</th>
                             <th scope="col">Tổng tiền</th>
                             <th scope="col">Ngày tạo</th>
                             <th scope="col">Trạng thái</th>
@@ -42,7 +65,7 @@
                     <tbody>
                         <tr th:each="hd : ${hoaDons}">
                             <td th:text="${hd.maHoaDon}"></td>
-                            <td th:text="${hd.thongTinNhanHang.tenNguoiNhan}"></td>
+                            <td th:text="${tenKhachDatByHoaDonId[hd.id]}"></td>
                             <td>
                                 <span th:text="${#numbers.formatDecimal(hd.tongGia, 0, 'COMMA', 2, 'POINT')}"></span> đ
                             </td>

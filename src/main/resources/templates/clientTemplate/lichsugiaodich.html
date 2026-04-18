@@ -65,14 +65,16 @@
                         <li>
                             <h6 class="dropdown-header">Thông báo</h6>
                         </li>
-                        <li th:if="${#lists.isEmpty(thongBaos)}">
+                        <li th:if="${thongBaos == null or #lists.isEmpty(thongBaos)}">
                             <p class="text-muted">Không có thông báo mới.</p>
                         </li>
                         <li th:each="tb : ${thongBaos}">
-                            <div class="dropdown-item">
-                                <div th:text="${tb.noiDung}"></div>
+                            <a class="dropdown-item thong-bao-item"
+                                th:classappend="${thongBaoLoaiCssById != null ? thongBaoLoaiCssById[tb.id] : 'tb-default'}"
+                                th:href="${thongBaoLinkById != null and thongBaoLinkById[tb.id] != null ? thongBaoLinkById[tb.id] : '#'}">
+                                <div th:text="${thongBaoNoiDungById != null ? thongBaoNoiDungById[tb.id] : tb.noiDung}"></div>
                                 <small th:text="${#temporals.format(tb.ngayThongBao, 'dd/MM/yyyy HH:mm')}"></small>
-                            </div>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -97,6 +99,15 @@
 
     <div class="container mt-4">
         <h2 class="mb-4">Lịch sử giao dịch</h2>
+
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
 
         <form method="get" th:action="@{/lichsugiaodich}" class="row g-3 mb-4">
             <div class="col-md-4">

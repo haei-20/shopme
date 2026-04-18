@@ -1,6 +1,7 @@
 package com.example.gearshop.repository;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -51,6 +52,25 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
             "WHERE nd.tenNguoiDung LIKE %:tenNguoiDung% " +
             "ORDER BY hd.ngayTao DESC")
     List<HoaDon> findByTenNguoiDungContainingIgnoreCase(@Param("tenNguoiDung") String tenNguoiDung);
+
+    @Query("""
+            SELECT hd
+            FROM HoaDon hd
+            JOIN hd.thongTinNhanHang ttnh
+            LEFT JOIN KhachHang kh ON ttnh.khachHangID = kh.id
+            LEFT JOIN kh.nguoiDung nd
+            WHERE (:maHoaDon IS NULL OR LOWER(hd.maHoaDon) LIKE LOWER(CONCAT('%', :maHoaDon, '%')))
+              AND (:tenKhachHang IS NULL OR LOWER(nd.tenNguoiDung) LIKE LOWER(CONCAT('%', :tenKhachHang, '%')))
+              AND (:trangThai IS NULL OR hd.trangThaiDonHang = :trangThai)
+              AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+              AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+            """)
+    List<HoaDon> findAllForAdminFilters(
+            @Param("maHoaDon") String maHoaDon,
+            @Param("tenKhachHang") String tenKhachHang,
+            @Param("trangThai") String trangThai,
+            @Param("tuNgay") LocalDateTime tuNgay,
+            @Param("denNgay") LocalDateTime denNgay);
 
     // Thống kê doanh thu theo ngày
     @Query("SELECT FUNCTION('DATE', hd.ngayTao), SUM(hd.tongGia) " +
