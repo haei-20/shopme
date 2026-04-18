@@ -170,13 +170,15 @@
         if (!header) return;
 
         const row = document.createElement('div');
-        row.className = 'd-flex justify-content-between align-items-center';
+        row.className = 'thongbao-header-row';
         const title = document.createElement('span');
-        title.textContent = header.textContent || 'Thong bao';
+        title.className = 'thongbao-header-title';
+        title.textContent = (header.textContent || '').trim() || 'Thông báo';
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'btn btn-sm btn-outline-secondary';
-        btn.textContent = 'Danh dau tat ca da xem';
+        btn.className = 'thongbao-mark-all-btn';
+        btn.setAttribute('aria-label', 'Đánh dấu tất cả thông báo đã xem');
+        btn.innerHTML = '<i class="bi bi-check2-all" aria-hidden="true"></i><span>Đánh dấu tất cả đã xem</span>';
 
         row.appendChild(title);
         row.appendChild(btn);
@@ -185,6 +187,7 @@
 
         btn.addEventListener('click', function (e) {
             e.preventDefault();
+            e.stopPropagation();
             fetch('/thongbao/markAsRead?all=true', { method: 'POST' })
                 .then(function () {
                     markItemsAsReadInUI(menu);

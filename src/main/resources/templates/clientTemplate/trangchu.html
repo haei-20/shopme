@@ -56,10 +56,9 @@
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                                 th:text="${soLuongThongBaoChuaDoc}">0</span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="thongBaoDropdown"
-                            style="min-width: 300px;">
+                        <ul class="dropdown-menu dropdown-menu-end thongbao-menu" aria-labelledby="thongBaoDropdown">
                             <li><h6 class="dropdown-header">Thông báo</h6></li>
-                            <li th:if="${#lists.isEmpty(thongBaos)}"><p class="text-muted">Không có thông báo mới.</p></li>
+                            <li class="thongbao-empty" th:if="${#lists.isEmpty(thongBaos)}"><i class="bi bi-inbox" aria-hidden="true"></i><p class="mb-0">Không có thông báo mới.</p></li>
                             <li th:each="tb : ${thongBaos}">
                                 <a class="dropdown-item thong-bao-item"
                                     th:classappend="${thongBaoLoaiCssById != null ? thongBaoLoaiCssById[tb.id] : 'tb-default'}"
