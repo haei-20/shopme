@@ -1,12 +1,17 @@
 package com.example.gearshop.controller;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -23,6 +28,7 @@ import com.example.gearshop.model.KhachHang;
 import com.example.gearshop.model.NguoiDung;
 import com.example.gearshop.model.NhanVien;
 import com.example.gearshop.model.SanPham;
+import com.example.gearshop.model.TrangThaiHoaDonHang;
 import com.example.gearshop.repository.HoaDonRepository;
 import com.example.gearshop.repository.KhachHangRepository;
 import com.example.gearshop.repository.NguoiDungRepository;
@@ -35,6 +41,10 @@ import jakarta.transaction.Transactional;
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
+
+    private static final int DASHBOARD_TREND_DAYS = 7;
+    private static final int DASHBOARD_RECENT_ORDERS = 5;
+    private static final DateTimeFormatter TREND_LABEL = DateTimeFormatter.ofPattern("dd/MM");
 
     @Autowired
     private NguoiDungRepository nguoiDungRepo;
@@ -49,78 +59,160 @@ public class AdminController {
     @Autowired
     private HoaDonRepository hoaDonRepository;
 
+    /**
+     * Dashboard: tổng quan nhanh — KPI, xu hướng 7 ngày, cảnh báo, đơn gần đây.
+     * Phân tích theo năm/tháng/lọc sâu nằm ở /admin/thongke.
+     */
     @GetMapping("/trangchu")
     public String adminHome(Model model) {
         LocalDate today = LocalDate.now();
-        int currentYear = today.getYear();
+        LocalDateTime startOfToday = today.atStartOfDay();
+        LocalDateTime endOfToday = today.plusDays(1).atStartOfDay();
+        int y = today.getYear();
+        int m = today.getMonthValue();
+        LocalDateTime startOfMonth = LocalDate.of(y, m, 1).atStartOfDay();
+        LocalDateTime startOfNextMonth = (m == 12 ? LocalDate.of(y + 1, 1, 1) : LocalDate.of(y, m + 1, 1)).atStartOfDay();
 
         List<HoaDon> allHoaDons = hoaDonRepository.findAll();
         allHoaDons.sort(Comparator.comparing(HoaDon::getNgayTao, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
 
-        List<HoaDon> hoaDonsTheoNamHienTai = allHoaDons.stream()
-            .filter(hd -> hd.getNgayTao() != null && hd.getNgayTao().getYear() == currentYear)
-            .toList();
-
         BigDecimal doanhThuHomNay = BigDecimal.ZERO;
         int donHangHomNay = 0;
+        BigDecimal doanhThuThangNay = BigDecimal.ZERO;
+        int donHangThangNay = 0;
+
+        long donCanXuLy = 0;
+        long donTrong30Ngay = 0;
+        long donDaGiao30Ngay = 0;
+        LocalDateTime cutoff30 = today.minusDays(30).atStartOfDay();
+
+        Set<Integer> khachCoDon7Ngay = new HashSet<>();
+        LocalDate ngayBatDau7 = today.minusDays(DASHBOARD_TREND_DAYS - 1);
 
         for (HoaDon hd : allHoaDons) {
-            if (hd.getNgayTao() != null && hd.getNgayTao().toLocalDate().equals(today)) {
+            if (hd.getNgayTao() == null) {
+                continue;
+            }
+            LocalDateTime nt = hd.getNgayTao();
+            LocalDate nd = nt.toLocalDate();
+
+            if (!nt.isBefore(startOfToday) && nt.isBefore(endOfToday)) {
                 donHangHomNay++;
                 if (hd.getTongGia() != null) {
                     doanhThuHomNay = doanhThuHomNay.add(hd.getTongGia());
                 }
             }
+            if (!nt.isBefore(startOfMonth) && nt.isBefore(startOfNextMonth)) {
+                donHangThangNay++;
+                if (hd.getTongGia() != null) {
+                    doanhThuThangNay = doanhThuThangNay.add(hd.getTongGia());
+                }
+            }
+
+            if (!nt.isBefore(cutoff30)) {
+                donTrong30Ngay++;
+                if (TrangThaiHoaDonHang.DA_GIAO.equals(hd.getTrangThaiDonHang())) {
+                    donDaGiao30Ngay++;
+                }
+            }
+
+            if (laDonDangCanXuLy(hd)) {
+                donCanXuLy++;
+            }
+
+            if (!nd.isBefore(ngayBatDau7) && !nd.isAfter(today)
+                    && hd.getThongTinNhanHang() != null) {
+                khachCoDon7Ngay.add(hd.getThongTinNhanHang().getKhachHangID());
+            }
         }
 
-        List<HoaDon> donGanDay = allHoaDons.size() > 8 ? allHoaDons.subList(0, 8) : allHoaDons;
+        Integer tyLeHoanThanh30Ngay = null;
+        if (donTrong30Ngay > 0) {
+            tyLeHoanThanh30Ngay = BigDecimal.valueOf(100L * donDaGiao30Ngay)
+                    .divide(BigDecimal.valueOf(donTrong30Ngay), 0, RoundingMode.HALF_UP)
+                    .intValue();
+        }
+
+        List<String> trendLabels = new ArrayList<>(DASHBOARD_TREND_DAYS);
+        BigDecimal[] trendDoanhThu = new BigDecimal[DASHBOARD_TREND_DAYS];
+        int[] trendDonHang = new int[DASHBOARD_TREND_DAYS];
+        for (int i = 0; i < DASHBOARD_TREND_DAYS; i++) {
+            trendDoanhThu[i] = BigDecimal.ZERO;
+        }
+        for (int i = 0; i < DASHBOARD_TREND_DAYS; i++) {
+            LocalDate d = ngayBatDau7.plusDays(i);
+            trendLabels.add(d.format(TREND_LABEL));
+            LocalDateTime d0 = d.atStartOfDay();
+            LocalDateTime d1 = d.plusDays(1).atStartOfDay();
+            for (HoaDon hd : allHoaDons) {
+                if (hd.getNgayTao() == null) {
+                    continue;
+                }
+                LocalDateTime nt = hd.getNgayTao();
+                if (!nt.isBefore(d0) && nt.isBefore(d1)) {
+                    trendDonHang[i]++;
+                    if (hd.getTongGia() != null) {
+                        trendDoanhThu[i] = trendDoanhThu[i].add(hd.getTongGia());
+                    }
+                }
+            }
+        }
+
+        List<HoaDon> donGanDay = allHoaDons.size() > DASHBOARD_RECENT_ORDERS
+                ? allHoaDons.subList(0, DASHBOARD_RECENT_ORDERS)
+                : allHoaDons;
 
         List<SanPham> topSanPham = sanPhamRepository.findTop10ByOrderByDaBanDesc();
         SanPham sanPhamBanChay = topSanPham.isEmpty() ? null : topSanPham.get(0);
 
         long tongDonHang = allHoaDons.size();
         long tongKhachHang = khachHangRepo.count();
-        long tongSanPham = sanPhamRepository.count();
 
         long sanPhamSapHet = sanPhamRepository.findAll().stream()
                 .filter(sp -> sp.getTonKho() != null && sp.getTonKho() <= 5)
                 .count();
 
-        int[] donTheoThang = new int[12];
-        for (HoaDon hd : hoaDonsTheoNamHienTai) {
-            if (hd.getNgayTao() != null) {
-                int month = hd.getNgayTao().getMonthValue();
-                donTheoThang[month - 1]++;
-            }
+        List<BigDecimal> trendDoanhThuList = new ArrayList<>(DASHBOARD_TREND_DAYS);
+        for (BigDecimal b : trendDoanhThu) {
+            trendDoanhThuList.add(b);
         }
-
-        BigDecimal[] doanhThuTheoThang = new BigDecimal[12];
-        Arrays.fill(doanhThuTheoThang, BigDecimal.ZERO);
-        for (HoaDon hd : hoaDonsTheoNamHienTai) {
-            if (hd.getNgayTao() != null && hd.getTongGia() != null) {
-                int month = hd.getNgayTao().getMonthValue();
-                doanhThuTheoThang[month - 1] = doanhThuTheoThang[month - 1].add(hd.getTongGia());
-            }
+        List<Integer> trendDonHangList = new ArrayList<>(DASHBOARD_TREND_DAYS);
+        for (int c : trendDonHang) {
+            trendDonHangList.add(c);
         }
-
-        List<String> monthLabels = Arrays.asList("T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12");
-        List<Integer> donTheoThangList = Arrays.stream(donTheoThang).boxed().toList();
-        List<BigDecimal> doanhThuTheoThangList = Arrays.asList(doanhThuTheoThang);
 
         model.addAttribute("doanhThuHomNay", doanhThuHomNay);
         model.addAttribute("donHangHomNay", donHangHomNay);
+        model.addAttribute("doanhThuThangNay", doanhThuThangNay);
+        model.addAttribute("donHangThangNay", donHangThangNay);
+        model.addAttribute("donCanXuLy", donCanXuLy);
+        model.addAttribute("tyLeHoanThanh30Ngay", tyLeHoanThanh30Ngay);
+        model.addAttribute("donTrong30Ngay", donTrong30Ngay);
+        model.addAttribute("donDaGiao30Ngay", donDaGiao30Ngay);
+        model.addAttribute("khachCoDon7Ngay", khachCoDon7Ngay.size());
+
+        model.addAttribute("trendLabels", trendLabels);
+        model.addAttribute("trendDoanhThu", trendDoanhThuList);
+        model.addAttribute("trendDonHang", trendDonHangList);
+
         model.addAttribute("tongDonHang", tongDonHang);
         model.addAttribute("tongKhachHang", tongKhachHang);
-        model.addAttribute("tongSanPham", tongSanPham);
         model.addAttribute("sanPhamBanChay", sanPhamBanChay);
         model.addAttribute("donGanDay", donGanDay);
-        model.addAttribute("monthLabels", monthLabels);
-        model.addAttribute("donTheoThang", donTheoThangList);
-        model.addAttribute("doanhThuTheoThang", doanhThuTheoThangList);
-        model.addAttribute("chartNam", currentYear);
         model.addAttribute("sanPhamSapHet", sanPhamSapHet);
 
         return "adminTemplate/trangchuadmin";
+    }
+
+    private static boolean laDonDangCanXuLy(HoaDon hd) {
+        String s = hd.getTrangThaiDonHang();
+        if (s == null) {
+            return true;
+        }
+        return TrangThaiHoaDonHang.CHO_XAC_NHAN.equals(s)
+                || TrangThaiHoaDonHang.DANG_CHUAN_BI_HANG.equals(s)
+                || TrangThaiHoaDonHang.CHO_GIAO_HANG.equals(s)
+                || TrangThaiHoaDonHang.LEGACY_CHO_LAY_HANG.equals(s);
     }
 
     @GetMapping("/nguoidung")
@@ -135,11 +227,12 @@ public class AdminController {
             Optional<KhachHang> khachHang = khachHangRepo.findByNguoiDung_Id(nd.getId());
             Optional<NhanVien> nhanVien = nhanVienRepo.findByNguoiDung_Id(nd.getId());
 
-            // Kiểm tra roleFilter
-            if (roleFilter.equals("khachhang") && khachHang.isEmpty())
+            if (roleFilter.equals("khachhang") && khachHang.isEmpty()) {
                 continue;
-            if (roleFilter.equals("nhanvien") && nhanVien.isEmpty())
+            }
+            if (roleFilter.equals("nhanvien") && nhanVien.isEmpty()) {
                 continue;
+            }
 
             NguoiDungDTO dto = new NguoiDungDTO();
             dto.setId(nd.getId());
@@ -161,7 +254,7 @@ public class AdminController {
         }
 
         model.addAttribute("danhSachNguoiDung", danhSach);
-        model.addAttribute("roleFilter", roleFilter); // Để giữ lựa chọn đã chọn
+        model.addAttribute("roleFilter", roleFilter);
         return "adminTemplate/nguoidung";
     }
 
@@ -196,13 +289,9 @@ public class AdminController {
     @PostMapping("/nguoidung/xoa/{id}")
     @Transactional
     public String xoaNguoiDung(@PathVariable("id") Integer id) {
-        // Xóa bản ghi trong bảng khachhang nếu tồn tại
         khachHangRepo.deleteByNguoiDung_Id(id);
-
-        // Xóa bản ghi trong bảng nhanvien nếu tồn tại
         nhanVienRepo.deleteByNguoiDung_Id(id);
-
-        nguoiDungRepo.deleteById(id); // bạn cần xoá cascade trong DB hoặc code
+        nguoiDungRepo.deleteById(id);
         return "redirect:/admin/nguoidung";
     }
 
@@ -235,5 +324,4 @@ public class AdminController {
         }
         return "redirect:/admin/nguoidung/" + id;
     }
-
 }

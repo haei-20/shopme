@@ -17,10 +17,11 @@ html {
     overflow-y: scroll;
 }
 
-/* Gộp header + thanh danh mục: không còn khe giữa 2 lớp fixed */
+/* Gộp header + thanh danh mục */
 .site-top-fixed-stack {
-    position: fixed;
-    top: 0;
+    /* position: fixed; */
+
+    position: static;
     left: 0;
     right: 0;
     z-index: 1030;
@@ -66,11 +67,11 @@ html {
 body {
     color: var(--theme-text);
     background: linear-gradient(180deg, var(--theme-cream) 0%, #ffffff 65%);
-    padding-top: var(--site-body-pad-base);
+    padding-top: 0;
 }
 
 body.with-category-nav {
-    padding-top: var(--site-body-pad-with-category);
+    padding-top: 0;
 }
 
 h1, h2, h3, h4, h5, .section-title, .form-label {

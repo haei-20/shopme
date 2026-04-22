@@ -22,14 +22,6 @@
         }
     </style>
 
-    <div th:if="${cartMergeWarning != null}" class="container page-content-shell">
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong>Giỏ hàng khi đăng nhập:</strong>
-            <span th:text="${cartMergeWarning}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
-        </div>
-    </div>
-
     <th:block th:each="sectionKey : ${homeSectionOrder}">
         <th:block th:switch="${sectionKey}">
             <th:block th:case="'banner'">

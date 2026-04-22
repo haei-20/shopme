@@ -8,6 +8,15 @@
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('sanpham')"></th:block>
 
     <main class="admin-page container py-4 admin-product-detail">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}">Thành công</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}">Lỗi</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <div class="admin-page-toolbar align-items-start">
             <div>
                 <h1 class="h4 mb-1">Chi tiết sản phẩm</h1>
@@ -56,6 +65,24 @@
                                             <div class="text-muted small mb-0">Tồn kho</div>
                                             <div class="fs-5 fw-semibold product-qty-value"
                                                 th:text="${sanPham.tonKho != null ? sanPham.tonKho : 0}">0</div>
+                                            <form id="stockUpdateForm"
+                                                th:action="@{'/admin/quanlysanpham/chitiet/' + ${sanPham.id} + '/capnhat-tonkho'}"
+                                                method="post" class="mt-2 d-flex gap-2 align-items-center">
+                                                <input type="number" name="tonKhoMoi" min="0" step="1" inputmode="numeric"
+                                                    class="form-control form-control-sm"
+                                                    id="tonKhoMoiInput"
+                                                    th:value="${sanPham.tonKho != null ? sanPham.tonKho : 0}" required>
+                                                <button type="button"
+                                                    class="btn btn-sm btn-outline-primary text-nowrap"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#confirmStockModal"
+                                                    id="openStockConfirmModalBtn">
+                                                    Cập nhật
+                                                </button>
+                                            </form>
+                                            <div id="tonKhoErrorMessage" class="invalid-feedback d-block" style="display:none;">
+                                                Tồn kho chỉ được nhập số nguyên từ 0 trở lên.
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
@@ -172,7 +199,100 @@
         </div>
     </main>
 
+    <div class="modal fade" id="confirmStockModal" tabindex="-1" aria-labelledby="confirmStockModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmStockModalLabel">Xác nhận cập nhật tồn kho</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Bạn có chắc chắn muốn cập nhật tồn kho cho sản phẩm sau không?</p>
+                    <div class="small mb-2">
+                        <span class="fw-semibold">Sản phẩm:</span>
+                        <span class="font-monospace" th:text="${sanPham.maSanPham}">SP00001</span>
+                        <span> - </span>
+                        <span th:text="${sanPham.tenSanPham}">Tên sản phẩm</span>
+                    </div>
+                    <div class="small text-muted">Tồn kho hiện tại: <span id="currentTonKhoValue"
+                            th:text="${sanPham.tonKho != null ? sanPham.tonKho : 0}">0</span></div>
+                    <div class="small text-muted">Tồn kho mới: <span id="newTonKhoValue">0</span></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary" form="stockUpdateForm">Xác nhận cập nhật</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const tonKhoInput = document.getElementById("tonKhoMoiInput");
+            const newTonKhoValue = document.getElementById("newTonKhoValue");
+            const openModalBtn = document.getElementById("openStockConfirmModalBtn");
+            const tonKhoErrorMessage = document.getElementById("tonKhoErrorMessage");
+
+            if (!tonKhoInput || !newTonKhoValue || !openModalBtn || !tonKhoErrorMessage) {
+                return;
+            }
+
+            const sanitizeTonKhoValue = () => {
+                tonKhoInput.value = (tonKhoInput.value || "").replace(/\D/g, "");
+            };
+
+            const getValidationMessage = () => {
+                const value = tonKhoInput.value || "";
+                if (!/^\d+$/.test(value)) {
+                    return "Tồn kho chỉ được nhập số nguyên từ 0 trở lên.";
+                }
+                return "";
+            };
+
+            const showValidationState = (message) => {
+                const isValid = message === "";
+                tonKhoInput.classList.toggle("is-invalid", !isValid);
+                tonKhoErrorMessage.textContent = message;
+                tonKhoErrorMessage.style.display = isValid ? "none" : "block";
+            };
+
+            const updatePreviewValue = () => {
+                newTonKhoValue.textContent = tonKhoInput.value || "0";
+            };
+
+            tonKhoInput.addEventListener("keydown", function (event) {
+                if (["e", "E", "+", "-", ".", ","].includes(event.key)) {
+                    event.preventDefault();
+                }
+            });
+
+            tonKhoInput.addEventListener("input", function () {
+                sanitizeTonKhoValue();
+                const message = getValidationMessage();
+                tonKhoInput.setCustomValidity(message);
+                showValidationState(message);
+                updatePreviewValue();
+            });
+
+            openModalBtn.addEventListener("click", function (event) {
+                sanitizeTonKhoValue();
+                const message = getValidationMessage();
+                showValidationState(message);
+                if (message !== "") {
+                    tonKhoInput.setCustomValidity(message);
+                    tonKhoInput.focus();
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+                tonKhoInput.setCustomValidity("");
+                updatePreviewValue();
+            });
+            showValidationState("");
+            updatePreviewValue();
+        });
+    </script>
 </body>
 
 </html>

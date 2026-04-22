@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,30 +32,20 @@ public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, In
             @Param("sanPhamId") Integer sanPhamId,
             @Param("trangThaiDaGiao") String trangThaiDaGiao);
 
-    @Query("SELECT CASE " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP01%' THEN 'SanPhamMainBoard' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP02%' THEN 'SanPhamCPU' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP03%' THEN 'SanPhamRAM' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP04%' THEN 'SanPhamVGA' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP05%' THEN 'SanPhamOCung' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP06%' THEN 'SanPhamPSU' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP07%' THEN 'SanPhamCooler' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP08%' THEN 'SanPhamCase' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP09%' THEN 'SanPhamManHinh' " +
-            "ELSE 'Khác' END, " +
-            "SUM(hdct.thanhTien) " +
+    @Query("SELECT COALESCE(sp.loaiSanPham.tenLoaiSanPham, 'Khác'), SUM(hdct.thanhTien) " +
             "FROM HoaDonChiTiet hdct " +
             "JOIN SanPham sp ON hdct.sanPhamID = sp.id " +
-            "GROUP BY CASE " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP01%' THEN 'SanPhamMainBoard' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP02%' THEN 'SanPhamCPU' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP03%' THEN 'SanPhamRAM' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP04%' THEN 'SanPhamVGA' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP05%' THEN 'SanPhamOCung' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP06%' THEN 'SanPhamPSU' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP07%' THEN 'SanPhamCooler' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP08%' THEN 'SanPhamCase' " +
-            "WHEN sp.loaiSanPham.maLoaiSP LIKE '%LSP09%' THEN 'SanPhamManHinh' " +
-            "ELSE 'Khác' END")
+            "GROUP BY sp.loaiSanPham.id, COALESCE(sp.loaiSanPham.tenLoaiSanPham, 'Khác')")
     List<Object[]> doanhThuTheoLoaiSanPham();
+
+    /** Cơ cấu doanh thu theo loại SP trong khoảng thời gian (ngày tạo hóa đơn). */
+    @Query("SELECT COALESCE(sp.loaiSanPham.tenLoaiSanPham, 'Khác'), SUM(hdct.thanhTien) " +
+            "FROM HoaDonChiTiet hdct " +
+            "JOIN hdct.hoaDon hd " +
+            "JOIN SanPham sp ON sp.id = hdct.sanPhamID " +
+            "WHERE hd.ngayTao >= :tu AND hd.ngayTao < :den " +
+            "GROUP BY sp.loaiSanPham.id, COALESCE(sp.loaiSanPham.tenLoaiSanPham, 'Khác')")
+    List<Object[]> doanhThuTheoLoaiSanPhamTrongKhoang(
+            @Param("tu") LocalDateTime tu,
+            @Param("den") LocalDateTime den);
 }

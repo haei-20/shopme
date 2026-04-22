@@ -11,8 +11,10 @@
         <div class="stats-hero p-4 p-lg-5 mb-4">
             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                 <div>
-                    <h2 class="mb-2">Thống kê doanh thu</h2>
-                    <p class="text-muted mb-0">Theo dõi doanh thu theo ngày, theo tháng và theo từng loại sản phẩm trong một màn hình trực quan hơn.</p>
+                    <h2 class="mb-2">Phân tích &amp; thống kê</h2>
+                    <p th:if="${statLoaiId != null}" class="text-muted small mb-0 mt-2">
+                        Đang lọc theo <strong>một danh mục sản phẩm</strong> — doanh thu theo ngày/tháng chỉ tính dòng hàng thuộc loại đó.
+                    </p>
                 </div>
                 <div class="text-end">
                     <div class="text-muted small">Tổng doanh thu</div>
@@ -22,13 +24,46 @@
             </div>
         </div>
 
+        <div class="stats-card p-3 mb-4">
+            <form class="row g-2 align-items-end flex-wrap" method="get" th:action="@{/admin/thongke}" id="statFilterForm">
+                <div class="col-auto">
+                    <label class="form-label small text-muted mb-1">Năm</label>
+                    <select name="statNam" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option th:each="y : ${statYearOptions}" th:value="${y}" th:text="${y}" th:selected="${y == statNam}">2026</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label small text-muted mb-1">Tháng</label>
+                    <select name="statThang" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="" th:selected="${statThang == null}">Cả năm</option>
+                        <option th:each="m : ${#numbers.sequence(1, 12)}" th:value="${m}" th:text="'Tháng ' + ${m}"
+                            th:selected="${statThang != null and statThang == m}">Tháng 1</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label small text-muted mb-1">Danh mục SP</label>
+                    <select name="statLoaiId" class="form-select form-select-sm" style="min-width: 11rem;" onchange="this.form.submit()">
+                        <option value="" th:selected="${statLoaiId == null}">Tất cả loại</option>
+                        <option th:each="lsp : ${loaiSanPhams}" th:value="${lsp.id}" th:text="${lsp.tenLoaiSanPham}"
+                            th:selected="${statLoaiId != null and statLoaiId == lsp.id}">Loại</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-auto ms-md-auto d-flex flex-wrap gap-2 align-items-center">
+                    <a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener"
+                        th:href="@{/admin/thongke/export-csv(statNam=${statNam},statThang=${statThang},statLoaiId=${statLoaiId})}">
+                        Xuất CSV
+                    </a>
+                </div>
+            </form>
+        </div>
+
         <div class="row g-3 mb-4">
             <div class="col-md-6 col-xl-3">
                 <div class="summary-card">
                     <div class="d-flex align-items-center gap-3">
                         <div class="summary-icon"><i class="bi bi-cash-stack"></i></div>
                         <div>
-                            <div class="text-muted small">Tổng doanh thu</div>
+                            <div class="text-muted small">Tổng doanh thu đã lọc</div>
                             <div class="fw-bold"
                                 th:text="${#numbers.formatDecimal(tongDoanhThu, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
                         </div>
@@ -40,7 +75,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="summary-icon"><i class="bi bi-calendar-day"></i></div>
                         <div>
-                            <div class="text-muted small">Mốc ngày thống kê</div>
+                            <div class="text-muted small">Số mốc ngày</div>
                             <div class="fw-bold" th:text="${soNgayThongKe}">0</div>
                         </div>
                     </div>
@@ -51,7 +86,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="summary-icon"><i class="bi bi-calendar3"></i></div>
                         <div>
-                            <div class="text-muted small">Mốc tháng thống kê</div>
+                            <div class="text-muted small">Số cột tháng / kỳ</div>
                             <div class="fw-bold" th:text="${soThangThongKe}">0</div>
                         </div>
                     </div>
@@ -62,7 +97,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="summary-icon"><i class="bi bi-pie-chart"></i></div>
                         <div>
-                            <div class="text-muted small">Loại sản phẩm có doanh thu</div>
+                            <div class="text-muted small">Nhóm loại SP</div>
                             <div class="fw-bold" th:text="${soLoaiSanPham}">0</div>
                         </div>
                     </div>
@@ -75,8 +110,8 @@
                 <div class="stats-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                         <div>
-                            <h4 class="mb-1">Biểu đồ doanh thu</h4>
-                            <p class="text-muted mb-0">Chuyển nhanh giữa thống kê theo ngày và theo tháng.</p>
+                            <h4 class="mb-1">Doanh thu</h4>
+                            <p class="text-muted mb-0">Theo ngày và theo tháng trong khoảng đã lọc.</p>
                         </div>
                     </div>
 
@@ -96,12 +131,15 @@
                             <div class="chart-wrap mb-4">
                                 <canvas id="chartNgay"></canvas>
                             </div>
+                            <label class="form-label small text-muted mb-1">Tìm trong bảng · click tiêu đề cột để sắp xếp</label>
+                            <input type="search" class="form-control form-control-sm mb-2" id="searchTableNgay"
+                                placeholder="Gõ để lọc dòng..." autocomplete="off">
                             <div class="table-responsive">
-                                <table class="table table-bordered align-middle stats-table">
+                                <table class="table table-bordered align-middle stats-table" id="tableNgay">
                                     <thead>
                                         <tr>
                                             <th>Ngày</th>
-                                            <th>Doanh thu (VNĐ)</th>
+                                            <th>Doanh thu</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -118,12 +156,15 @@
                             <div class="chart-wrap mb-4">
                                 <canvas id="chartThang"></canvas>
                             </div>
+                            <label class="form-label small text-muted mb-1">Tìm trong bảng · click tiêu đề cột để sắp xếp</label>
+                            <input type="search" class="form-control form-control-sm mb-2" id="searchTableThang"
+                                placeholder="Gõ để lọc dòng..." autocomplete="off">
                             <div class="table-responsive">
-                                <table class="table table-bordered align-middle stats-table">
+                                <table class="table table-bordered align-middle stats-table" id="tableThang">
                                     <thead>
                                         <tr>
-                                            <th>Tháng</th>
-                                            <th>Doanh thu (VNĐ)</th>
+                                            <th>Tháng / kỳ</th>
+                                            <th>Doanh thu</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -142,17 +183,20 @@
             <div class="col-xl-4">
                 <div class="stats-card p-4 h-100">
                     <h4 class="mb-1">Cơ cấu doanh thu</h4>
-                    <p class="text-muted mb-3">Tỷ trọng doanh thu theo từng loại sản phẩm.</p>
+                    <p class="text-muted mb-3">Tỷ trọng theo <strong>tất cả danh mục</strong> sản phẩm trong khoảng thời gian đã lọc.</p>
 
-                    <div class="chart-wrap mb-4" style="min-height: 300px;">
+                    <div class="chart-wrap mb-4" style="min-height: 280px;">
                         <canvas id="chartLoaiSP"></canvas>
                     </div>
 
+                    <label class="form-label small text-muted mb-1">Tìm trong bảng · click tiêu đề cột để sắp xếp</label>
+                    <input type="search" class="form-control form-control-sm mb-2" id="searchTableLoai"
+                        placeholder="Gõ để lọc dòng..." autocomplete="off">
                     <div class="table-responsive">
-                        <table class="table table-bordered align-middle stats-table">
+                        <table class="table table-bordered align-middle stats-table" id="tableLoaiSP">
                             <thead>
                                 <tr>
-                                    <th>Loại sản phẩm</th>
+                                    <th>Danh mục</th>
                                     <th>Doanh thu</th>
                                 </tr>
                             </thead>
@@ -160,6 +204,80 @@
                                 <tr th:each="entry : ${doanhThuLoaiSP}">
                                     <td th:text="${entry.key}"></td>
                                     <td th:text="${#numbers.formatDecimal(entry.value, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-1">
+            <div class="col-lg-6">
+                <div class="stats-card p-4 h-100">
+                    <h4 class="mb-1">Đơn hàng theo trạng thái</h4>
+                    <p class="text-muted small mb-3">Trong cùng khoảng thời gian đã lọc.</p>
+                    <div class="chart-wrap mb-3" style="min-height: 260px;">
+                        <canvas id="chartTrangThai"></canvas>
+                    </div>
+                    <label class="form-label small text-muted mb-1">Tìm trong bảng · click tiêu đề cột để sắp xếp</label>
+                    <input type="search" class="form-control form-control-sm mb-2" id="searchTableTrangThai"
+                        placeholder="Gõ để lọc dòng..." autocomplete="off">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0" id="tableTrangThai">
+                            <thead><tr><th>Trạng thái</th><th>Số đơn</th></tr></thead>
+                            <tbody>
+                                <tr th:each="e : ${donTheoTrangThai}">
+                                    <td th:text="${e.key}"></td>
+                                    <td th:text="${e.value}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="stats-card p-4 h-100">
+                    <h4 class="mb-1">Top sản phẩm theo doanh thu</h4>
+                    <p class="text-muted small mb-3">Theo tổng thành tiền dòng hàng trong khoảng lọc, tối đa 10 mục.</p>
+                    <label class="form-label small text-muted mb-1">Tìm trong bảng · click tiêu đề cột để sắp xếp</label>
+                    <input type="search" class="form-control form-control-sm mb-2" id="searchTableTopSp"
+                        placeholder="Gõ để lọc dòng..." autocomplete="off">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="tableTopSp">
+                            <thead><tr><th>#</th><th>Sản phẩm</th><th>Doanh thu</th></tr></thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(topSanPham)}">
+                                    <td colspan="3" class="text-muted text-center py-3">Chưa có dữ liệu</td>
+                                </tr>
+                                <tr th:each="row, iter : ${topSanPham}">
+                                    <td th:text="${iter.count}">1</td>
+                                    <td th:text="${row.ten}">SP</td>
+                                    <td th:text="${#numbers.formatDecimal(row.giaTri, 0, 'COMMA', 0, 'POINT')} + ' đ'">0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="stats-card p-4">
+                    <h4 class="mb-1">Top khách hàng theo tổng mua</h4>
+                    <p class="text-muted small mb-3">Theo tổng tiền hóa đơn trong khoảng lọc, tối đa 10 mục.</p>
+                    <label class="form-label small text-muted mb-1">Tìm trong bảng · click tiêu đề cột để sắp xếp</label>
+                    <input type="search" class="form-control form-control-sm mb-2" id="searchTableTopKhach"
+                        placeholder="Gõ để lọc dòng..." autocomplete="off">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="tableTopKhach">
+                            <thead><tr><th>#</th><th>Khách</th><th>Tổng mua</th></tr></thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(topKhach)}">
+                                    <td colspan="3" class="text-muted text-center py-3">Chưa có dữ liệu</td>
+                                </tr>
+                                <tr th:each="row, iter : ${topKhach}">
+                                    <td th:text="${iter.count}">1</td>
+                                    <td th:text="${row.ten}">Khách</td>
+                                    <td th:text="${#numbers.formatDecimal(row.giaTri, 0, 'COMMA', 0, 'POINT')} + ' đ'">0</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -182,9 +300,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         label: function (context) {
@@ -205,14 +321,15 @@
             }
         };
 
-        // Biểu đồ cột: Doanh thu theo ngày
-        const chartNgay = new Chart(document.getElementById('chartNgay'), {
+        const ngayLabels = [[${ #lists.toList(doanhThuNgay.keySet()) }]];
+        const ngayData = [[${ #lists.toList(doanhThuNgay.values()) }]];
+        new Chart(document.getElementById('chartNgay'), {
             type: 'bar',
             data: {
-                labels: [[${ #lists.toList(doanhThuNgay.keySet()) }]],
+                labels: ngayLabels,
                 datasets: [{
-                    label: 'Doanh thu (VNĐ)',
-                    data: [[${ #lists.toList(doanhThuNgay.values()) }]],
+                    label: 'Doanh thu',
+                    data: ngayData,
                     backgroundColor: 'rgba(28, 100, 242, 0.65)',
                     borderColor: 'rgba(28, 100, 242, 1)',
                     borderWidth: 1,
@@ -223,14 +340,15 @@
             options: commonBarOptions
         });
 
-        // Biểu đồ cột: Doanh thu theo tháng
-        const chartThang = new Chart(document.getElementById('chartThang'), {
+        const thangLabels = [[${ #lists.toList(doanhThuThang.keySet()) }]];
+        const thangData = [[${ #lists.toList(doanhThuThang.values()) }]];
+        new Chart(document.getElementById('chartThang'), {
             type: 'bar',
             data: {
-                labels: [[${ #lists.toList(doanhThuThang.keySet()) }]],
+                labels: thangLabels,
                 datasets: [{
-                    label: 'Doanh thu (VNĐ)',
-                    data: [[${ #lists.toList(doanhThuThang.values()) }]],
+                    label: 'Doanh thu',
+                    data: thangData,
                     backgroundColor: 'rgba(79, 70, 229, 0.6)',
                     borderColor: 'rgba(79, 70, 229, 1)',
                     borderWidth: 1,
@@ -241,44 +359,142 @@
             options: commonBarOptions
         });
 
-        // Biểu đồ tròn: Doanh thu theo loại sản phẩm
-        const chartLoaiSP = new Chart(document.getElementById('chartLoaiSP'), {
-            type: 'pie',
-            data: {
-                labels: [[${ #lists.toList(doanhThuLoaiSP.keySet()) }]],
-                datasets: [{
-                    label: 'Doanh thu (VNĐ)',
-                    data: [[${ #lists.toList(doanhThuLoaiSP.values()) }]],
-                    backgroundColor: [
-                        'rgba(28, 100, 242, 0.75)',
-                        'rgba(59, 130, 246, 0.65)',
-                        'rgba(99, 102, 241, 0.65)',
-                        'rgba(129, 140, 248, 0.6)',
-                        'rgba(148, 163, 184, 0.55)',
-                        'rgba(71, 85, 105, 0.5)',
-                        'rgba(14, 165, 233, 0.55)',
-                        'rgba(79, 70, 229, 0.55)',
-                        'rgba(100, 116, 139, 0.5)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
+        {
+            const pieLabels = [[${ #lists.toList(doanhThuLoaiSP.keySet()) }]];
+            const pieData = [[${ #lists.toList(doanhThuLoaiSP.values()) }]];
+            const pieEl = document.getElementById('chartLoaiSP');
+            if (pieEl && pieLabels.length > 0) {
+                new Chart(pieEl, {
+                    type: 'pie',
+                    data: {
+                        labels: pieLabels,
+                        datasets: [{
+                            label: 'Doanh thu',
+                            data: pieData,
+                            backgroundColor: [
+                                'rgba(28, 100, 242, 0.75)', 'rgba(59, 130, 246, 0.65)', 'rgba(99, 102, 241, 0.65)',
+                                'rgba(129, 140, 248, 0.6)', 'rgba(148, 163, 184, 0.55)', 'rgba(71, 85, 105, 0.5)',
+                                'rgba(14, 165, 233, 0.55)', 'rgba(79, 70, 229, 0.55)', 'rgba(100, 116, 139, 0.5)'
+                            ]
+                        }]
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.label + ': ' + commonCurrencyFormatter(context.raw);
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return context.label + ': ' + commonCurrencyFormatter(context.raw);
+                                    }
+                                }
                             }
                         }
                     }
-                }
+                });
             }
-        });
+        }
+
+        const ttLabels = [[${ #lists.toList(donTheoTrangThai.keySet()) }]];
+        const ttData = [[${ #lists.toList(donTheoTrangThai.values()) }]].map((v) => Number(v));
+        if (ttLabels.length > 0) {
+            new Chart(document.getElementById('chartTrangThai'), {
+                type: 'doughnut',
+                data: {
+                    labels: ttLabels,
+                    datasets: [{
+                        data: ttData,
+                        backgroundColor: [
+                            '#1c64f2', '#4f46e5', '#0ea5e9', '#64748b', '#f59e0b', '#22c55e', '#ef4444', '#a855f7'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        /** Tìm kiếm và sắp xếp cột bảng */
+        function statsTableDataRows(tbody) {
+            return Array.from(tbody.querySelectorAll('tr')).filter(function (tr) {
+                var c0 = tr.cells[0];
+                return c0 && !c0.hasAttribute('colspan');
+            });
+        }
+        function attachStatsTableSearch(inputId, tableId) {
+            var input = document.getElementById(inputId);
+            var table = document.getElementById(tableId);
+            if (!input || !table) return;
+            var tbody = table.querySelector('tbody');
+            if (!tbody) return;
+            input.addEventListener('input', function () {
+                var q = input.value.trim().toLowerCase();
+                tbody.querySelectorAll('tr').forEach(function (tr) {
+                    if (tr.cells[0] && tr.cells[0].hasAttribute('colspan')) {
+                        tr.style.display = '';
+                        return;
+                    }
+                    var text = tr.textContent.toLowerCase();
+                    tr.style.display = !q || text.includes(q) ? '' : 'none';
+                });
+            });
+        }
+        function attachStatsTableSort(tableId, numericColIndexes) {
+            var table = document.getElementById(tableId);
+            if (!table) return;
+            var thead = table.querySelector('thead');
+            var tbody = table.querySelector('tbody');
+            if (!thead || !tbody) return;
+            numericColIndexes = numericColIndexes || [];
+            var headers = thead.querySelectorAll('th');
+            var state = {};
+            headers.forEach(function (th, idx) {
+                th.style.cursor = 'pointer';
+                th.title = 'Click để sắp xếp';
+                th.addEventListener('click', function () {
+                    var emptyTr = Array.from(tbody.querySelectorAll('tr')).find(function (tr) {
+                        return tr.cells[0] && tr.cells[0].hasAttribute('colspan');
+                    });
+                    var rows = statsTableDataRows(tbody);
+                    var dir = state[idx] === 'asc' ? 'desc' : 'asc';
+                    Object.keys(state).forEach(function (k) { state[k] = null; });
+                    state[idx] = dir;
+                    var num = numericColIndexes.indexOf(idx) >= 0;
+                    rows.sort(function (a, b) {
+                        var ta = (a.cells[idx] && a.cells[idx].textContent) ? a.cells[idx].textContent.trim() : '';
+                        var tb = (b.cells[idx] && b.cells[idx].textContent) ? b.cells[idx].textContent.trim() : '';
+                        if (num) {
+                            var na = parseFloat(ta.replace(/[^\d.-]/g, '')) || 0;
+                            var nb = parseFloat(tb.replace(/[^\d.-]/g, '')) || 0;
+                            return dir === 'asc' ? na - nb : nb - na;
+                        }
+                        return dir === 'asc' ? ta.localeCompare(tb, 'vi') : tb.localeCompare(ta, 'vi');
+                    });
+                    rows.forEach(function (r) { tbody.appendChild(r); });
+                    if (emptyTr) tbody.appendChild(emptyTr);
+                });
+            });
+        }
+
+        attachStatsTableSearch('searchTableNgay', 'tableNgay');
+        attachStatsTableSearch('searchTableThang', 'tableThang');
+        attachStatsTableSearch('searchTableLoai', 'tableLoaiSP');
+        attachStatsTableSearch('searchTableTrangThai', 'tableTrangThai');
+        attachStatsTableSearch('searchTableTopSp', 'tableTopSp');
+        attachStatsTableSearch('searchTableTopKhach', 'tableTopKhach');
+
+        attachStatsTableSort('tableNgay', [1]);
+        attachStatsTableSort('tableThang', [1]);
+        attachStatsTableSort('tableLoaiSP', [1]);
+        attachStatsTableSort('tableTrangThai', [1]);
+        attachStatsTableSort('tableTopSp', [0, 2]);
+        attachStatsTableSort('tableTopKhach', [0, 2]);
     </script>
 </body>
 

@@ -7,76 +7,157 @@
 <body class="admin-body">
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('nguoidung')"></th:block>
 
-    <div class="container mt-5">
-        <div class="d-flex justify-content-end mb-3">
-            <form method="get" th:action="@{/admin/nguoidung}">
-                <label for="filterRole" class="me-2">Hiển thị:</label>
-                <select name="roleFilter" id="filterRole" class="form-select d-inline w-auto me-2"
-                    onchange="this.form.submit()">
-                    <option value="all" th:selected="${roleFilter == 'all'}">Tất cả</option>
-                    <option value="khachhang" th:selected="${roleFilter == 'khachhang'}">Chỉ khách hàng</option>
-                    <option value="nhanvien" th:selected="${roleFilter == 'nhanvien'}">Chỉ nhân viên</option>
-                </select>
-            </form>
-        </div>
-        <h2 class="text-center mb-4">Danh sách người dùng</h2>
-        <table id="nguoiDungTable" class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>Tên người dùng</th>
-                    <th>Email</th>
-                    <th>Vai trò</th>
-                    <th>Ghi chú</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="nd : ${danhSachNguoiDung}">
-                    <td th:text="${nd.tenNguoiDung}"></td>
-                    <td th:text="${nd.email}"></td>
-                    <td th:text="${nd.vaiTro}"></td>
-                    <td th:text="${nd.ghiChu}"></td>
-                    <td>
-                        <a th:href="@{'/admin/nguoidung/' + ${nd.id}}" class="btn btn-sm btn-primary">Xem</a>
-                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                            th:attr="data-bs-target='#editNoteModal__' + ${nd.id}">
-                            Sửa ghi chú
-                        </button>
+    <style>
+        .user-page-wrap {
+            margin-top: 1.5rem;
+            margin-bottom: 2rem;
+        }
 
-                        <!-- Modal riêng cho mỗi người dùng -->
-                        <div class="modal fade" th:id="'editNoteModal__' + ${nd.id}" tabindex="-1"
-                            aria-labelledby="editNoteModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form th:action="@{/admin/nguoidung/capnhatghichu}" method="post">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="editNoteModalLabel">Sửa ghi chú</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Đóng"></button>
+        .user-page-card {
+            border: 1px solid #dfe3eb;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+            overflow: hidden;
+        }
+
+        .user-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px 18px;
+            border-bottom: 1px solid #e9edf3;
+            background: #f8fafd;
+        }
+
+        .user-page-title {
+            margin: 0;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .role-filter-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .role-filter-form label {
+            margin: 0;
+            font-weight: 600;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+
+        .role-filter-form .form-select {
+            min-width: 210px;
+        }
+
+        .user-page-table {
+            margin: 0;
+        }
+
+        .user-page-table thead th {
+            background: #f3f6fb;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .user-page-table tbody td {
+            vertical-align: middle;
+        }
+
+        .action-cell {
+            white-space: nowrap;
+            min-width: 170px;
+        }
+
+        @media (max-width: 768px) {
+            .user-page-title {
+                font-size: 1.3rem;
+            }
+
+            .role-filter-form .form-select {
+                min-width: 160px;
+            }
+        }
+    </style>
+
+    <div class="container user-page-wrap">
+        <div class="user-page-card">
+            <div class="user-page-header">
+                <h2 class="user-page-title">Danh sách người dùng</h2>
+                <form method="get" th:action="@{/admin/nguoidung}" class="role-filter-form">
+                    <label for="filterRole">Hiển thị:</label>
+                    <select name="roleFilter" id="filterRole" class="form-select" onchange="this.form.submit()">
+                        <option value="all" th:selected="${roleFilter == 'all'}">Tất cả</option>
+                        <option value="khachhang" th:selected="${roleFilter == 'khachhang'}">Chỉ khách hàng</option>
+                        <option value="nhanvien" th:selected="${roleFilter == 'nhanvien'}">Chỉ nhân viên</option>
+                    </select>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table id="nguoiDungTable" class="table table-bordered table-hover user-page-table">
+                    <thead>
+                        <tr>
+                            <th>Tên người dùng</th>
+                            <th>Email</th>
+                            <th>Vai trò</th>
+                            <th>Ghi chú</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="nd : ${danhSachNguoiDung}">
+                            <td th:text="${nd.tenNguoiDung}"></td>
+                            <td th:text="${nd.email}"></td>
+                            <td th:text="${nd.vaiTro}"></td>
+                            <td th:text="${nd.ghiChu}"></td>
+                            <td class="action-cell">
+                                <a th:href="@{'/admin/nguoidung/' + ${nd.id}}" class="btn btn-sm btn-primary">Chi tiết</a>
+                                <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                    th:attr="data-bs-target='#editNoteModal__' + ${nd.id}">
+                                    Sửa ghi chú
+                                </button>
+
+                                <div class="modal fade" th:id="'editNoteModal__' + ${nd.id}" tabindex="-1"
+                                    aria-labelledby="editNoteModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form th:action="@{/admin/nguoidung/capnhatghichu}" method="post">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="editNoteModalLabel">Sửa ghi chú</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                        aria-label="Đóng"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="nguoiDungId" th:value="${nd.id}" />
+                                                    <div class="mb-3">
+                                                        <label for="ghiChu" class="form-label">Ghi chú</label>
+                                                        <textarea class="form-control" name="ghiChu" rows="3"
+                                                            th:text="${nd.ghiChu}"></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Hủy</button>
+                                                </div>
+                                            </form>
                                         </div>
-                                        <div class="modal-body">
-                                            <input type="hidden" name="nguoiDungId" th:value="${nd.id}" />
-                                            <div class="mb-3">
-                                                <label for="ghiChu" class="form-label">Ghi chú</label>
-                                                <textarea class="form-control" name="ghiChu" rows="3"
-                                                    th:text="${nd.ghiChu}"></textarea>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="submit" class="btn btn-primary">Xác nhận</button>
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Hủy</button>
-                                        </div>
-                                    </form>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <!-- Modal for editing note -->
 
 
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>

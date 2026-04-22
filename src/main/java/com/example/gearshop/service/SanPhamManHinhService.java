@@ -2,6 +2,7 @@ package com.example.gearshop.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +16,13 @@ public class SanPhamManHinhService {
     @Autowired
     private SanPhamManHinhRepository manHinhRepository;
 
-    public List<SanPhamManHinh> filterManHinh(String thuongHieu, Integer kichThuoc, String beMat, Integer tanSoQuet,
+    public List<SanPhamManHinh> filterManHinh(String thuongHieu, BigDecimal kichThuoc, String beMat, Integer tanSoQuet,
             String tamNen, String doPhanGiai, Long giaMin, Long giaMax, String sort) {
 
         List<SanPhamManHinh> manHinhs = manHinhRepository.findAll();
 
         return manHinhs.stream()
+                .filter(mh -> mh.getSanPham() != null && mh.getSanPham().getTonKho() != null && mh.getSanPham().getTonKho() > 0)
                 .filter(mh -> thuongHieu == null || thuongHieu.isEmpty()
                         || thuongHieu.equals(mh.getSanPham().getThuongHieu().getTenThuongHieu()))
                 .filter(mh -> kichThuoc == null || kichThuoc.equals(mh.getKichThuoc()))
@@ -41,7 +43,7 @@ public class SanPhamManHinhService {
                 .collect(Collectors.toList());
     }
 
-    public List<Integer> getAllKichThuoc() {
+    public List<BigDecimal> getAllKichThuoc() {
         return manHinhRepository.findAllKichThuoc();
     }
 
@@ -79,6 +81,6 @@ public class SanPhamManHinhService {
     }
 
     public SanPhamManHinh luuSanPhamManHinh(SanPhamManHinh sanPhamManHinh) {
-        return manHinhRepository.save(sanPhamManHinh);
+        return manHinhRepository.save(Objects.requireNonNull(sanPhamManHinh, "sanPhamManHinh must not be null"));
     }
 }

@@ -12,54 +12,7 @@
 
 <body class="with-category-nav">
     <div th:replace="~{clientTemplate/fragments/giao-dien-chung :: dau_trang_danh_muc}"></div>
-    <nav class="bg-light py-4 border-bottom">
-        <div class="container">
-
-            <form method="get" action="/sanphamocung" class="row g-3 justify-content-center">
-                <div class="col-md-3">
-                    <label class="form-label">Thương hiệu</label>
-                    <select name="thuongHieu" class="form-select">
-                        <option value="">Tất cả</option>
-                        <option th:each="th : ${dsThuongHieu}" th:value="${th}" th:text="${th}"
-                            th:selected="${th == thuongHieu}"></option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Loại ổ cứng</label>
-                    <select name="loaiOCung" class="form-select">
-                        <option value="">Tất cả</option>
-                        <option th:each="k : ${dsLoaiOCung}" th:value="${k}" th:text="${k}"
-                            th:selected="${k == loaiOCung}">
-                        </option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Dung lượng ổ cứng</label>
-                    <select name="dungLuong" class="form-select">
-                        <option value="">Tất cả</option>
-                        <option th:each="d : ${dsDungLuong}" th:value="${d}" th:text="${d}"
-                            th:selected="${d == dungLuong}"></option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Khoảng giá</label>
-                    <input type="number" name="giaMin" class="form-control" th:value="${giaMin}">
-                    <input type="number" name="giaMax" class="form-control" th:value="${giaMax}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Sắp xếp</label>
-                    <select name="sort" class="form-select">
-                        <option value="">Mặc định</option>
-                        <option value="giaAsc" th:selected="${sort == 'giaAsc'}">Giá tăng dần</option>
-                        <option value="giaDesc" th:selected="${sort == 'giaDesc'}">Giá giảm dần</option>
-                    </select>
-                </div>
-                <div class="col-12 text-center">
-                    <button type="submit" class="btn btn-success px-4">Lọc</button>
-                </div>
-            </form>
-        </div>
-    </nav>
+    <div th:replace="~{clientTemplate/fragments/bo-loc-sanpham :: boLocOcung}"></div>
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
         <div class="col" th:each="ocung : ${dsOCung}">
             <a th:href="@{/chitietsanpham/{sanPhamID}(sanPhamID=${ocung.sanPham.id})}"

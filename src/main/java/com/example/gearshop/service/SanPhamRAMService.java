@@ -1,6 +1,7 @@
 package com.example.gearshop.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ public class SanPhamRAMService {
         List<SanPhamRAM> sanPhamRAMs = ramRepository.findAll();
 
         return sanPhamRAMs.stream()
+                .filter(ram -> ram.getSanPham() != null && ram.getSanPham().getTonKho() != null && ram.getSanPham().getTonKho() > 0)
                 .filter(ram -> thuongHieu == null || thuongHieu.isEmpty()
                         || ram.getSanPham().getThuongHieu().getTenThuongHieu().equals(thuongHieu))
                 .filter(ram -> chuanRAM == null || ram.getChuanRAM().equals(chuanRAM) || chuanRAM.isEmpty())
@@ -28,9 +30,9 @@ public class SanPhamRAMService {
                 .filter(ram -> giaMax == null
                         || ram.getSanPham().getGia().compareTo(java.math.BigDecimal.valueOf(giaMax)) <= 0)
                 .sorted((ram1, ram2) -> {
-                    if ("giaTangDan".equals(sort)) {
+                    if ("giaAsc".equals(sort) || "giaTangDan".equals(sort)) {
                         return ram1.getSanPham().getGia().compareTo(ram2.getSanPham().getGia());
-                    } else if ("giaGiamDan".equals(sort)) {
+                    } else if ("giaDesc".equals(sort) || "giaGiamDan".equals(sort)) {
                         return ram2.getSanPham().getGia().compareTo(ram1.getSanPham().getGia());
                     }
                     return 0;
@@ -65,6 +67,6 @@ public class SanPhamRAMService {
     }
 
     public SanPhamRAM luuSanPhamRAM(SanPhamRAM sanPhamRAM) {
-        return ramRepository.save(sanPhamRAM);
+        return ramRepository.save(Objects.requireNonNull(sanPhamRAM, "sanPhamRAM must not be null"));
     }
 }

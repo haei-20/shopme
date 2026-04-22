@@ -434,13 +434,7 @@ public class HomeController {
                             }
                         }
                     }
-                    if (!loiGopGio.isEmpty()) {
-                        String msg = loiGopGio.size() == 1
-                                ? loiGopGio.get(0)
-                                : "Có " + loiGopGio.size()
-                                        + " mặt hàng trong giỏ khách không gộp được (hết hoặc không đủ tồn kho). Giỏ đã cập nhật theo kho hiện tại.";
-                        redirectAttributes.addFlashAttribute("cartMergeWarning", msg);
-                    }
+                    // Không hiển thị cảnh báo gộp giỏ hàng sau khi đăng nhập.
                 }
                 session.setAttribute("cart", gioHangService.buildSessionCartPayload(khachHang.getId()));
                 return "redirect:/";
@@ -506,33 +500,63 @@ public class HomeController {
 
             model.addAttribute("nguoiDung", nguoiDung);
             boolean isKhachHang = khachHangRepo.findByNguoiDung_Id(nguoiDung.getId()).isPresent();
+            // Xác định nhân viên trực tiếp từ bảng nhanvien theo nguoiDungID.
             boolean isNhanVien = nhanVienRepo.findByNguoiDung_Id(nguoiDung.getId()).isPresent();
+            boolean showClientNavbar = !isNhanVien && isKhachHang;
             System.out.println("isKhachHang: " + isKhachHang);
             System.out.println("isNhanVien: " + isNhanVien);
             System.out.println("Co nguoi dung: " + nguoiDung.getTenNguoiDung());
             model.addAttribute("isKhachHang", isKhachHang);
             model.addAttribute("isNhanVien", isNhanVien);
+            model.addAttribute("showClientNavbar", showClientNavbar);
             return "/thongtincanhan";
         }
 
         @PostMapping("/capnhat")
         public String capNhatThongTin(HttpSession session,
+                @RequestParam String tenDangNhap,
+                @RequestParam String tenNguoiDung,
+                @RequestParam String email,
                 @RequestParam String sdt,
                 @RequestParam String diaChi,
+                @RequestParam String matKhauXacNhan,
                 RedirectAttributes redirectAttributes) {
             NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
             if (nguoiDung == null)
                 return "redirect:/dangnhap";
 
-            nguoiDungService.capNhatThongTin(nguoiDung.getTenDangNhap(), sdt, diaChi);
+            try {
+                nguoiDungService.capNhatThongTin(nguoiDung.getId(), tenDangNhap, tenNguoiDung, email, sdt, diaChi,
+                        matKhauXacNhan);
 
-            // Cập nhật session
-            nguoiDung.setSdt(sdt);
-            nguoiDung.setDiaChi(diaChi);
-            session.setAttribute("nguoiDung", nguoiDung);
+                // Đồng bộ session với DB sau khi lưu (tránh entity trong session lệch dữ liệu)
+                NguoiDung capNhat = nguoiDungRepo.findById(nguoiDung.getId()).orElse(nguoiDung);
+                session.setAttribute("nguoiDung", capNhat);
 
-            // Gửi thông báo thành công
-            redirectAttributes.addFlashAttribute("thongBaoCapNhat", "Cập nhật thông tin thành công!");
+                // Gửi thông báo thành công
+                redirectAttributes.addFlashAttribute("thongBaoCapNhat", "Cập nhật thông tin thành công!");
+            } catch (IllegalArgumentException e) {
+                // Trả lỗi theo từng trường để hiển thị inline sau redirect.
+                redirectAttributes.addFlashAttribute("tenDangNhap", tenDangNhap);
+                redirectAttributes.addFlashAttribute("tenNguoiDung", tenNguoiDung);
+                redirectAttributes.addFlashAttribute("email", email);
+                redirectAttributes.addFlashAttribute("sdt", sdt);
+                redirectAttributes.addFlashAttribute("diaChi", diaChi);
+                String errorMessage = e.getMessage() == null ? "" : e.getMessage();
+                if (errorMessage.toLowerCase().contains("tên đăng nhập")) {
+                    redirectAttributes.addFlashAttribute("tenDangNhapError", errorMessage);
+                } else if (errorMessage.toLowerCase().contains("email")) {
+                    redirectAttributes.addFlashAttribute("emailError", errorMessage);
+                } else if (errorMessage.toLowerCase().contains("số điện thoại") || errorMessage.toLowerCase().contains("sdt")) {
+                    redirectAttributes.addFlashAttribute("sdtError", errorMessage);
+                } else if (errorMessage.toLowerCase().contains("họ tên")) {
+                    redirectAttributes.addFlashAttribute("tenNguoiDungError", errorMessage);
+                } else if (errorMessage.toLowerCase().contains("mật khẩu")) {
+                    redirectAttributes.addFlashAttribute("matKhauXacNhanError", errorMessage);
+                } else {
+                    redirectAttributes.addFlashAttribute("thongBaoLoiCapNhatInline", errorMessage);
+                }
+            }
 
             return "redirect:/thongtincanhan";
         }
@@ -550,7 +574,22 @@ public class HomeController {
             String thongBao = nguoiDungService.doiMatKhau(
                     nguoiDung.getTenDangNhap(), matKhauCu, matKhauMoi, xacNhanMatKhauMoi);
 
-            redirectAttributes.addFlashAttribute("thongBaoDoiMatKhau", thongBao);
+            if ("Đổi mật khẩu thành công.".equals(thongBao)) {
+                redirectAttributes.addFlashAttribute("thongBaoDoiMatKhauSuccess", thongBao);
+            } else {
+                redirectAttributes.addFlashAttribute("matKhauCu", matKhauCu);
+                redirectAttributes.addFlashAttribute("matKhauMoi", matKhauMoi);
+                redirectAttributes.addFlashAttribute("xacNhanMatKhauMoi", xacNhanMatKhauMoi);
+                if (thongBao.toLowerCase().contains("xác nhận")) {
+                    redirectAttributes.addFlashAttribute("xacNhanMatKhauMoiError", thongBao);
+                } else if (thongBao.toLowerCase().contains("mật khẩu cũ")) {
+                    redirectAttributes.addFlashAttribute("matKhauCuError", thongBao);
+                } else if (thongBao.toLowerCase().contains("mật khẩu mới")) {
+                    redirectAttributes.addFlashAttribute("matKhauMoiError", thongBao);
+                } else {
+                    redirectAttributes.addFlashAttribute("matKhauMoiError", thongBao);
+                }
+            }
             return "redirect:/thongtincanhan";
         }
     }

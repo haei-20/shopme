@@ -3,7 +3,7 @@
 
 <body>
     <th:block th:fragment="dau_trang_danh_muc">
-        <div class="site-top-fixed-stack">
+        <div class="site-top-fixed-stack" th:if="${session.nhanVien == null}">
             <header class="bg-dark text-white site-header py-3">
                 <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <div class="site-brand fs-4 fw-bold mb-0">

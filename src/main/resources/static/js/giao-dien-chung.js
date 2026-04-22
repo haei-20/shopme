@@ -123,3 +123,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     window.sendMessage = sendMessage;
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const productFilterForms = document.querySelectorAll(
+        'body.with-category-nav nav.bg-light.py-4.border-bottom form[action^="/sanpham"]'
+    );
+    if (productFilterForms.length === 0) return;
+
+    productFilterForms.forEach((form) => {
+        const controls = form.querySelectorAll("select");
+        controls.forEach((control) => {
+            control.addEventListener("change", () => form.submit());
+        });
+    });
+});

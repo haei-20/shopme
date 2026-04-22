@@ -7,54 +7,125 @@
 <body class="admin-body">
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('dashboard')"></th:block>
 
-    <main class="admin-content">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <style>
+        .dashboard-home {
+            position: relative;
+        }
+
+        .dashboard-notify-corner {
+            position: absolute;
+            top: 56px;
+            right: 0;
+            width: min(380px, 100%);
+            z-index: 2;
+        }
+
+        @media (min-width: 1201px) {
+            .dashboard-home .kpi-grid,
+            .dashboard-home .chart-grid,
+            .dashboard-home section.mb-3 {
+                padding-right: 400px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-notify-corner {
+                position: static;
+                width: 100%;
+                margin-bottom: 0.75rem;
+            }
+
+            .dashboard-home .kpi-grid,
+            .dashboard-home .chart-grid,
+            .dashboard-home section.mb-3 {
+                padding-right: 0;
+            }
+        }
+
+        .dashboard-spotlight {
+            font-size: 0.9rem;
+            color: var(--admin-muted, #64748b);
+        }
+    </style>
+
+    <main class="admin-content dashboard-home">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
                 <div>
                     <h4 class="mb-1">Dashboard</h4>
-                    <div class="text-muted">Tổng quan hoạt động cửa hàng theo dữ liệu hiện tại</div>
                 </div>
-                <span class="badge-soft"><i class="bi bi-calendar-event me-1"></i><span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">16/04/2026 10:00</span></span>
+                <span class="badge-soft"><i class="bi bi-calendar-event me-1"></i><span
+                        th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">16/04/2026 10:00</span></span>
+            </div>
+
+            <div class="dashboard-notify-corner">
+                <div class="panel mb-0">
+                    <div class="panel-title">Việc cần chú ý</div>
+                    <div class="notify-list">
+                        <div class="notify-item warning" th:if="${donCanXuLy > 0}">
+                            <div class="fw-semibold"><i class="bi bi-hourglass-split me-1"></i>Đơn cần xử lý</div>
+                            <div class="text-muted"><strong th:text="${donCanXuLy}">0</strong> đơn đang chờ xác nhận / chuẩn bị / giao.</div>
+                        </div>
+                        <div class="notify-item">
+                            <div class="fw-semibold"><i class="bi bi-bag-plus me-1"></i>Đơn mới hôm nay</div>
+                            <div class="text-muted">Có <strong th:text="${donHangHomNay}">0</strong> đơn phát sinh trong ngày.</div>
+                        </div>
+                        <a th:href="@{/admin/quanlysanpham(loai='', sort='tonKho_asc')}"
+                            class="notify-item notify-item--link warning text-decoration-none">
+                            <div class="fw-semibold text-body"><i class="bi bi-exclamation-triangle me-1"></i>Sắp hết hàng</div>
+                            <div class="text-muted"><strong th:text="${sanPhamSapHet}">0</strong> sản phẩm còn tồn kho ≤ 5.</div>
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <section class="kpi-grid">
                 <article class="kpi-card">
-                    <div class="kpi-label">Doanh thu hôm nay</div>
+                    <div class="kpi-label">Doanh thu</div>
                     <div class="kpi-value" th:text="${#numbers.formatDecimal(doanhThuHomNay, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</div>
-                    <div class="kpi-sub"><i class="bi bi-graph-up-arrow me-1"></i>Đơn hôm nay: <span th:text="${donHangHomNay}">0</span></div>
+                    <div class="kpi-sub">Hôm nay · Tháng này: <span th:text="${#numbers.formatDecimal(doanhThuThangNay, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span></div>
                 </article>
 
                 <article class="kpi-card">
-                    <div class="kpi-label">Số đơn hàng</div>
-                    <div class="kpi-value" th:text="${tongDonHang}">0</div>
-                    <div class="kpi-sub">Tổng đơn trên hệ thống</div>
+                    <div class="kpi-label">Đơn hàng</div>
+                    <div class="kpi-value" th:text="${donHangHomNay}">0</div>
+                    <div class="kpi-sub">Hôm nay · Tháng này: <span th:text="${donHangThangNay}">0</span> đơn · Tổng HT: <span th:text="${tongDonHang}">0</span></div>
                 </article>
 
                 <article class="kpi-card">
-                    <div class="kpi-label">Sản phẩm bán chạy</div>
-                    <div class="kpi-value" th:if="${sanPhamBanChay != null}" th:text="${sanPhamBanChay.tenSanPham}">-</div>
-                    <div class="kpi-value" th:if="${sanPhamBanChay == null}">Chưa có</div>
-                    <div class="kpi-sub" th:if="${sanPhamBanChay != null}">Đã bán: <span th:text="${sanPhamBanChay.daBan}">0</span> sản phẩm</div>
+                    <div class="kpi-label">Khách có đơn (7 ngày)</div>
+                    <div class="kpi-value" th:text="${khachCoDon7Ngay}">0</div>
+                    <div class="kpi-sub">Số khách (theo mã KH) có ít nhất 1 đơn trong 7 ngày gần nhất.</div>
                 </article>
 
                 <article class="kpi-card">
-                    <div class="kpi-label">Khách hàng mới</div>
-                    <div class="kpi-value" th:text="${tongKhachHang}">0</div>
-                    <div class="kpi-sub">Tổng khách hàng đã đăng ký</div>
+                    <div class="kpi-label">Tỷ lệ hoàn thành (30 ngày)</div>
+                    <div class="kpi-value" th:if="${tyLeHoanThanh30Ngay != null}" th:text="${tyLeHoanThanh30Ngay} + '%'">—</div>
+                    <div class="kpi-value" th:if="${tyLeHoanThanh30Ngay == null}">—</div>
+                    <div class="kpi-sub" th:if="${tyLeHoanThanh30Ngay != null}">
+                        <span th:text="${donDaGiao30Ngay}">0</span> đã giao / <span th:text="${donTrong30Ngay}">0</span> đơn phát sinh
+                    </div>
+                    <div class="kpi-sub" th:if="${tyLeHoanThanh30Ngay == null}">Chưa đủ đơn trong 30 ngày để tính.</div>
                 </article>
             </section>
 
+            <p class="dashboard-spotlight mb-3" th:if="${sanPhamBanChay != null}">
+                <i class="bi bi-fire me-1"></i><strong>Spotlight:</strong>
+                <a th:href="@{'/admin/quanlysanpham/chitiet/' + ${sanPhamBanChay.id}}" th:text="${sanPhamBanChay.tenSanPham}">Sản phẩm</a>
+                · Đã bán <span th:text="${sanPhamBanChay.daBan}">0</span>
+            </p>
+
             <section class="chart-grid">
                 <div class="panel">
-                    <div class="panel-title chart-title">Biểu đồ doanh thu theo tháng - Năm <span th:text="${chartNam}">2026</span></div>
+                    <div class="panel-title chart-title">Doanh thu 7 ngày gần nhất</div>
                     <canvas id="revenueChart" height="110"></canvas>
                 </div>
                 <div class="panel">
-                    <div class="panel-title chart-title">Biểu đồ đơn hàng theo tháng - Năm <span th:text="${chartNam}">2026</span></div>
+                    <div class="panel-title chart-title">Số đơn 7 ngày gần nhất</div>
                     <canvas id="orderChart" height="110"></canvas>
                 </div>
             </section>
 
-            <section class="bottom-grid">
+            <section class="mb-3">
                 <div class="panel">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="panel-title mb-0">Đơn hàng gần đây</div>
@@ -64,7 +135,7 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
+                                    <th>Mã</th>
                                     <th>Khách</th>
                                     <th>Tổng tiền</th>
                                     <th>Trạng thái</th>
@@ -88,29 +159,15 @@
                         </table>
                     </div>
                 </div>
-
-                <div class="panel">
-                    <div class="panel-title">Thông báo</div>
-                    <div class="notify-list">
-                        <div class="notify-item">
-                            <div class="fw-semibold"><i class="bi bi-bag-plus me-1"></i>Đơn mới hôm nay</div>
-                            <div class="text-muted">Có <strong th:text="${donHangHomNay}">0</strong> đơn phát sinh trong ngày.</div>
-                        </div>
-                        <div class="notify-item warning">
-                            <div class="fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i>Sắp hết hàng</div>
-                            <div class="text-muted"><strong th:text="${sanPhamSapHet}">0</strong> sản phẩm còn tồn kho ≤ 5.</div>
-                        </div>
-                    </div>
-                </div>
             </section>
     </main>
 
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
 
     <script th:inline="javascript">
-        const monthLabels = /*[[${monthLabels}]]*/ [];
-        const revenueByMonth = /*[[${doanhThuTheoThang}]]*/ [];
-        const ordersByMonth = /*[[${donTheoThang}]]*/ [];
+        const trendLabels = /*[[${trendLabels}]]*/ [];
+        const trendDoanhThu = /*[[${trendDoanhThu}]]*/ [];
+        const trendDonHang = /*[[${trendDonHang}]]*/ [];
 
         const searchInput = document.getElementById('adminMenuSearch');
         const sidebarItems = Array.from(document.querySelectorAll('#adminSidebarMenu .admin-topbar-item'));
@@ -130,10 +187,10 @@
             new Chart(revenueCtx, {
                 type: 'line',
                 data: {
-                    labels: monthLabels,
+                    labels: trendLabels,
                     datasets: [{
                         label: 'Doanh thu (₫)',
-                        data: revenueByMonth,
+                        data: trendDoanhThu,
                         borderColor: '#1c64f2',
                         backgroundColor: 'rgba(28, 100, 242, 0.12)',
                         fill: true,
@@ -164,10 +221,10 @@
             new Chart(orderCtx, {
                 type: 'bar',
                 data: {
-                    labels: monthLabels,
+                    labels: trendLabels,
                     datasets: [{
                         label: 'Đơn hàng',
-                        data: ordersByMonth,
+                        data: trendDonHang,
                         borderRadius: 8,
                         backgroundColor: '#4f46e5'
                     }]

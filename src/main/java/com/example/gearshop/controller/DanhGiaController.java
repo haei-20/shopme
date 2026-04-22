@@ -47,4 +47,31 @@ public class DanhGiaController {
 
         return "redirect:/chitietsanpham/" + sanPhamId + "#danh-gia";
     }
+
+    @PostMapping("/danhgia/xoa")
+    public String xoaDanhGia(
+            @RequestParam Integer danhGiaId,
+            @RequestParam Integer sanPhamId,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
+        if (nguoiDung == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để thực hiện thao tác này.");
+            return "redirect:/dangnhap";
+        }
+
+        KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
+        if (khachHang == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Chỉ tài khoản khách hàng mới có thể xóa đánh giá.");
+            return "redirect:/chitietsanpham/" + sanPhamId + "#danh-gia";
+        }
+
+        try {
+            danhGiaService.xoaDanhGiaCuaKhachHang(khachHang, danhGiaId, sanPhamId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xóa đánh giá của bạn.");
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/chitietsanpham/" + sanPhamId + "#danh-gia";
+    }
 }

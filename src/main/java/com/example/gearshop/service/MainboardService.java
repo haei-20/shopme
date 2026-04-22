@@ -10,5 +10,7 @@ public interface MainboardService {
                                         String[] kichThuoc, String[] soKheRAM,
                                         Integer minPrice, Integer maxPrice, String sort);
 
+    List<SanPhamMainBoard> getAllMainboards();
+
     SanPhamMainBoard findById(Integer id); // Thêm phương thức này
 }

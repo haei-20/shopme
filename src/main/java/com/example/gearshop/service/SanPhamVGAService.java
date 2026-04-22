@@ -2,6 +2,7 @@ package com.example.gearshop.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ public class SanPhamVGAService {
         List<SanPhamVGA> vgas = vgaRepository.findAll();
 
         return vgas.stream()
+                .filter(vga -> vga.getSanPham() != null && vga.getSanPham().getTonKho() != null && vga.getSanPham().getTonKho() > 0)
                 .filter(vga -> kieuBoNho == null || kieuBoNho.isEmpty() || kieuBoNho.equals(vga.getKieuBoNho()))
                 .filter(vga -> dungLuongBoNho == null || dungLuongBoNho.isEmpty()
                         || dungLuongBoNho.equals(vga.getDungLuongBoNho()))
@@ -70,6 +72,6 @@ public class SanPhamVGAService {
     }
 
     public SanPhamVGA luuSanPhamVGA(SanPhamVGA sanPhamVGA) {
-        return vgaRepository.save(sanPhamVGA);
+        return vgaRepository.save(Objects.requireNonNull(sanPhamVGA, "sanPhamVGA must not be null"));
     }
 }

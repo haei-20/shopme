@@ -2,6 +2,7 @@ package com.example.gearshop.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ public class SanPhamOCungService {
         List<SanPhamOCung> danhSach = repository.findAll();
 
         return danhSach.stream()
+                .filter(o -> o.getSanPham() != null && o.getSanPham().getTonKho() != null && o.getSanPham().getTonKho() > 0)
                 .filter(o -> loaiOCung == null || loaiOCung.isEmpty() || loaiOCung.equals(o.getLoaiOCung()))
                 .filter(o -> dungLuong == null || dungLuong.isEmpty() || dungLuong.equals(o.getDungLuong()))
                 .filter(o -> thuongHieu == null || thuongHieu.isEmpty()
@@ -63,6 +65,6 @@ public class SanPhamOCungService {
     }
 
     public SanPhamOCung luuSanPhamOCung(SanPhamOCung sanPhamOCung) {
-        return repository.save(sanPhamOCung);
+        return repository.save(Objects.requireNonNull(sanPhamOCung, "sanPhamOCung must not be null"));
     }
 }

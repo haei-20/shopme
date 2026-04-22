@@ -1,7 +1,7 @@
 package com.example.gearshop.service;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +20,7 @@ public class SanPhamCPUService {
         List<SanPhamCPU> cpus = cpuRepository.findAll();
 
         return cpus.stream()
+                .filter(cpu -> cpu.getSanPham() != null && cpu.getSanPham().getTonKho() != null && cpu.getSanPham().getTonKho() > 0)
                 .filter(cpu -> loaiCPU == null || loaiCPU.isEmpty() || loaiCPU.equals(cpu.getLoaiCPU()))
                 .filter(cpu -> soNhanSoLuong == null || soNhanSoLuong.isEmpty()
                         || soNhanSoLuong.equals(cpu.getSoNhansoLuong()))
@@ -67,6 +68,6 @@ public class SanPhamCPUService {
     }
 
     public SanPhamCPU luuSanPhamCPU(SanPhamCPU sanPhamCPU) {
-        return cpuRepository.save(sanPhamCPU);
+        return cpuRepository.save(Objects.requireNonNull(sanPhamCPU, "sanPhamCPU must not be null"));
     }
 }

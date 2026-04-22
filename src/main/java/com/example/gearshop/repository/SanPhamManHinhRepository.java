@@ -1,6 +1,7 @@
 package com.example.gearshop.repository;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,7 +27,7 @@ public interface SanPhamManHinhRepository extends JpaRepository<SanPhamManHinh, 
                         + "CASE WHEN :sort = 'giaGiamDan' THEN m.sanPham.gia END DESC")
         List<SanPhamManHinh> filterManHinh(
                         @Param("thuongHieu") String thuongHieu,
-                        @Param("kichThuoc") Integer kichThuoc,
+                        @Param("kichThuoc") BigDecimal kichThuoc,
                         @Param("beMat") String beMat,
                         @Param("tanSoQuet") Integer tanSoQuet,
                         @Param("tamNen") String tamNen,
@@ -36,7 +37,7 @@ public interface SanPhamManHinhRepository extends JpaRepository<SanPhamManHinh, 
                         @Param("sort") String sort);
 
         @Query("SELECT DISTINCT m.kichThuoc FROM SanPhamManHinh m")
-        List<Integer> findAllKichThuoc();
+        List<BigDecimal> findAllKichThuoc();
 
         @Query("SELECT DISTINCT m.beMat FROM SanPhamManHinh m")
         List<String> findAllBeMat();

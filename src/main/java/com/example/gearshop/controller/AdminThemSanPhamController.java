@@ -215,7 +215,11 @@ public class AdminThemSanPhamController {
                     SanPhamManHinh manHinh = new SanPhamManHinh();
                     manHinh.setMaMH(maManHinh);
                     manHinh.setSanPham(sanPham);
-                    manHinh.setKichThuoc(Integer.parseInt(allParams.get("kichThuoc")));
+                    String kichThuocManHinh = allParams.get("kichThuocManHinh");
+                    if (kichThuocManHinh == null || kichThuocManHinh.isBlank()) {
+                        throw new IllegalArgumentException("Kích thước màn hình không hợp lệ.");
+                    }
+                    manHinh.setKichThuoc(new BigDecimal(kichThuocManHinh.trim()));
                     manHinh.setDoPhanGiai(allParams.get("doPhanGiai"));
                     manHinh.setBeMat(allParams.get("beMat"));
                     manHinh.setTanSoQuet(Integer.parseInt(allParams.get("tanSoQuet")));

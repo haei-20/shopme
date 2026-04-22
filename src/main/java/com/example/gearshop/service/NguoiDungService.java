@@ -24,13 +24,61 @@ public class NguoiDungService {
     @Autowired
     private NhanVienRepository nhanVienRepository;
 
-    public void capNhatThongTin(String tenDangNhap, String sdtMoi, String diaChiMoi) {
-        NguoiDung nd = nguoiDungRepository.findByTenDangNhap(tenDangNhap);
-        if (nd != null) {
-            nd.setSdt(sdtMoi);
-            nd.setDiaChi(diaChiMoi);
-            nguoiDungRepository.save(nd);
+    /**
+     * Cập nhật hồ sơ. Luôn tìm bản ghi theo {@code nguoiDungId} để tránh lỗi khi đổi {@code tenDangNhap}
+     * (lookup theo tên cũ có thể null nếu session/DB lệch hoặc đã đổi tên trước đó).
+     */
+    public void capNhatThongTin(Integer nguoiDungId, String tenDangNhapMoi, String tenNguoiDungMoi, String emailMoi, String sdtMoi,
+            String diaChiMoi, String matKhauXacNhan) {
+        NguoiDung nd = nguoiDungRepository.findById(nguoiDungId).orElse(null);
+        if (nd == null) {
+            throw new IllegalArgumentException("Không tìm thấy người dùng.");
         }
+        String tenDangNhapCapNhat = tenDangNhapMoi == null ? "" : tenDangNhapMoi.trim();
+        String tenNguoiDung = tenNguoiDungMoi == null ? "" : tenNguoiDungMoi.trim();
+        String email = emailMoi == null ? "" : emailMoi.trim();
+        String sdt = sdtMoi == null ? "" : sdtMoi.trim();
+        String diaChi = diaChiMoi == null ? "" : diaChiMoi.trim();
+
+        if (tenDangNhapCapNhat.isBlank() || tenNguoiDung.isBlank() || email.isBlank() || sdt.isBlank() || diaChi.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập đầy đủ thông tin bắt buộc.");
+        }
+        if (!tenDangNhapCapNhat.matches("^[A-Za-z0-9._-]{4,30}$")) {
+            throw new IllegalArgumentException(
+                    "Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang (4-30 ký tự).");
+        }
+        if (tenNguoiDung.length() < 2) {
+            throw new IllegalArgumentException("Họ tên cần ít nhất 2 ký tự.");
+        }
+        if (matKhauXacNhan == null || matKhauXacNhan.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập mật khẩu hiện tại để xác nhận.");
+        }
+        if (!matKhauXacNhan.equals(nd.getMatKhau())) {
+            throw new IllegalArgumentException("Mật khẩu xác nhận không đúng.");
+        }
+
+        if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new IllegalArgumentException("Email không đúng định dạng (vd: abc@gmail.com).");
+        }
+        if (!sdt.matches("^(0|\\+84)[0-9]{9}$")) {
+            throw new IllegalArgumentException("Số điện thoại phải bắt đầu bằng 0 và có 10 số.");
+        }
+
+        Optional<NguoiDung> nguoiDungTheoEmail = nguoiDungRepository.findByEmail(email);
+        if (nguoiDungTheoEmail.isPresent() && !nguoiDungTheoEmail.get().getId().equals(nd.getId())) {
+            throw new IllegalArgumentException("Email đã được sử dụng bởi tài khoản khác.");
+        }
+        if (nguoiDungRepository.existsByTenDangNhap(tenDangNhapCapNhat)
+                && !tenDangNhapCapNhat.equals(nd.getTenDangNhap())) {
+            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại.");
+        }
+
+        nd.setTenDangNhap(tenDangNhapCapNhat);
+        nd.setTenNguoiDung(tenNguoiDung);
+        nd.setEmail(email);
+        nd.setSdt(sdt);
+        nd.setDiaChi(diaChi);
+        nguoiDungRepository.save(nd);
     }
 
     public String doiMatKhau(String tenDangNhap, String matKhauCu, String matKhauMoi, String xacNhan) {
@@ -44,7 +92,13 @@ public class NguoiDungService {
         }
 
         if (!matKhauMoi.equals(xacNhan)) {
-            return "Mật khẩu mới và xác nhận không khớp.";
+            return "Mật khẩu xác nhận không khớp.";
+        }
+        if (matKhauMoi.equals(matKhauCu)) {
+            return "Mật khẩu mới không được trùng mật khẩu cũ.";
+        }
+        if (!matKhauMoi.matches("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$")) {
+            return "Mật khẩu mới phải có cả chữ và số, tối thiểu 6 ký tự.";
         }
 
         nd.setMatKhau(matKhauMoi);

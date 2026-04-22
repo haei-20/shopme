@@ -1,9 +1,12 @@
 package com.example.gearshop.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -37,6 +40,7 @@ import com.example.gearshop.repository.SanPhamManHinhRepository;
 import com.example.gearshop.repository.SanPhamOCungRepository;
 import com.example.gearshop.repository.SanPhamPSURepository;
 import com.example.gearshop.repository.SanPhamRAMRepository;
+import com.example.gearshop.repository.NhanVienRepository;
 import com.example.gearshop.repository.SanPhamVGARepository;
 import com.example.gearshop.service.LoaiSanPhamService;
 import com.example.gearshop.service.MainboardService;
@@ -80,17 +84,31 @@ public class AdminQuanLySanPhamController {
     private SanPhamManHinhRepository sanPhamManHinhRepository;
     @Autowired
     private SanPhamCaseRepository sanPhamCaseRepository;
+    @Autowired
+    private NhanVienRepository nhanVienRepository;
 
     @GetMapping("/quanlysanpham")
     public String quanLySanPham(@RequestParam(value = "loai", required = false) String loai,
             @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "thuongHieuId", required = false) Integer thuongHieuId,
+            @RequestParam(value = "nhanVienId", required = false) Integer nhanVienId,
+            @RequestParam(value = "giaMin", required = false) String giaMinRaw,
+            @RequestParam(value = "giaMax", required = false) String giaMaxRaw,
+            @RequestParam(value = "tonKhoMin", required = false) String tonKhoMinRaw,
+            @RequestParam(value = "tonKhoMax", required = false) String tonKhoMaxRaw,
             Model model) {
         List<SanPham> danhSachSanPham;
         if (loai == null || loai.isEmpty()) {
-            danhSachSanPham = sanPhamService.getAllSanPham();
+            danhSachSanPham = new ArrayList<>(sanPhamService.getAllSanPham());
         } else {
-            danhSachSanPham = sanPhamService.getByLoai(loai);
+            danhSachSanPham = new ArrayList<>(sanPhamService.getByLoai(loai));
         }
+
+        BigDecimal giaMin = parseBigDecimalParam(giaMinRaw);
+        BigDecimal giaMax = parseBigDecimalParam(giaMaxRaw);
+        Integer tonKhoMin = parseIntParam(tonKhoMinRaw);
+        Integer tonKhoMax = parseIntParam(tonKhoMaxRaw);
+        apDungLocNangCao(danhSachSanPham, thuongHieuId, nhanVienId, giaMin, giaMax, tonKhoMin, tonKhoMax);
 
         // Sắp xếp danh sách
         if (sort != null) {
@@ -121,11 +139,77 @@ public class AdminQuanLySanPhamController {
         List<String> loaiSanPhams = Arrays.asList("MainBoard", "CPU", "RAM", "VGA", "Ổ cứng", "PSU", "Tản", "Case",
                 "Màn hình");
 
+        List<ThuongHieu> dsThuongHieu = new ArrayList<>(thuongHieuService.findAll());
+        dsThuongHieu.sort(Comparator.comparing(ThuongHieu::getTenThuongHieu, Comparator.nullsLast(String::compareToIgnoreCase)));
+
+        List<NhanVien> dsNhanVien = new ArrayList<>(nhanVienRepository.findAll());
+        dsNhanVien.sort(Comparator.comparing((NhanVien nv) -> nv.getNguoiDung() != null && nv.getNguoiDung().getTenNguoiDung() != null
+                ? nv.getNguoiDung().getTenNguoiDung() : "", String.CASE_INSENSITIVE_ORDER));
+
         model.addAttribute("dsSanPham", danhSachSanPham);
         model.addAttribute("sort", sort);
-        model.addAttribute("dsLoaiSanPham", loaiSanPhams); // Gửi danh sách loại sản phẩm
+        model.addAttribute("dsLoaiSanPham", loaiSanPhams);
         model.addAttribute("loaiDangChon", loai);
+        model.addAttribute("dsThuongHieu", dsThuongHieu);
+        model.addAttribute("dsNhanVien", dsNhanVien);
+        model.addAttribute("thuongHieuIdLoc", thuongHieuId);
+        model.addAttribute("nhanVienIdLoc", nhanVienId);
+        model.addAttribute("giaMinLoc", giaMinRaw != null ? giaMinRaw.trim() : "");
+        model.addAttribute("giaMaxLoc", giaMaxRaw != null ? giaMaxRaw.trim() : "");
+        model.addAttribute("tonKhoMinLoc", tonKhoMinRaw != null ? tonKhoMinRaw.trim() : "");
+        model.addAttribute("tonKhoMaxLoc", tonKhoMaxRaw != null ? tonKhoMaxRaw.trim() : "");
         return "adminTemplate/quanlysanpham";
+    }
+
+    private static Integer parseIntParam(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(raw.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static BigDecimal parseBigDecimalParam(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(raw.trim().replace(" ", "").replace(",", ""));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** Lọc theo thương hiệu, người thêm, khoảng giá, khoảng tồn kho (đã có danh sách theo loại nếu có). */
+    private static void apDungLocNangCao(List<SanPham> ds, Integer thuongHieuId, Integer nhanVienId,
+            BigDecimal giaMin, BigDecimal giaMax, Integer tonKhoMin, Integer tonKhoMax) {
+        if (thuongHieuId != null) {
+            ds.removeIf(sp -> sp.getThuongHieu() == null || !Objects.equals(thuongHieuId, sp.getThuongHieu().getId()));
+        }
+        if (nhanVienId != null) {
+            ds.removeIf(sp -> sp.getNguoiThem() == null || !Objects.equals(nhanVienId, sp.getNguoiThem().getId()));
+        }
+        if (giaMin != null) {
+            ds.removeIf(sp -> sp.getGia() == null || sp.getGia().compareTo(giaMin) < 0);
+        }
+        if (giaMax != null) {
+            ds.removeIf(sp -> sp.getGia() == null || sp.getGia().compareTo(giaMax) > 0);
+        }
+        if (tonKhoMin != null) {
+            ds.removeIf(sp -> {
+                int tk = sp.getTonKho() != null ? sp.getTonKho() : 0;
+                return tk < tonKhoMin;
+            });
+        }
+        if (tonKhoMax != null) {
+            ds.removeIf(sp -> {
+                int tk = sp.getTonKho() != null ? sp.getTonKho() : 0;
+                return tk > tonKhoMax;
+            });
+        }
     }
 
     @GetMapping("/quanlysanpham/chitiet/{id}")
@@ -190,6 +274,30 @@ public class AdminQuanLySanPhamController {
             model.addAttribute("loaiSanPhamRutGon", "manhinh");
         }
         return "adminTemplate/chitietsanpham";
+    }
+
+    @PostMapping("/quanlysanpham/chitiet/{id}/capnhat-tonkho")
+    public String capNhatTonKho(@PathVariable Integer id,
+            @RequestParam("tonKhoMoi") String tonKhoMoiRaw,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
+        if (nguoiDung == null) {
+            return "redirect:/dangnhap";
+        }
+        try {
+            if (tonKhoMoiRaw == null || tonKhoMoiRaw.isBlank() || !tonKhoMoiRaw.trim().matches("\\d+")) {
+                throw new IllegalArgumentException("Tồn kho chỉ được nhập số nguyên không âm.");
+            }
+            Integer tonKhoMoi = Integer.parseInt(tonKhoMoiRaw.trim());
+            sanPhamService.capNhatTonKho(id, tonKhoMoi);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật tồn kho thành công.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể cập nhật tồn kho.");
+        }
+        return "redirect:/admin/quanlysanpham/chitiet/" + id;
     }
 
     @GetMapping("/quanlysanpham/capnhat/mainboard/{id}")

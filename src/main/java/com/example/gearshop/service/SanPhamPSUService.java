@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,6 +21,7 @@ public class SanPhamPSUService {
         List<SanPhamPSU> ds = psuRepository.findAll();
 
         return ds.stream()
+                .filter(p -> p.getSanPham() != null && p.getSanPham().getTonKho() != null && p.getSanPham().getTonKho() > 0)
                 .filter(p -> thuongHieu == null || thuongHieu.isEmpty() ||
                         thuongHieu.equals(p.getSanPham().getThuongHieu().getTenThuongHieu()))
                 .filter(p -> dienApVao == null || p.getDienApVao().equals(dienApVao))
@@ -66,6 +68,6 @@ public class SanPhamPSUService {
     }
 
     public SanPhamPSU luuSanPhamPSU(SanPhamPSU sanPhamPSU) {
-        return psuRepository.save(sanPhamPSU);
+        return psuRepository.save(Objects.requireNonNull(sanPhamPSU, "sanPhamPSU must not be null"));
     }
 }

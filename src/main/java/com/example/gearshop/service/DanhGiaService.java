@@ -95,6 +95,22 @@ public class DanhGiaService {
         danhGiaRepository.save(dg);
     }
 
+    @Transactional
+    public void xoaDanhGiaCuaKhachHang(KhachHang khachHang, Integer danhGiaId, Integer sanPhamId) {
+        if (khachHang == null || danhGiaId == null || sanPhamId == null) {
+            throw new IllegalArgumentException("Thiếu thông tin để xóa đánh giá.");
+        }
+        DanhGia dg = danhGiaRepository.findById(danhGiaId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đánh giá."));
+        if (dg.getSanPham() == null || !sanPhamId.equals(dg.getSanPham().getId())) {
+            throw new IllegalArgumentException("Đánh giá không thuộc sản phẩm hiện tại.");
+        }
+        if (dg.getKhachHang() == null || !khachHang.getId().equals(dg.getKhachHang().getId())) {
+            throw new IllegalStateException("Bạn không có quyền xóa đánh giá này.");
+        }
+        danhGiaRepository.delete(dg);
+    }
+
     @Transactional(readOnly = true)
     public List<DanhGia> adminLayDanhSach(Integer sanPhamIdLoc, String khachHang, Integer soSao, LocalDate tuNgay,
             LocalDate denNgay) {

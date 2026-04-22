@@ -23,6 +23,44 @@ body.admin-body {
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
+/* --- Compact layout toàn bộ trang admin --- */
+.admin-body .container,
+.admin-body main.admin-page.container,
+.admin-body .stats-page {
+    max-width: 1320px;
+}
+
+.admin-body .container.mt-5 {
+    margin-top: 1.25rem !important;
+}
+
+.admin-body .container.mt-4 {
+    margin-top: 1rem !important;
+}
+
+.admin-body .container.mb-5 {
+    margin-bottom: 1.5rem !important;
+}
+
+.admin-body .container.py-4,
+.admin-body .container.py-5 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+/* Một số trang đang lồng container gây dư lề/khoảng trắng */
+.admin-body .container .container {
+    margin-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.admin-body .card,
+.admin-body .table-responsive,
+.admin-body .panel {
+    margin-bottom: 0.75rem;
+}
+
 /* Vùng nội dung dưới topbar — căn container Bootstrap */
 main.admin-page {
     background: transparent;
@@ -223,7 +261,7 @@ main.admin-page .alert {
 
 /* --- Trang Dashboard (trangchuadmin) --- */
 main.admin-content {
-    padding: 1.4rem;
+    padding: 1rem 1.25rem;
 }
 
 .kpi-grid {
@@ -344,6 +382,17 @@ section.bottom-grid .panel {
     background: var(--admin-warning-soft);
 }
 
+a.notify-item.notify-item--link {
+    display: block;
+    color: inherit;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+a.notify-item.notify-item--link:hover {
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
+}
+
 @media (max-width: 1200px) {
     .kpi-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -461,4 +510,55 @@ section.bottom-grid .panel {
 
 .admin-product-detail .product-qty-box--stock .product-qty-value {
     color: var(--admin-primary);
+}
+
+/* --- Trang danh sách sản phẩm (admin) --- */
+.admin-product-list-page .admin-product-list-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--admin-border);
+    background: var(--admin-surface);
+}
+
+.admin-product-list-page .admin-product-list-toolbar {
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.admin-product-list-page .admin-product-sort-select {
+    min-width: 100%;
+}
+
+@media (min-width: 992px) {
+    .admin-product-list-page .admin-product-sort-select {
+        min-width: 280px;
+    }
+}
+
+.admin-product-list-page .admin-product-table thead th {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--admin-muted);
+    letter-spacing: 0.02em;
+    border-bottom: 2px solid var(--admin-border);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.admin-product-list-page .admin-product-table tbody td {
+    font-size: 0.9rem;
+    border-color: #f1f5f9;
+}
+
+.admin-product-list-page .admin-product-table tbody tr:hover {
+    background: rgba(28, 100, 242, 0.04);
+}
+
+.admin-product-list-page .code-cell {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8125rem;
+    color: #334155;
+}
+
+.admin-product-list-page .btn-group-sm > .btn {
+    padding: 0.28rem 0.5rem;
 }

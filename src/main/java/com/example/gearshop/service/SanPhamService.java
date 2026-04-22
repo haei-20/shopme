@@ -392,6 +392,20 @@ public class SanPhamService {
         return sanPhamRepository.findById(id);
     }
 
+    public void capNhatTonKho(Integer sanPhamId, Integer tonKhoMoi) {
+        SanPham sanPham = sanPhamRepository.findById(sanPhamId);
+        if (sanPham == null) {
+            throw new IllegalArgumentException("Không tìm thấy sản phẩm.");
+        }
+        if (tonKhoMoi == null || tonKhoMoi < 0) {
+            throw new IllegalArgumentException("Tồn kho phải là số nguyên lớn hơn hoặc bằng 0.");
+        }
+        int tonKhoMoiValue = tonKhoMoi;
+        sanPham.setTonKho(tonKhoMoiValue);
+        sanPham.setNgayThem(LocalDateTime.now());
+        sanPhamRepository.save(sanPham);
+    }
+
     public String sinhMaSanPham() {
         String maxMaSanPham = sanPhamRepository.findMaxMaSanPham();
         if (maxMaSanPham == null) {

@@ -1,6 +1,7 @@
 package com.example.gearshop.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "sanphammanhinh")
@@ -15,7 +16,7 @@ public class SanPhamManHinh {
     @JoinColumn(name = "sanPhamID", nullable = false)
     private SanPham sanPham;
 
-    private Integer kichThuoc;
+    private BigDecimal kichThuoc;
     private String beMat;
     private Integer tanSoQuet;
     private String tamNen;
@@ -45,11 +46,11 @@ public class SanPhamManHinh {
         this.sanPham = sanPham;
     }
 
-    public Integer getKichThuoc() {
+    public BigDecimal getKichThuoc() {
         return kichThuoc;
     }
 
-    public void setKichThuoc(Integer kichThuoc) {
+    public void setKichThuoc(BigDecimal kichThuoc) {
         this.kichThuoc = kichThuoc;
     }
 

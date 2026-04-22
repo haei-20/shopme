@@ -1,15 +1,16 @@
 package com.example.gearshop.service;
 
-import com.example.gearshop.model.SanPhamMainBoard;
-import com.example.gearshop.repository.SanPhamMainBoardRepository;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.example.gearshop.model.SanPhamMainBoard;
+import com.example.gearshop.repository.SanPhamMainBoardRepository;
 
 @Service
 public class MainboardServiceImpl implements MainboardService {
@@ -24,6 +25,7 @@ public class MainboardServiceImpl implements MainboardService {
                                                Integer minPrice, Integer maxPrice, String sort) {
         // Gọi xuống repository với Specification (lọc động)
         Specification<SanPhamMainBoard> spec = Specification.where(null);
+        spec = spec.and((root, query, cb) -> cb.greaterThan(root.get("sanPham").get("tonKho"), 0));
 
         if (thuongHieu != null && thuongHieu.length > 0) {
             spec = spec.and((root, query, cb) -> root.get("sanPham").get("thuongHieu").get("tenThuongHieu")
@@ -63,9 +65,9 @@ public class MainboardServiceImpl implements MainboardService {
 
         // Sắp xếp
         Sort sortObj = Sort.unsorted();
-        if ("priceAsc".equals(sort)) {
+        if ("giaAsc".equals(sort) || "priceAsc".equals(sort) || "giaTangDan".equals(sort)) {
             sortObj = Sort.by(Sort.Direction.ASC, "sanPham.gia");
-        } else if ("priceDesc".equals(sort)) {
+        } else if ("giaDesc".equals(sort) || "priceDesc".equals(sort) || "giaGiamDan".equals(sort)) {
             sortObj = Sort.by(Sort.Direction.DESC, "sanPham.gia");
         }
 
@@ -73,7 +75,17 @@ public class MainboardServiceImpl implements MainboardService {
     }
 
     @Override
+    public List<SanPhamMainBoard> getAllMainboards() {
+        return mainboardRepository.findAll().stream()
+                .filter(mb -> mb.getSanPham() != null && mb.getSanPham().getTonKho() != null && mb.getSanPham().getTonKho() > 0)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public SanPhamMainBoard findById(Integer id) {
+        if (id == null) {
+            return null;
+        }
         // Tìm sản phẩm Mainboard theo ID
         return mainboardRepository.findById(id).orElse(null);
     }

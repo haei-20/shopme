@@ -7,94 +7,165 @@
 <body class="admin-body">
 
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('sanpham')"></th:block>
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
-            <h2 class="mb-0">Quản lý sản phẩm</h2>
-            <a th:href="@{/admin/themsanpham}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Thêm sản phẩm
+
+    <main class="admin-page container py-4 admin-product-list-page">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+            <div>
+                <h1 class="h3 mb-1 fw-bold text-dark">Quản lý sản phẩm</h1>
+                <p class="text-muted small mb-0">Danh sách, lọc theo loại, thương hiệu, người thêm, giá, tồn kho và sắp xếp.</p>
+            </div>
+            <a th:href="@{/admin/themsanpham}" class="btn btn-primary shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i>Thêm sản phẩm
             </a>
         </div>
 
-        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-
-        <div class="d-flex justify-content-end mb-3 align-items-center">
-            <label class="me-2">Lọc theo loại sản phẩm:</label>
-            <form method="get" action="/admin/quanlysanpham" id="filterForm" class="d-flex align-items-center">
-                <select name="loai" onchange="this.form.submit()" class="form-select d-inline w-auto me-2">
-                    <option value="" th:selected="${loaiDangChon == null or loaiDangChon == ''}">Tất cả</option>
-                    <option th:each="loai : ${dsLoaiSanPham}" th:value="${loai}" th:text="${loai}"
-                        th:selected="${loai == loaiDangChon}">
-                    </option>
-                </select>
-
-                <select name="sort" onchange="document.getElementById('filterForm').submit()" class="form-select
-                    d-inline w-auto me-2">
-                    <option value="">-- Sắp xếp --</option>
-                    <option value="maSanPham_asc" th:selected="${sort == 'maSanPham_asc'}">Mã sản phẩm (A → Z)</option>
-                    <option value="maSanPham_desc" th:selected="${sort == 'maSanPham_desc'}">Mã sản phẩm (Z → A)
-                    </option>
-
-                    <option value="tenSanPham_asc" th:selected="${sort == 'tenSanPham_asc'}">Tên sản phẩm (A → Z)
-                    </option>
-                    <option value="tenSanPham_desc" th:selected="${sort == 'tenSanPham_desc'}">Tên sản phẩm (Z → A)
-                    </option>
-
-                    <option value="thuongHieu_asc" th:selected="${sort == 'thuongHieu_asc'}">Thương hiệu (A → Z)
-                    </option>
-                    <option value="thuongHieu_desc" th:selected="${sort == 'thuongHieu_desc'}">Thương hiệu (Z → A)
-                    </option>
-
-                    <option value="ngayThem_desc" th:selected="${sort == 'ngayThem_desc'}">Ngày sửa đổi (Mới → Cũ)
-                    </option>
-                    <option value="ngayThem_asc" th:selected="${sort == 'ngayThem_asc'}">Ngày sửa đổi (Cũ → Mới)
-                    </option>
-
-                    <option value="gia_asc" th:selected="${sort == 'gia_asc'}">Giá (Thấp → Cao)</option>
-                    <option value="gia_desc" th:selected="${sort == 'gia_desc'}">Giá (Cao → Thấp)</option>
-
-                    <option value="tonKho_asc" th:selected="${sort == 'tonKho_asc'}">Tồn kho (Ít → Nhiều)</option>
-                    <option value="tonKho_desc" th:selected="${sort == 'tonKho_desc'}">Tồn kho (Nhiều → Ít)</option>
-                </select>
-            </form>
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
         </div>
 
-        <table class="table table-bordered table-hover mt-3">
-            <thead>
-                <tr>
-                    <th>Mã sản phẩm</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Loại</th>
-                    <th>Thương hiệu</th>
-                    <th>Người thêm</th>
-                    <th>Ngày sửa cuối</th>
-                    <th class="text-end">Giá</th>
-                    <th class="text-end">Tồn kho (còn)</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="sp : ${dsSanPham}">
-                    <td th:text="${sp.maSanPham}"></td>
-                    <td th:text="${sp.tenSanPham}"></td>
-                    <td th:text="${#strings.defaultString(sp.loaiSanPham?.tenLoaiSanPham, 'Không xác định')}"></td>
-                    <td th:text="${sp.thuongHieu.tenThuongHieu}"></td>
-                    <td th:text="${sp.nguoiThem.nguoiDung.tenNguoiDung}"></td>
-                    <td th:text="${#temporals.format(sp.ngayThem, 'dd/MM/yyyy')}"></td>
-                    <td class="text-end" th:text="${#numbers.formatDecimal(sp.gia, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
-                    <td class="text-end">
-                        <span th:if="${sp.tonKho != null && sp.tonKho > 0}" th:text="${sp.tonKho}">0</span>
-                        <span th:if="${sp.tonKho == null || sp.tonKho == 0}" class="badge bg-danger">0</span>
-                    </td>
-                    <td>
-                        <a th:href="@{'/admin/quanlysanpham/chitiet/' + ${sp.id}}">Chi tiết</a> |
-                        <a th:href="@{'/admin/xoasanpham/' + ${sp.id}}"
-                            onclick="return confirm('Bạn có chắc chắn muốn xoá?')">Xoá</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+        <div class="card border-0 shadow-sm admin-product-list-card">
+            <div class="card-body border-bottom admin-product-list-toolbar py-3 px-3 px-lg-4">
+                <form method="get" th:action="@{/admin/quanlysanpham}" id="filterForm" class="admin-product-filter-form">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="filterLoai">Loại sản phẩm</label>
+                            <select name="loai" id="filterLoai" onchange="this.form.submit()" class="form-select form-select-sm">
+                                <option value="" th:selected="${loaiDangChon == null or loaiDangChon == ''}">Tất cả</option>
+                                <option th:each="loai : ${dsLoaiSanPham}" th:value="${loai}" th:text="${loai}"
+                                    th:selected="${loai == loaiDangChon}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="filterThuongHieu">Thương hiệu</label>
+                            <select name="thuongHieuId" id="filterThuongHieu" onchange="this.form.submit()" class="form-select form-select-sm">
+                                <option value="" th:selected="${thuongHieuIdLoc == null}">Tất cả</option>
+                                <option th:each="th : ${dsThuongHieu}" th:value="${th.id}" th:text="${th.tenThuongHieu}"
+                                    th:selected="${thuongHieuIdLoc != null and thuongHieuIdLoc == th.id}"></option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="filterNhanVien">Người thêm</label>
+                            <select name="nhanVienId" id="filterNhanVien" onchange="this.form.submit()" class="form-select form-select-sm">
+                                <option value="" th:selected="${nhanVienIdLoc == null}">Tất cả</option>
+                                <option th:each="nv : ${dsNhanVien}" th:value="${nv.id}"
+                                    th:selected="${nhanVienIdLoc != null and nhanVienIdLoc == nv.id}"
+                                    th:text="${nv.nguoiDung != null and nv.nguoiDung.tenNguoiDung != null ? nv.nguoiDung.tenNguoiDung : nv.maNhanVien}">NV</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="filterSort">Sắp xếp</label>
+                            <select name="sort" id="filterSort" onchange="this.form.submit()"
+                                class="form-select form-select-sm admin-product-sort-select">
+                                <option value="">— Mặc định —</option>
+                                <option value="maSanPham_asc" th:selected="${sort == 'maSanPham_asc'}">Mã A → Z</option>
+                                <option value="maSanPham_desc" th:selected="${sort == 'maSanPham_desc'}">Mã Z → A</option>
+                                <option value="tenSanPham_asc" th:selected="${sort == 'tenSanPham_asc'}">Tên A → Z</option>
+                                <option value="tenSanPham_desc" th:selected="${sort == 'tenSanPham_desc'}">Tên Z → A</option>
+                                <option value="thuongHieu_asc" th:selected="${sort == 'thuongHieu_asc'}">Thương hiệu A → Z</option>
+                                <option value="thuongHieu_desc" th:selected="${sort == 'thuongHieu_desc'}">Thương hiệu Z → A</option>
+                                <option value="ngayThem_desc" th:selected="${sort == 'ngayThem_desc'}">Ngày sửa: mới nhất</option>
+                                <option value="ngayThem_asc" th:selected="${sort == 'ngayThem_asc'}">Ngày sửa: cũ nhất</option>
+                                <option value="gia_asc" th:selected="${sort == 'gia_asc'}">Giá thấp → cao</option>
+                                <option value="gia_desc" th:selected="${sort == 'gia_desc'}">Giá cao → thấp</option>
+                                <option value="tonKho_asc" th:selected="${sort == 'tonKho_asc'}">Tồn kho ít → nhiều</option>
+                                <option value="tonKho_desc" th:selected="${sort == 'tonKho_desc'}">Tồn kho nhiều → ít</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 align-items-end mt-1 pt-2 border-top border-light-subtle">
+                        <div class="col-6 col-md-3 col-xl-2">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="giaMin">Giá tối thiểu</label>
+                            <input type="text" class="form-control form-control-sm" name="giaMin" id="giaMin"
+                                inputmode="decimal" placeholder="VD: 1000000" th:value="${giaMinLoc}">
+                        </div>
+                        <div class="col-6 col-md-3 col-xl-2">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="giaMax">Giá tối đa</label>
+                            <input type="text" class="form-control form-control-sm" name="giaMax" id="giaMax"
+                                inputmode="decimal" placeholder="VD: 50000000" th:value="${giaMaxLoc}">
+                        </div>
+                        <div class="col-6 col-md-3 col-xl-2">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="tonKhoMin">Tồn tối thiểu</label>
+                            <input type="number" class="form-control form-control-sm" name="tonKhoMin" id="tonKhoMin"
+                                min="0" step="1" placeholder="0" th:value="${tonKhoMinLoc}">
+                        </div>
+                        <div class="col-6 col-md-3 col-xl-2">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="tonKhoMax">Tồn tối đa</label>
+                            <input type="number" class="form-control form-control-sm" name="tonKhoMax" id="tonKhoMax"
+                                min="0" step="1" placeholder="Không giới hạn" th:value="${tonKhoMaxLoc}">
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4 d-flex flex-wrap gap-2 align-items-end">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-funnel me-1"></i>Áp dụng lọc giá &amp; tồn
+                            </button>
+                            <a th:href="@{/admin/quanlysanpham}" class="btn btn-sm btn-outline-secondary">Đặt lại bộ lọc</a>
+                        </div>
+                        <div class="col-12 col-xl-12 text-xl-end">
+                            <span class="small text-muted">Số dòng sau lọc:</span>
+                            <span class="fw-semibold text-dark ms-1" th:text="${#lists.size(dsSanPham)}">0</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 admin-product-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-3">Mã</th>
+                            <th scope="col">Tên sản phẩm</th>
+                            <th scope="col">Loại</th>
+                            <th scope="col">Thương hiệu</th>
+                            <th scope="col" class="d-none d-xl-table-cell">Người thêm</th>
+                            <th scope="col">Ngày sửa</th>
+                            <th scope="col" class="text-end">Giá</th>
+                            <th scope="col" class="text-end">Tồn kho</th>
+                            <th scope="col" class="text-end pe-3" style="width: 7rem;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(dsSanPham)}">
+                            <td colspan="9" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox d-block fs-2 mb-2 opacity-50"></i>
+                                Chưa có sản phẩm nào. Thêm sản phẩm mới hoặc đổi bộ lọc.
+                            </td>
+                        </tr>
+                        <tr th:each="sp : ${dsSanPham}">
+                            <td class="ps-3 code-cell" th:text="${sp.maSanPham}">SP00001</td>
+                            <td class="name-cell">
+                                <span class="d-inline-block text-truncate align-bottom" style="max-width: min(320px, 38vw);"
+                                    th:text="${sp.tenSanPham}" th:title="${sp.tenSanPham}">Tên</span>
+                            </td>
+                            <td class="small" th:text="${#strings.defaultString(sp.loaiSanPham?.tenLoaiSanPham, '—')}">Loại</td>
+                            <td class="small" th:text="${sp.thuongHieu.tenThuongHieu}">TH</td>
+                            <td class="small d-none d-xl-table-cell text-muted" th:text="${sp.nguoiThem.nguoiDung.tenNguoiDung}">—</td>
+                            <td class="small text-muted text-nowrap" th:text="${#temporals.format(sp.ngayThem, 'dd/MM/yyyy')}">—</td>
+                            <td class="text-end fw-semibold text-nowrap" th:text="${#numbers.formatDecimal(sp.gia, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                            <td class="text-end">
+                                <th:block th:with="tk=${sp.tonKho != null ? sp.tonKho : 0}">
+                                    <span th:if="${tk == 0}" class="badge rounded-pill bg-danger">0</span>
+                                    <span th:if="${tk > 0 and tk <= 5}" class="badge rounded-pill bg-warning text-dark" th:text="${tk}">1</span>
+                                    <span th:if="${tk > 5}" class="badge rounded-pill bg-light text-dark border" th:text="${tk}">10</span>
+                                </th:block>
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Thao tác">
+                                    <a th:href="@{'/admin/quanlysanpham/chitiet/' + ${sp.id}}" class="btn btn-outline-primary"
+                                        title="Chi tiết"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{'/admin/xoasanpham/' + ${sp.id}}" class="btn btn-outline-danger"
+                                        title="Xóa sản phẩm" onclick="return confirm('Bạn có chắc chắn muốn xoá sản phẩm này?');"><i class="bi bi-trash"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
 </body>

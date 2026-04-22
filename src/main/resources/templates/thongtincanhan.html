@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thông tin cá nhân</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
     <style>
         .profile-wrap {
             max-width: 1100px;
@@ -23,153 +26,782 @@
             font-weight: 700;
         }
 
-        .profile-info-item {
-            padding: 0.9rem 1rem;
+        .profile-section {
+            background: #fffdf7;
+            border: 1px solid #f2e5c5;
             border-radius: 14px;
-            background: #fffaf0;
-            border: 1px solid #f0e1ba;
+            padding: 14px;
+        }
+
+        .profile-section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #8a6b2f;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .profile-card .form-label {
+            font-weight: 600;
+            color: #5f4a1f;
+            margin-bottom: 0.35rem;
+        }
+
+        .profile-card .form-control,
+        .profile-card .form-select {
+            border-radius: 10px;
+            border-color: #eadcb7;
+            min-height: 42px;
+        }
+
+        .profile-card .form-control:focus,
+        .profile-card .form-select:focus {
+            border-color: #d7b56d;
+            box-shadow: 0 0 0 0.2rem rgba(215, 181, 109, 0.2);
+        }
+
+        .profile-note {
+            color: #8f6e31;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .searchable-select {
+            position: relative;
+        }
+
+        .searchable-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            z-index: 1060;
+            display: none;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+        }
+
+        .searchable-dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .searchable-dropdown-item:hover {
+            background: #f8fafc;
+        }
+
+        .searchable-dropdown-empty {
+            padding: 10px 12px;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .profile-actions {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .address-edit-panel {
+            display: none;
+        }
+
+        .address-edit-panel.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .profile-actions .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 
-<body>
-    <header class="bg-dark text-white py-3">
-        <div class="container">
-            <div class="d-flex align-items-center justify-content-between">
+<body th:class="${showClientNavbar} ? 'with-category-nav' : ''">
+    <th:block th:if="${showClientNavbar}"
+        th:replace="~{clientTemplate/fragments/giao-dien-chung :: dau_trang_danh_muc}"></th:block>
 
-                <!-- Nút quay về trang chủ -->
-                <a th:if="${isNhanVien}" th:href="@{/admin/trangchu}" class="btn btn-outline-light">← Trang chủ</a>
-                <a th:unless="${isNhanVien}" th:href="@{/}" class="btn btn-outline-light">← Trang chủ</a>
-
-                <!-- Tiêu đề chính giữa -->
-                <div class="fs-3 fw-bold text-center flex-grow-1">Thông tin người dùng</div>
-
-                <!-- Để giữ cân bằng chiều rộng (có thể thêm div trống) -->
-                <div style="width: 120px;"></div>
-            </div>
+    <div class="container profile-wrap page-content-shell mb-5">
+        <div class="d-flex justify-content-start mb-3">
+            <a th:if="${isNhanVien}" th:href="@{/admin/trangchu}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Trang chủ quản trị
+            </a>
         </div>
-    </header>
-    <div class="container profile-wrap mt-4 mb-5">
         <div th:if="${thongBaoCapNhat}" class="alert alert-success alert-dismissible fade show" role="alert">
             <span th:text="${thongBaoCapNhat}">Cập nhật thành công!</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+        <div th:if="${thongBaoDoiMatKhauSuccess}" class="alert alert-info alert-dismissible fade show" role="alert">
+            <span th:text="${thongBaoDoiMatKhauSuccess}">Đổi mật khẩu thành công!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
 
         <div class="row g-4">
-            <div class="col-lg-7">
-                <div class="card profile-card h-100">
-                    <div class="card-body p-4">
-                        <h4 class="card-title mb-4">Chỉnh sửa thông tin cá nhân</h4>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <div class="profile-info-item">
-                                    <div class="text-muted small">Họ tên</div>
-                                    <div class="fw-semibold" th:text="${nguoiDung.tenNguoiDung}">Người dùng</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="profile-info-item">
-                                    <div class="text-muted small">Email</div>
-                                    <div class="fw-semibold" th:text="${nguoiDung.email}">email@example.com</div>
-                                </div>
-                            </div>
-                        </div>
-
+            <div class="col-12">
+                <div class="card profile-card">
+                    <div class="card-body p-4 p-lg-5">
+                        <h4 class="card-title mb-2">Chỉnh sửa thông tin cá nhân</h4>
+                        <p class="profile-note">Cập nhật thông tin liên hệ và địa chỉ nhận hàng mặc định của bạn.</p>
+                        <div th:if="${thongBaoLoiCapNhatInline}" class="text-danger small mb-2" th:text="${thongBaoLoiCapNhatInline}"></div>
                         <form id="profileForm" th:action="@{/thongtincanhan/capnhat}" method="post" novalidate>
-                            <div class="mb-3">
-                                <label for="sdt" class="form-label">Số điện thoại</label>
-                                <input type="text" class="form-control" id="sdt" name="sdt"
-                                    th:value="${nguoiDung.sdt}" pattern="^0\\d{9}$" required>
-                                <div class="invalid-feedback"></div>
+                            <div class="profile-section mb-3">
+                                <div class="profile-section-title">Thông tin cơ bản</div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="tenDangNhap" class="form-label">Tên đăng nhập</label>
+                                        <input type="text" class="form-control" id="tenDangNhap" name="tenDangNhap"
+                                            th:classappend="${tenDangNhapError != null ? ' is-invalid' : ''}"
+                                            th:value="${tenDangNhap != null ? tenDangNhap : nguoiDung.tenDangNhap}"
+                                            pattern="^[A-Za-z0-9._-]{4,30}$" minlength="4" maxlength="30" required>
+                                        <div class="invalid-feedback"
+                                            th:text="${tenDangNhapError != null ? tenDangNhapError : ''}"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="tenNguoiDung" class="form-label">Họ tên</label>
+                                        <input type="text" class="form-control" id="tenNguoiDung" name="tenNguoiDung"
+                                            th:classappend="${tenNguoiDungError != null ? ' is-invalid' : ''}"
+                                            th:value="${tenNguoiDung != null ? tenNguoiDung : nguoiDung.tenNguoiDung}" minlength="2" maxlength="100" required>
+                                        <div class="invalid-feedback"
+                                            th:text="${tenNguoiDungError != null ? tenNguoiDungError : ''}"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email"
+                                            th:classappend="${emailError != null ? ' is-invalid' : ''}"
+                                            th:value="${email != null ? email : nguoiDung.email}"
+                                            pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+                                            maxlength="100" required>
+                                        <div class="invalid-feedback" th:text="${emailError != null ? emailError : ''}"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="sdt" class="form-label">Số điện thoại</label>
+                                        <input type="text" class="form-control" id="sdt" name="sdt"
+                                            th:classappend="${sdtError != null ? ' is-invalid' : ''}"
+                                            th:value="${sdt != null ? sdt : nguoiDung.sdt}" pattern="^(0|\+84)[0-9]{9}$" required>
+                                        <div class="invalid-feedback" th:text="${sdtError != null ? sdtError : ''}"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="diaChi" class="form-label">Địa chỉ</label>
-                                <input type="text" class="form-control" id="diaChi" name="diaChi"
-                                    th:value="${nguoiDung.diaChi}" minlength="8" maxlength="255" required>
-                                <div class="invalid-feedback"></div>
+
+                            <div class="profile-section">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="profile-section-title mb-0">Địa chỉ</div>
+                                    <button type="button" id="toggleAddressEditBtn" class="btn btn-outline-secondary btn-sm">Sửa địa chỉ</button>
+                                </div>
+                                <p class="text-muted small mb-3" id="addressHintText">Nhấn "Sửa địa chỉ" để thay đổi địa chỉ nhận hàng mặc định.</p>
+                                <div id="addressEditPanel" class="address-edit-panel">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="profileTinhThanh" class="form-label">Tỉnh / Thành phố</label>
+                                            <div class="searchable-select">
+                                                <input type="text" id="profileTinhThanh" class="form-control"
+                                                    placeholder="Gõ để tìm tỉnh/thành phố" autocomplete="off">
+                                                <div id="profileTinhThanhDropdown" class="searchable-dropdown-menu"></div>
+                                            </div>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="profilePhuongXa" class="form-label">Phường / Xã</label>
+                                            <div class="searchable-select">
+                                                <input type="text" id="profilePhuongXa" class="form-control"
+                                                    placeholder="Gõ để tìm phường/xã" autocomplete="off">
+                                                <div id="profilePhuongXaDropdown" class="searchable-dropdown-menu"></div>
+                                            </div>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="profileStreetLine" class="form-label">Tên đường, tòa nhà, số nhà</label>
+                                            <input type="text" class="form-control" id="profileStreetLine"
+                                                minlength="3" maxlength="120">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="diaChiPreview" class="form-label">Địa chỉ mới sẽ lưu</label>
+                                            <input type="text" class="form-control" id="diaChiPreview" readonly>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <button type="submit" class="btn btn-warning">Lưu thay đổi</button>
+                            <input type="hidden" id="diaChi" name="diaChi" th:value="${nguoiDung.diaChi}">
+                            <div class="mt-3">
+                                <label for="diaChiHienTai" class="form-label">Địa chỉ hiện tại</label>
+                                <input type="text" class="form-control" id="diaChiHienTai"
+                                    th:value="${nguoiDung.diaChi}" readonly>
+                            </div>
+                            <div class="mt-3">
+                                <label for="matKhauXacNhanCapNhat" class="form-label">Mật khẩu</label>
+                                <input type="password" class="form-control" id="matKhauXacNhanCapNhat" name="matKhauXacNhan"
+                                    th:classappend="${matKhauXacNhanError != null ? ' is-invalid' : ''}" required>
+                                <div class="invalid-feedback"
+                                    th:text="${matKhauXacNhanError != null ? matKhauXacNhanError : ''}"></div>
+                            </div>
+                            <div class="profile-actions">
+                                <button type="submit" class="btn btn-warning px-4">Lưu thay đổi</button>
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-5">
-                <div class="card profile-card h-100">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <h4 class="card-title mb-3">Lịch sử mua hàng của bạn</h4>
-                        <p class="text-muted mb-4">
-                            Xem lại các đơn hàng, trạng thái giao dịch và chi tiết mua hàng của chính bạn.
-                        </p>
-
-                        <div class="profile-info-item mb-4" th:if="${isKhachHang}">
-                            <div class="text-muted small">Trạng thái</div>
-                            <div class="fw-semibold">Tài khoản khách hàng có thể xem lịch sử mua hàng</div>
-                        </div>
-
-                        <div class="profile-info-item mb-4" th:unless="${isKhachHang}">
-                            <div class="text-muted small">Trạng thái</div>
-                            <div class="fw-semibold">Tài khoản này không có lịch sử mua hàng cá nhân</div>
-                        </div>
-
-                        <div class="mt-auto">
-                            <a th:if="${isKhachHang}" th:href="@{/lichsugiaodich}" class="btn btn-primary">
-                                Xem lịch sử mua hàng
-                            </a>
-                            <button th:unless="${isKhachHang}" type="button" class="btn btn-secondary" disabled>
-                                Không khả dụng
-                            </button>
-                        </div>
+            <div class="col-12">
+                <div class="card profile-card">
+                    <div class="card-body p-4 p-lg-5">
+                        <h4 class="card-title mb-2">Đổi mật khẩu</h4>
+                        <p class="profile-note">Đặt mật khẩu mới để tăng bảo mật tài khoản của bạn.</p>
+                        <form id="passwordForm" th:action="@{/thongtincanhan/doimatkhau}" method="post" novalidate>
+                            <input type="text" name="username"
+                                th:value="${nguoiDung != null ? nguoiDung.tenDangNhap : ''}"
+                                autocomplete="username" class="d-none" tabindex="-1" aria-hidden="true" readonly>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="matKhauCu" class="form-label">Mật khẩu hiện tại</label>
+                                    <input type="password" class="form-control" id="matKhauCu" name="matKhauCu"
+                                        autocomplete="current-password"
+                                        th:classappend="${matKhauCuError != null ? ' is-invalid' : ''}" required>
+                                    <div class="invalid-feedback"
+                                        th:text="${matKhauCuError != null ? matKhauCuError : ''}"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="matKhauMoi" class="form-label">Mật khẩu mới</label>
+                                    <input type="password" class="form-control" id="matKhauMoi" name="matKhauMoi"
+                                        autocomplete="new-password"
+                                        th:classappend="${matKhauMoiError != null ? ' is-invalid' : ''}"
+                                        pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$"
+                                        minlength="6" required>
+                                    <div class="invalid-feedback"
+                                        th:text="${matKhauMoiError != null ? matKhauMoiError : ''}"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="xacNhanMatKhauMoi" class="form-label">Xác nhận mật khẩu mới</label>
+                                    <input type="password" class="form-control" id="xacNhanMatKhauMoi"
+                                        autocomplete="new-password"
+                                        th:classappend="${xacNhanMatKhauMoiError != null ? ' is-invalid' : ''}"
+                                        name="xacNhanMatKhauMoi" minlength="6" required>
+                                    <div class="invalid-feedback"
+                                        th:text="${xacNhanMatKhauMoiError != null ? xacNhanMatKhauMoiError : ''}"></div>
+                                </div>
+                            </div>
+                            <div class="profile-actions">
+                                <button type="submit" class="btn btn-outline-dark px-4">Cập nhật mật khẩu</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const form = document.getElementById('profileForm');
-            if (!form) return;
+            const profileForm = document.getElementById('profileForm');
+            const passwordForm = document.getElementById('passwordForm');
+            const profileTinhThanh = document.getElementById('profileTinhThanh');
+            const profilePhuongXa = document.getElementById('profilePhuongXa');
+            const profileTinhThanhDropdown = document.getElementById('profileTinhThanhDropdown');
+            const profilePhuongXaDropdown = document.getElementById('profilePhuongXaDropdown');
+            const profileStreetLine = document.getElementById('profileStreetLine');
+            const addressEditPanel = document.getElementById('addressEditPanel');
+            const toggleAddressEditBtn = document.getElementById('toggleAddressEditBtn');
+            const diaChiInput = document.getElementById('diaChi');
+            const diaChiPreview = document.getElementById('diaChiPreview');
+            const diaChiHienTai = document.getElementById('diaChiHienTai');
+            const provincesApiBase = 'https://provinces.open-api.vn/api/v2';
+            let cachedProvinces = [];
+            let currentWardOptions = [];
+            let selectedProvinceCode = '';
+            let originalAddress = '';
+            const searchableDropdownState = new Map();
 
             const messages = {
-                sdt: {
-                    valueMissing: 'Số điện thoại không được để trống.',
-                    patternMismatch: 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.'
+                tenNguoiDung: {
+                    valueMissing: 'Không được để trống họ tên.',
+                    tooShort: 'Họ tên phải từ 2 ký tự trở lên.',
+                    tooLong: 'Họ tên không được vượt quá 100 ký tự.'
                 },
-                diaChi: {
-                    valueMissing: 'Địa chỉ không được để trống.',
-                    tooShort: 'Địa chỉ cần ít nhất 8 ký tự.'
-                }
+                tenDangNhap: {
+                    valueMissing: 'Không được để trống tên đăng nhập.',
+                    tooShort: 'Tên đăng nhập phải từ 4-30 ký tự.',
+                    tooLong: 'Tên đăng nhập phải từ 4-30 ký tự.',
+                    patternMismatch: 'Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang (4-30 ký tự).'
+                },
+                email: {
+                    valueMissing: 'Không được để trống email.',
+                    typeMismatch: 'Email không đúng định dạng (vd: abc@gmail.com).',
+                    patternMismatch: 'Email không đúng định dạng (vd: abc@gmail.com).',
+                    tooLong: 'Email không được vượt quá 100 ký tự.'
+                },
+                sdt: {
+                    valueMissing: 'Không được để trống số điện thoại.',
+                    patternMismatch: 'Số điện thoại phải bắt đầu bằng 0 và có 10 số.'
+                },
+                profileTinhThanh: { valueMissing: 'Vui lòng chọn tỉnh/thành phố.' },
+                profilePhuongXa: { valueMissing: 'Vui lòng chọn phường/xã.' },
+                profileStreetLine: {
+                    valueMissing: 'Không được để trống địa chỉ chi tiết.',
+                    tooShort: 'Địa chỉ chi tiết phải từ 3 ký tự trở lên.',
+                    tooLong: 'Địa chỉ chi tiết không được vượt quá 120 ký tự.'
+                },
+                matKhauXacNhan: {
+                    valueMissing: 'Vui lòng nhập mật khẩu hiện tại để xác nhận.'
+                },
+                matKhauCu: { valueMissing: 'Vui lòng nhập mật khẩu hiện tại.' },
+                matKhauMoi: {
+                    valueMissing: 'Vui lòng nhập mật khẩu mới.',
+                    tooShort: 'Mật khẩu mới cần ít nhất 6 ký tự.',
+                    patternMismatch: 'Mật khẩu mới phải có cả chữ và số, tối thiểu 6 ký tự.'
+                },
+                xacNhanMatKhauMoi: {
+                    valueMissing: 'Vui lòng xác nhận mật khẩu mới.',
+                    tooShort: 'Mật khẩu xác nhận cần ít nhất 6 ký tự.'
+                },
             };
 
-            form.querySelectorAll('input').forEach(function (input) {
-                input.addEventListener('invalid', function () {
-                    const map = messages[input.name] || {};
-                    let msg = 'Dữ liệu chưa hợp lệ.';
-                    if (input.validity.valueMissing && map.valueMissing) msg = map.valueMissing;
-                    else if (input.validity.patternMismatch && map.patternMismatch) msg = map.patternMismatch;
-                    else if (input.validity.tooShort && map.tooShort) msg = map.tooShort;
-                    input.setCustomValidity(msg);
-                    input.classList.add('is-invalid');
-                    const fb = input.parentElement.querySelector('.invalid-feedback');
-                    if (fb) fb.textContent = msg;
-                });
-                input.addEventListener('input', function () {
-                    input.setCustomValidity('');
-                    input.classList.remove('is-invalid');
-                });
-            });
-
-            form.addEventListener('submit', function (e) {
-                if (!form.checkValidity()) {
-                    e.preventDefault();
-                    form.reportValidity();
+            function getMessage(field) {
+                const map = messages[field.name] || messages[field.id] || {};
+                if (field.validity.customError && field.validationMessage) {
+                    return field.validationMessage;
                 }
-            });
+                if (field.validity.valueMissing && map.valueMissing) return map.valueMissing;
+                if (field.validity.typeMismatch && map.typeMismatch) return map.typeMismatch;
+                if (field.validity.patternMismatch && map.patternMismatch) return map.patternMismatch;
+                if (field.validity.tooShort && map.tooShort) return map.tooShort;
+                if (field.validity.tooLong && map.tooLong) return map.tooLong;
+                return 'Giá trị nhập chưa đúng định dạng yêu cầu.';
+            }
+
+            function setFieldInvalid(field) {
+                const msg = getMessage(field);
+                field.setCustomValidity(msg);
+                field.classList.add('is-invalid');
+                const fb = field.parentElement.querySelector('.invalid-feedback')
+                    || (field.parentElement.nextElementSibling
+                        && field.parentElement.nextElementSibling.classList.contains('invalid-feedback')
+                        ? field.parentElement.nextElementSibling
+                        : null);
+                if (fb) fb.textContent = msg;
+            }
+
+            function clearFieldInvalid(field) {
+                field.setCustomValidity('');
+                field.classList.remove('is-invalid');
+            }
+
+            function validateFieldRealtime(field) {
+                if (!field) return true;
+                if ((field.id === 'profileTinhThanh' || field.id === 'profilePhuongXa' || field.id === 'profileStreetLine')
+                    && addressEditPanel && !addressEditPanel.classList.contains('show')) {
+                    clearFieldInvalid(field);
+                    return true;
+                }
+                clearFieldInvalid(field);
+
+                const value = String(field.value || '').trim();
+                if (value === '') return true;
+
+                if (field.id === 'profileTinhThanh') {
+                    const province = findProvinceByName(value);
+                    if (!province) {
+                        field.setCustomValidity('Vui lòng chọn tỉnh/thành phố hợp lệ từ danh sách.');
+                        setFieldInvalid(field);
+                        return false;
+                    }
+                    return true;
+                }
+
+                if (field.id === 'profilePhuongXa') {
+                    if (!isValidWardName(value)) {
+                        field.setCustomValidity('Vui lòng chọn phường/xã hợp lệ từ danh sách.');
+                        setFieldInvalid(field);
+                        return false;
+                    }
+                    return true;
+                }
+
+                if (!field.checkValidity()) {
+                    setFieldInvalid(field);
+                    return false;
+                }
+                return true;
+            }
+
+            function validatePasswordMatchRealtime() {
+                const matKhauMoi = document.getElementById('matKhauMoi');
+                const matKhauCu = document.getElementById('matKhauCu');
+                const xacNhan = document.getElementById('xacNhanMatKhauMoi');
+                if (!matKhauMoi || !xacNhan || !matKhauCu) return true;
+
+                if (matKhauMoi.value.length > 0 && matKhauCu.value.length > 0 && matKhauMoi.value === matKhauCu.value) {
+                    matKhauMoi.setCustomValidity('Mật khẩu mới không được trùng mật khẩu cũ.');
+                    setFieldInvalid(matKhauMoi);
+                } else {
+                    clearFieldInvalid(matKhauMoi);
+                }
+
+                const confirmValue = String(xacNhan.value || '');
+                if (confirmValue.length === 0) {
+                    clearFieldInvalid(xacNhan);
+                    return matKhauMoi.validity.valid;
+                }
+
+                if (matKhauMoi.value !== confirmValue) {
+                    xacNhan.setCustomValidity('Mật khẩu xác nhận không khớp.');
+                    setFieldInvalid(xacNhan);
+                    return false;
+                }
+
+                clearFieldInvalid(xacNhan);
+                return matKhauMoi.validity.valid;
+            }
+
+            function normalizeAddressPart(value) {
+                return String(value || '').replace(/\s+/g, ' ').trim();
+            }
+
+            function buildFullAddress(streetLine, phuongXa, tinhThanh) {
+                return [streetLine, phuongXa, tinhThanh]
+                    .map(normalizeAddressPart)
+                    .filter(Boolean)
+                    .join(', ');
+            }
+
+            function normalizeAddressText(value) {
+                return String(value || '')
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/^tinh\s+|^thanh pho\s+|^tp\.?\s+|^quan\s+|^huyen\s+|^phuong\s+|^xa\s+/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            }
+
+            function hideSearchableDropdown(dropdownId) {
+                const dropdown = document.getElementById(dropdownId);
+                if (dropdown) dropdown.style.display = 'none';
+            }
+
+            function renderSearchableDropdown(inputId, options, keyword) {
+                const state = searchableDropdownState.get(inputId);
+                if (!state) return;
+                const dropdown = document.getElementById(state.dropdownId);
+                if (!dropdown) return;
+
+                const normalizedKeyword = normalizeAddressText(keyword || '');
+                const filtered = normalizedKeyword
+                    ? options.filter(function (name) {
+                        return normalizeAddressText(name).includes(normalizedKeyword);
+                    })
+                    : options;
+
+                dropdown.innerHTML = '';
+                if (filtered.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'searchable-dropdown-empty';
+                    empty.textContent = 'Không có kết quả';
+                    dropdown.appendChild(empty);
+                } else {
+                    filtered.forEach(function (name) {
+                        const item = document.createElement('div');
+                        item.className = 'searchable-dropdown-item';
+                        item.textContent = name;
+                        item.addEventListener('mousedown', function (event) {
+                            event.preventDefault();
+                            const input = document.getElementById(inputId);
+                            input.value = name;
+                            hideSearchableDropdown(state.dropdownId);
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                        dropdown.appendChild(item);
+                    });
+                }
+                dropdown.style.display = 'block';
+            }
+
+            function bindSearchableInput(inputId, dropdownId) {
+                const input = document.getElementById(inputId);
+                const dropdown = document.getElementById(dropdownId);
+                if (!input || !dropdown || input.dataset.searchableBound === 'true') return;
+
+                input.addEventListener('focus', function () {
+                    const state = searchableDropdownState.get(inputId);
+                    if (!state) return;
+                    renderSearchableDropdown(inputId, state.options, input.value);
+                });
+
+                input.addEventListener('input', function () {
+                    const state = searchableDropdownState.get(inputId);
+                    if (!state) return;
+                    renderSearchableDropdown(inputId, state.options, input.value);
+                });
+
+                input.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') hideSearchableDropdown(dropdownId);
+                });
+
+                document.addEventListener('click', function (event) {
+                    if (!input.parentElement.contains(event.target)) {
+                        hideSearchableDropdown(dropdownId);
+                    }
+                });
+
+                input.dataset.searchableBound = 'true';
+            }
+
+            function setSearchableOptions(inputId, dropdownId, options) {
+                searchableDropdownState.set(inputId, {
+                    dropdownId: dropdownId,
+                    options: Array.isArray(options) ? options : []
+                });
+                bindSearchableInput(inputId, dropdownId);
+            }
+
+            function findProvinceByName(name) {
+                const normalizedName = normalizeAddressText(name);
+                return cachedProvinces.find(function (item) {
+                    return normalizeAddressText(item.name) === normalizedName;
+                }) || null;
+            }
+
+            function parseAddressParts(address) {
+                const parts = String(address || '').split(',').map(function (item) { return item.trim(); }).filter(Boolean);
+                if (parts.length >= 3) {
+                    return {
+                        streetLine: parts.slice(0, parts.length - 2).join(', '),
+                        phuongXa: parts[parts.length - 2] || '',
+                        tinhThanh: parts[parts.length - 1] || ''
+                    };
+                }
+                if (parts.length === 2) {
+                    return {
+                        streetLine: parts[0] || '',
+                        phuongXa: '',
+                        tinhThanh: parts[1] || ''
+                    };
+                }
+                return {
+                    streetLine: parts[0] || '',
+                    phuongXa: '',
+                    tinhThanh: ''
+                };
+            }
+
+            function isValidWardName(value) {
+                const normalizedWard = normalizeAddressText(value);
+                return currentWardOptions.some(function (name) {
+                    return normalizeAddressText(name) === normalizedWard;
+                });
+            }
+
+            function updateAddressPreview() {
+                if (!profileTinhThanh || !profilePhuongXa || !profileStreetLine || !diaChiInput || !diaChiPreview) return;
+                if (addressEditPanel && !addressEditPanel.classList.contains('show')) {
+                    diaChiPreview.value = diaChiInput.value || '';
+                    return;
+                }
+                const provinceName = profileTinhThanh.value || '';
+                const wardName = profilePhuongXa.value || '';
+                const streetLine = profileStreetLine.value || '';
+                const fullAddress = buildFullAddress(streetLine, wardName, provinceName);
+                diaChiInput.value = fullAddress;
+                diaChiPreview.value = fullAddress;
+            }
+
+            async function fillAddressEditorFromAddress(address) {
+                const parts = parseAddressParts(address);
+                profileStreetLine.value = parts.streetLine || '';
+                profileTinhThanh.value = parts.tinhThanh || '';
+                const province = findProvinceByName(profileTinhThanh.value);
+                selectedProvinceCode = province ? String(province.code) : '';
+                await loadPhuongXaByTinhThanh(selectedProvinceCode);
+                profilePhuongXa.value = parts.phuongXa || '';
+                updateAddressPreview();
+            }
+
+            async function fetchJson(url) {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Không thể tải dữ liệu địa chỉ.');
+                return response.json();
+            }
+
+            async function loadTinhThanhOptions() {
+                try {
+                    const provinces = await fetchJson(`${provincesApiBase}/p/`);
+                    cachedProvinces = Array.isArray(provinces) ? provinces : [];
+                    const provinceNames = cachedProvinces
+                        .filter(function (item) { return item && item.name && item.code != null; })
+                        .sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'vi'); })
+                        .map(function (item) {
+                            return item.name;
+                        });
+                    setSearchableOptions('profileTinhThanh', 'profileTinhThanhDropdown', provinceNames);
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            async function loadPhuongXaByTinhThanh(provinceCode) {
+                if (!provinceCode) {
+                    currentWardOptions = [];
+                    setSearchableOptions('profilePhuongXa', 'profilePhuongXaDropdown', currentWardOptions);
+                    return;
+                }
+                try {
+                    const province = await fetchJson(`${provincesApiBase}/p/${provinceCode}?depth=2`);
+                    currentWardOptions = (province.wards || [])
+                        .filter(function (ward) { return ward && ward.name; })
+                        .map(function (ward) { return ward.name; })
+                        .sort(function (a, b) { return a.localeCompare(b, 'vi'); });
+                    setSearchableOptions('profilePhuongXa', 'profilePhuongXaDropdown', currentWardOptions);
+                } catch (err) {
+                    console.error(err);
+                    currentWardOptions = [];
+                    setSearchableOptions('profilePhuongXa', 'profilePhuongXaDropdown', currentWardOptions);
+                }
+            }
+
+            function attachValidation(form) {
+                if (!form) return;
+                form.querySelectorAll('input, select').forEach(function (field) {
+                    field.addEventListener('invalid', function () {
+                        setFieldInvalid(field);
+                    });
+                    field.addEventListener('input', function () {
+                        validateFieldRealtime(field);
+                        if (field.id === 'matKhauMoi' || field.id === 'xacNhanMatKhauMoi') {
+                            validatePasswordMatchRealtime();
+                        }
+                    });
+                    field.addEventListener('change', function () {
+                        validateFieldRealtime(field);
+                        if (field.id === 'matKhauMoi' || field.id === 'xacNhanMatKhauMoi') {
+                            validatePasswordMatchRealtime();
+                        }
+                    });
+                });
+
+                form.addEventListener('submit', function (e) {
+                    if (form.id === 'profileForm') {
+                        if (addressEditPanel && addressEditPanel.classList.contains('show')) {
+                            const province = findProvinceByName(profileTinhThanh.value);
+                            if (!province) {
+                                profileTinhThanh.setCustomValidity('Vui lòng chọn tỉnh/thành phố hợp lệ từ danh sách.');
+                                setFieldInvalid(profileTinhThanh);
+                            } else {
+                                clearFieldInvalid(profileTinhThanh);
+                            }
+
+                            if (!isValidWardName(profilePhuongXa.value)) {
+                                profilePhuongXa.setCustomValidity('Vui lòng chọn phường/xã hợp lệ từ danh sách.');
+                                setFieldInvalid(profilePhuongXa);
+                            } else {
+                                clearFieldInvalid(profilePhuongXa);
+                            }
+                        } else {
+                            clearFieldInvalid(profileTinhThanh);
+                            clearFieldInvalid(profilePhuongXa);
+                            clearFieldInvalid(profileStreetLine);
+                        }
+                        updateAddressPreview();
+                    }
+                    if (form.id === 'passwordForm') {
+                        const matKhauMoi = document.getElementById('matKhauMoi');
+                        const xacNhan = document.getElementById('xacNhanMatKhauMoi');
+                        if (matKhauMoi && xacNhan && matKhauMoi.value !== xacNhan.value) {
+                            xacNhan.setCustomValidity('Mật khẩu xác nhận không khớp.');
+                            setFieldInvalid(xacNhan);
+                        } else if (xacNhan) {
+                            clearFieldInvalid(xacNhan);
+                        }
+                    }
+                    if (!form.checkValidity()) {
+                        e.preventDefault();
+                        const invalidFields = form.querySelectorAll(':invalid');
+                        invalidFields.forEach(function (field) {
+                            setFieldInvalid(field);
+                        });
+                        if (invalidFields.length > 0) {
+                            invalidFields[0].focus();
+                        }
+                    }
+                });
+            }
+
+            attachValidation(profileForm);
+            attachValidation(passwordForm);
+
+            if (toggleAddressEditBtn && addressEditPanel) {
+                const setAddressEditorState = function (isOpen) {
+                    addressEditPanel.classList.toggle('show', isOpen);
+                    toggleAddressEditBtn.textContent = isOpen ? 'Hủy sửa địa chỉ' : 'Sửa địa chỉ';
+                    const hintText = document.getElementById('addressHintText');
+                    if (hintText) {
+                        hintText.textContent = isOpen
+                            ? 'Đang ở chế độ chỉnh sửa địa chỉ. Chọn đủ tỉnh/thành, phường/xã và nhập số nhà/đường.'
+                            : 'Nhấn "Sửa địa chỉ" để thay đổi địa chỉ nhận hàng mặc định.';
+                    }
+                };
+
+                toggleAddressEditBtn.addEventListener('click', function () {
+                    const isOpen = !addressEditPanel.classList.contains('show');
+                    setAddressEditorState(isOpen);
+                    if (isOpen) {
+                        originalAddress = diaChiInput.value || '';
+                        fillAddressEditorFromAddress(originalAddress).then(function () {
+                            profileTinhThanh.focus();
+                        });
+                    } else {
+                        clearFieldInvalid(profileTinhThanh);
+                        clearFieldInvalid(profilePhuongXa);
+                        clearFieldInvalid(profileStreetLine);
+                        diaChiInput.value = originalAddress;
+                        diaChiPreview.value = originalAddress;
+                        hideSearchableDropdown('profileTinhThanhDropdown');
+                        hideSearchableDropdown('profilePhuongXaDropdown');
+                    }
+                    updateAddressPreview();
+                });
+
+                setAddressEditorState(false);
+            }
+
+            if (profileTinhThanh) {
+                loadTinhThanhOptions().then(function () {
+                    updateAddressPreview();
+                    setSearchableOptions('profilePhuongXa', 'profilePhuongXaDropdown', []);
+                });
+                profileTinhThanh.addEventListener('change', function () {
+                    const province = findProvinceByName(profileTinhThanh.value);
+                    selectedProvinceCode = province ? String(province.code) : '';
+                    if (!selectedProvinceCode) {
+                        profilePhuongXa.value = '';
+                    }
+                    loadPhuongXaByTinhThanh(selectedProvinceCode).then(updateAddressPreview);
+                });
+            }
+            if (profilePhuongXa) {
+                profilePhuongXa.addEventListener('change', updateAddressPreview);
+            }
+            if (profileStreetLine) {
+                profileStreetLine.addEventListener('input', updateAddressPreview);
+            }
+
+            if (diaChiHienTai && diaChiInput) {
+                originalAddress = diaChiHienTai.value || diaChiInput.value || '';
+                diaChiInput.value = originalAddress;
+                diaChiPreview.value = originalAddress;
+            }
+            updateAddressPreview();
         });
     </script>
+    <th:block th:replace="~{clientTemplate/fragments/giao-dien-chung :: chan_trang}"></th:block>
+    <th:block th:replace="~{clientTemplate/fragments/giao-dien-chung :: chatbot}"></th:block>
+    <th:block th:replace="~{clientTemplate/fragments/giao-dien-chung :: tap_lenh_chung}"></th:block>
 </body>
 
 </html>
