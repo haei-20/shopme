@@ -10,27 +10,10 @@
     <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 
-<body>
-    <header class="bg-dark text-white py-3">
-        <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div class="fs-4 fw-bold mb-0">
-                <a class="no-underline text-white" href="/" th:text="${shopInfo.tenShop}">Shop</a>
-            </div>
-            <form class="flex-grow-1 mx-md-3" style="max-width: 420px;" role="search" action="/timkiem" method="get">
-                <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm…" aria-label="Tìm kiếm">
-            </form>
-            <div class="dropdown" th:if="${nguoiDung != null}">
-                <a class="btn btn-light dropdown-toggle" href="#" data-bs-toggle="dropdown">Tài khoản</a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
-                    <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
-                    <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
-                </ul>
-            </div>
-        </div>
-    </header>
+<body class="with-category-nav">
+    <div th:replace="~{clientTemplate/fragments/giao-dien-chung :: dau_trang_danh_muc}"></div>
 
-    <main class="container my-5">
+    <main class="container page-content-shell">
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="text-center mb-4">
@@ -85,7 +68,8 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div th:replace="~{clientTemplate/fragments/giao-dien-chung :: chan_trang}"></div>
+    <th:block th:replace="~{clientTemplate/fragments/giao-dien-chung :: tap_lenh_chung}"></th:block>
 </body>
 
 </html>

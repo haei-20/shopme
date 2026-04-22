@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import com.example.gearshop.repository.HoaDonChiTietRepository;
 
 @Service
 public class DanhGiaService {
+    private static final Pattern DANGEROUS_SCHEME_PATTERN = Pattern.compile("(?i)\\b(?:javascript|data|vbscript)\\s*:");
 
     @Autowired
     private DanhGiaRepository danhGiaRepository;
@@ -73,6 +75,9 @@ public class DanhGiaService {
         }
         if (nd.length() > 2000) {
             throw new IllegalArgumentException("Nội dung không quá 2000 ký tự.");
+        }
+        if (DANGEROUS_SCHEME_PATTERN.matcher(nd).find()) {
+            throw new IllegalArgumentException("Nội dung chứa liên kết không an toàn.");
         }
 
         SanPham sanPham = sanPhamService.getSanPhamById(sanPhamId);

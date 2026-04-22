@@ -21,17 +21,20 @@
         <div th:if="${param.logout}" class="text-success">Đăng xuất thành công</div>
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
         <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-        <form id="loginForm" th:action="@{/dangnhap}" method="post">
+        <form id="loginForm" th:action="@{/dangnhap}" method="post" novalidate>
             <div class="mb-3">
                 <label for="username" class="form-label">Tên đăng nhập</label>
                 <input type="text" id="username" name="tenDangNhap" class="form-control"
-                    placeholder="Nhập tên đăng nhập" required />
+                    placeholder="Nhập tên đăng nhập" pattern="^[A-Za-z0-9._-]{4,30}$" minlength="4" maxlength="30"
+                    required />
+                <div class="invalid-feedback"></div>
             </div>
 
             <div class="mb-3">
                 <label for="password" class="form-label">Mật khẩu</label>
                 <input type="password" id="password" name="matKhau" class="form-control" placeholder="Nhập mật khẩu"
-                    required />
+                    minlength="6" maxlength="64" required />
+                <div class="invalid-feedback"></div>
             </div>
 
             <div class="mb-3 form-check">
@@ -52,7 +55,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div th:if="${registerStep == null or registerStep != 'verify'}">
-                <form th:action="@{/dangky/gui-ma}" method="post">
+                <form th:action="@{/dangky/gui-ma}" method="post" id="registerForm" novalidate>
                     <div class="modal-header">
                         <h5 class="modal-title" id="dangKyLabel">Đăng ký tài khoản</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
@@ -62,42 +65,65 @@
                     <div class="modal-body">
                         <div class="mb-2">
                             <label>Họ và tên</label>
-                            <input type="text" class="form-control" name="tenNguoiDung" required>
+                            <input type="text" class="form-control" name="tenNguoiDung" minlength="2" maxlength="80" required>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="mb-2">
                             <label>Tên đăng nhập</label>
-                            <input type="text" class="form-control" name="tenDangNhap" required>
+                            <input type="text" class="form-control" name="tenDangNhap" pattern="^[A-Za-z0-9._-]{4,30}$" minlength="4" maxlength="30" required>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="mb-2">
                             <label>Mật khẩu</label>
-                            <input type="password" class="form-control" name="matKhau" required>
+                            <input type="password" class="form-control" name="matKhau" minlength="6" maxlength="64" required>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="mb-2">
                             <label>Nhập lại mật khẩu</label>
-                            <input type="password" class="form-control" name="nhapLaiMatKhau" required>
+                            <input type="password" class="form-control" name="nhapLaiMatKhau" minlength="6" maxlength="64" required>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="mb-2">
                             <label>Email</label>
                             <input type="email" class="form-control" name="email" required>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="mb-2">
                             <label>Số điện thoại</label>
-                            <input type="text" class="form-control" name="sdt" required>
+                            <input type="text" class="form-control" name="sdt" pattern="^0\\d{9}$" required>
+                            <div class="invalid-feedback"></div>
                         </div>
                         <div class="mb-2">
-                            <label>Địa chỉ</label>
-                            <input type="text" class="form-control" name="diaChi" required>
+                            <label for="registerTinhThanh">Tỉnh / Thành phố</label>
+                            <select id="registerTinhThanh" class="form-select" required>
+                                <option value="">Chọn tỉnh/thành phố</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
                         </div>
+                        <div class="mb-2">
+                            <label for="registerPhuongXa">Phường / Xã</label>
+                            <select id="registerPhuongXa" class="form-select" required>
+                                <option value="">Chọn phường/xã</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="mb-2">
+                            <label for="registerStreetLine">Tên đường, tòa nhà, số nhà</label>
+                            <input type="text" id="registerStreetLine" class="form-control" minlength="8" maxlength="255"
+                                placeholder="Ví dụ: Số 12, Tòa A, Đường Lê Lợi" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <input type="hidden" id="registerDiaChi" name="diaChi">
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Gửi OTP</button>
+                        <button type="submit" class="btn btn-success">Gửi</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
                     </div>
                 </form>
                 </div>
 
                 <div th:if="${registerStep == 'verify'}">
-                    <form th:action="@{/dangky/xac-nhan}" method="post">
+                    <form th:action="@{/dangky/xac-nhan}" method="post" id="otpRegisterForm" novalidate>
                         <div class="modal-header">
                             <h5 class="modal-title" id="dangKyLabel">Xác nhận OTP đăng ký</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
@@ -109,7 +135,8 @@
                             </div>
                             <div class="mb-2">
                                 <label>OTP</label>
-                                <input type="text" class="form-control" name="otp" placeholder="Nhập mã OTP" required>
+                                <input type="text" class="form-control" name="otp" placeholder="Nhập mã OTP" pattern="^\\d{6}$" maxlength="6" required>
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -124,47 +151,222 @@
     </div>
 </body>
 
-<footer class="bg-dark text-light pt-4 mt-5">
-    <div class="container">
-        <div class="row">
-            <!-- Thông tin shop -->
-            <div class="col-md-4 mb-3">
-                <h5 th:text="${shopInfo.tenShop}">PGearShop</h5>
-                <p>Chuyên cung cấp linh kiện máy tính chính hãng.<br />
-                    <span th:text="'Địa chỉ: ' + ${shopInfo.diaChiShop}">Địa chỉ: Km10 đường Trần Phú, quận Hà Đông, thành phố Hà Nội</span><br />
-                    <span th:text="'SĐT: ' + ${shopInfo.soDienThoaiShop}">SĐT: 0999 999 999</span><br />
-                    <span th:text="'Email: ' + ${shopInfo.emailShop}">Email: contact@pgearshop.vn</span>
-                </p>
-            </div>
-
-            <!-- Chính sách đổi trả -->
-            <div class="col-md-4 mb-3">
-                <h5>Chính sách đổi trả</h5>
-                <p>Hỗ trợ đổi trả trong vòng <strong>7 ngày</strong> nếu sản phẩm bị lỗi kỹ thuật hoặc không đúng mô tả.
-                </p>
-            </div>
-
-            <!-- Chính sách bảo hành -->
-            <div class="col-md-4 mb-3">
-                <h5>Bảo hành chính hãng</h5>
-                <p>Tất cả sản phẩm đều được bảo hành chính hãng từ <strong>6 đến 36 tháng</strong> tùy loại. Hỗ trợ bảo
-                    hành nhanh tại cửa hàng.</p>
-            </div>
-        </div>
-
-        <div class="text-center py-3 border-top border-secondary">
-            <span th:text="'© 2025 ' + ${shopInfo.tenShop} + '. All rights reserved.'">© 2025 GearShop. All rights reserved.</span>
-        </div>
-    </div>
-</footer>
+<div th:replace="~{clientTemplate/fragments/giao-dien-chung :: chan_trang}"></div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const otpRegisterForm = document.getElementById('otpRegisterForm');
         const registerStep = document.body.dataset.registerStep;
         const dangKyModalElement = document.getElementById('dangKyModal');
+        const registerTinhThanh = document.getElementById('registerTinhThanh');
+        const registerPhuongXa = document.getElementById('registerPhuongXa');
+        const registerStreetLine = document.getElementById('registerStreetLine');
+        const registerDiaChi = document.getElementById('registerDiaChi');
+        const provincesApiBase = 'https://provinces.open-api.vn/api/v2';
+        let cachedProvinces = [];
 
-        if (loginForm) {
-            loginForm.addEventListener('submit', function () {
+        function getMessage(input) {
+            const labels = {
+                tenDangNhap: 'Tên đăng nhập',
+                matKhau: 'Mật khẩu',
+                nhapLaiMatKhau: 'Nhập lại mật khẩu',
+                tenNguoiDung: 'Họ và tên',
+                email: 'Email',
+                sdt: 'Số điện thoại',
+                diaChi: 'Địa chỉ',
+                registerTinhThanh: 'Tỉnh / Thành phố',
+                registerPhuongXa: 'Phường / Xã',
+                registerStreetLine: 'Tên đường, tòa nhà, số nhà',
+                otp: 'Mã OTP'
+            };
+            const label = labels[input.name] || labels[input.id] || 'Trường này';
+            if (input.validity.valueMissing) return label + ' không được để trống.';
+            if (input.validity.typeMismatch) return label + ' không đúng định dạng.';
+            if (input.validity.patternMismatch) {
+                if (input.name === 'tenDangNhap') return 'Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang (4-30 ký tự).';
+                if (input.name === 'sdt') return 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.';
+                if (input.name === 'otp') return 'Mã OTP phải gồm đúng 6 chữ số.';
+                return label + ' không đúng định dạng.';
+            }
+            if (input.validity.tooShort) return label + ' quá ngắn.';
+            if (input.validity.tooLong) return label + ' quá dài.';
+            return label + ' chưa hợp lệ.';
+        }
+
+        function removeVietnameseDiacritics(value) {
+            return (value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .replace(/Đ/g, 'D')
+                .trim();
+        }
+
+        function normalizeAddressPart(value) {
+            return removeVietnameseDiacritics(value).replace(/\s+/g, ' ').trim();
+        }
+
+        function buildFullAddress(streetLine, phuongXa, tinhThanh) {
+            return [streetLine, phuongXa, tinhThanh]
+                .map(normalizeAddressPart)
+                .filter(Boolean)
+                .join(', ');
+        }
+
+        async function fetchJson(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Không thể tải dữ liệu địa chỉ.');
+            }
+            return response.json();
+        }
+
+        function setSelectOptions(selectEl, options, placeholder) {
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = placeholder;
+            selectEl.appendChild(defaultOption);
+
+            options.forEach(function (opt) {
+                const option = document.createElement('option');
+                if (typeof opt === 'object' && opt !== null) {
+                    option.value = String(opt.value ?? '');
+                    option.textContent = String(opt.label ?? opt.value ?? '');
+                } else {
+                    option.value = opt;
+                    option.textContent = opt;
+                }
+                selectEl.appendChild(option);
+            });
+        }
+
+        async function loadTinhThanhOptions() {
+            if (!registerTinhThanh) return;
+            try {
+                const provinces = await fetchJson(`${provincesApiBase}/p?depth=2`);
+                cachedProvinces = Array.isArray(provinces) ? provinces : [];
+                const provinceOptions = cachedProvinces
+                    .filter(function (item) { return item && item.name && item.code != null; })
+                    .sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'vi'); })
+                    .map(function (item) {
+                        return { value: item.code, label: item.name };
+                    });
+                setSelectOptions(registerTinhThanh, provinceOptions, 'Chọn tỉnh/thành phố');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadPhuongXaByTinhThanh(provinceCode) {
+            if (!registerPhuongXa) return;
+            setSelectOptions(registerPhuongXa, [], 'Đang tải phường/xã...');
+            if (!provinceCode) {
+                setSelectOptions(registerPhuongXa, [], 'Chọn phường/xã');
+                return;
+            }
+            try {
+                const province = await fetchJson(`${provincesApiBase}/p/${provinceCode}?depth=2`);
+                const wardSet = new Set();
+                (province.wards || []).forEach(function (ward) {
+                    if (ward && ward.name) wardSet.add(ward.name);
+                });
+                const wards = Array.from(wardSet).sort(function (a, b) { return a.localeCompare(b, 'vi'); });
+                if (wards.length === 0) {
+                    setSelectOptions(registerPhuongXa, [], 'Không có dữ liệu phường/xã');
+                    return;
+                }
+                setSelectOptions(registerPhuongXa, wards, 'Chọn phường/xã');
+            } catch (err) {
+                console.error(err);
+                setSelectOptions(registerPhuongXa, [], 'Không tải được phường/xã');
+            }
+        }
+
+        function attachValidation(form) {
+            if (!form) return;
+            const fields = form.querySelectorAll('input, textarea, select');
+
+            fields.forEach(function (field) {
+                field.addEventListener('invalid', function () {
+                    field.setCustomValidity(getMessage(field));
+                    field.classList.add('is-invalid');
+                    const feedback = field.parentElement.querySelector('.invalid-feedback');
+                    if (feedback) feedback.textContent = field.validationMessage;
+                });
+
+                field.addEventListener('input', function () {
+                    field.setCustomValidity('');
+                    field.classList.remove('is-invalid');
+                });
+                field.addEventListener('change', function () {
+                    field.setCustomValidity('');
+                    field.classList.remove('is-invalid');
+                });
+            });
+
+            form.addEventListener('submit', function (e) {
+                const password = form.querySelector('input[name="matKhau"]');
+                const confirmPassword = form.querySelector('input[name="nhapLaiMatKhau"]');
+                if (password && confirmPassword && password.value !== confirmPassword.value) {
+                    confirmPassword.setCustomValidity('Mật khẩu nhập lại không khớp.');
+                    confirmPassword.classList.add('is-invalid');
+                    const feedback = confirmPassword.parentElement.querySelector('.invalid-feedback');
+                    if (feedback) feedback.textContent = confirmPassword.validationMessage;
+                }
+
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    form.reportValidity();
+                }
+            });
+        }
+
+        attachValidation(loginForm);
+        attachValidation(registerForm);
+        attachValidation(otpRegisterForm);
+
+        if (registerTinhThanh && registerPhuongXa) {
+            loadTinhThanhOptions();
+            registerTinhThanh.addEventListener('change', function () {
+                loadPhuongXaByTinhThanh(registerTinhThanh.value);
+            });
+        }
+
+        if (registerForm && registerDiaChi && registerStreetLine && registerTinhThanh && registerPhuongXa) {
+            registerForm.addEventListener('submit', function (e) {
+                const fullAddress = buildFullAddress(
+                    registerStreetLine.value,
+                    registerPhuongXa.value,
+                    registerTinhThanh.options[registerTinhThanh.selectedIndex]?.text || ''
+                );
+
+                if (!registerTinhThanh.value) {
+                    registerTinhThanh.setCustomValidity('Vui lòng chọn tỉnh/thành phố.');
+                } else {
+                    registerTinhThanh.setCustomValidity('');
+                }
+
+                if (!registerPhuongXa.value) {
+                    registerPhuongXa.setCustomValidity('Vui lòng chọn phường/xã.');
+                } else {
+                    registerPhuongXa.setCustomValidity('');
+                }
+
+                if (!fullAddress || fullAddress.length < 8) {
+                    registerStreetLine.setCustomValidity('Địa chỉ cần đủ số nhà/đường, phường/xã và tỉnh/thành phố.');
+                    registerDiaChi.value = '';
+                } else {
+                    registerStreetLine.setCustomValidity('');
+                    registerDiaChi.value = fullAddress;
+                }
+
+                if (!registerForm.checkValidity()) {
+                    e.preventDefault();
+                    registerForm.reportValidity();
+                }
             });
         }
 

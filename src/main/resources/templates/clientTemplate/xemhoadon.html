@@ -113,32 +113,11 @@
   </style>
 </head>
 
-<body>
-  <!-- HEADER -->
-  <header class="bg-dark text-white py-3">
-    <div class="container d-flex justify-content-between align-items-center">
-      <a class="fs-3 fw-bold text-white text-decoration-none" th:href="@{/}" th:text="${shopInfo.tenShop}">PGearShop</a>
-      <form class="flex-grow-1 mx-3" action="/timkiem" method="get">
-        <input class="form-control" type="search" name="q" placeholder="Tìm kiếm sản phẩm…" />
-      </form>
-      <div class="d-flex align-items-center">
-        <div class="dropdown" th:if="${nguoiDung != null}">
-          <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
-            <span th:text="'Xin chào, ' + ${nguoiDung.tenNguoiDung}">Xin chào</span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" th:href="@{/thongtincanhan}">Thông tin cá nhân</a></li>
-            <li><a class="dropdown-item" th:href="@{/lichsugiaodich}"><i class="bi bi-bag-check me-1"></i>Đơn hàng của tôi</a></li>
-            <li><a class="dropdown-item" th:href="@{/dangxuat}">Đăng xuất</a></li>
-          </ul>
-        </div>
-        <a th:if="${nguoiDung == null}" href="/dangnhap" class="btn btn-outline-light">Đăng nhập</a>
-      </div>
-    </div>
-  </header>
+<body class="with-category-nav">
+  <div th:replace="~{clientTemplate/fragments/giao-dien-chung :: dau_trang_danh_muc}"></div>
 
   <!-- MAIN CONTENT -->
-  <div class="container my-5">
+  <div class="container page-content-shell">
     <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
     <div class="row">
       <!-- THÔNG TIN ĐỊA CHỈ NHẬN HÀNG -->
@@ -284,23 +263,26 @@
           <h5 class="modal-title">Sửa địa chỉ</h5>
           <button class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <form id="editReceiverForm">
+        <form id="editReceiverForm" novalidate>
           <div class="modal-body">
             <input type="hidden" id="editReceiverId" />
             <input type="hidden" id="editReceiverEmail" />
             <div class="mb-3">
               <label class="form-label">Họ và tên</label>
-              <input id="editTenNguoiNhan" class="form-control" required />
+              <input id="editTenNguoiNhan" class="form-control" minlength="2" maxlength="80" required />
+              <div class="invalid-feedback"></div>
             </div>
             <div class="mb-3">
               <label class="form-label">Số điện thoại</label>
-              <input id="editSdt" class="form-control" required />
+              <input id="editSdt" class="form-control" pattern="^0\\d{9}$" required />
+              <div class="invalid-feedback"></div>
             </div>
             <div class="mb-3">
               <label class="form-label">Tỉnh / Thành phố</label>
               <div class="searchable-select">
                 <input id="editTinhThanh" class="form-control" placeholder="Gõ để tìm tỉnh/thành phố" autocomplete="off" required />
                 <div id="editTinhThanhDropdown" class="searchable-dropdown-menu"></div>
+                <div class="invalid-feedback">Vui lòng chọn tỉnh/thành phố hợp lệ.</div>
               </div>
             </div>
             <div class="mb-3">
@@ -308,11 +290,13 @@
               <div class="searchable-select">
                 <input id="editPhuongXa" class="form-control" placeholder="Gõ để tìm phường/xã" autocomplete="off" required />
                 <div id="editPhuongXaDropdown" class="searchable-dropdown-menu"></div>
+                <div class="invalid-feedback">Vui lòng chọn phường/xã hợp lệ.</div>
               </div>
             </div>
             <div class="mb-3">
               <label class="form-label">Tên đường, tòa nhà, số nhà</label>
-              <input id="editStreetLine" class="form-control" placeholder="Ví dụ: Số 12, Tòa A, Đường Lê Lợi" required />
+              <input id="editStreetLine" class="form-control" placeholder="Ví dụ: Số 12, Tòa A, Đường Lê Lợi" minlength="5" maxlength="255" required />
+              <div class="invalid-feedback"></div>
             </div>
           </div>
           <div class="modal-footer d-flex justify-content-between">
@@ -335,25 +319,29 @@
           <h5 class="modal-title">Thêm thông tin nhận hàng</h5>
           <button class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <form id="addReceiverForm">
+        <form id="addReceiverForm" novalidate>
           <div class="modal-body">
             <div class="mb-3">
               <label class="form-label">Tên người nhận</label>
-              <input id="newTen" name="tenNguoiNhan" class="form-control" required />
+              <input id="newTen" name="tenNguoiNhan" class="form-control" minlength="2" maxlength="80" required />
+              <div class="invalid-feedback"></div>
             </div>
             <div class="mb-3">
               <label class="form-label">Email</label>
               <input id="newEmail" name="email" type="email" class="form-control" required />
+              <div class="invalid-feedback"></div>
             </div>
             <div class="mb-3">
               <label class="form-label">Số điện thoại</label>
-              <input id="newSdt" name="sdt" class="form-control" required />
+              <input id="newSdt" name="sdt" class="form-control" pattern="^0\\d{9}$" required />
+              <div class="invalid-feedback"></div>
             </div>
             <div class="mb-3">
               <label class="form-label">Tỉnh / Thành phố</label>
               <div class="searchable-select">
                 <input id="newTinhThanh" class="form-control" placeholder="Gõ để tìm tỉnh/thành phố" autocomplete="off" required />
                 <div id="newTinhThanhDropdown" class="searchable-dropdown-menu"></div>
+                <div class="invalid-feedback">Vui lòng chọn tỉnh/thành phố hợp lệ.</div>
               </div>
             </div>
             <div class="mb-3">
@@ -361,11 +349,13 @@
               <div class="searchable-select">
                 <input id="newPhuongXa" class="form-control" placeholder="Gõ để tìm phường/xã" autocomplete="off" required />
                 <div id="newPhuongXaDropdown" class="searchable-dropdown-menu"></div>
+                <div class="invalid-feedback">Vui lòng chọn phường/xã hợp lệ.</div>
               </div>
             </div>
             <div class="mb-3">
               <label class="form-label">Tên đường, tòa nhà, số nhà</label>
-              <input id="newStreetLine" class="form-control" placeholder="Ví dụ: Số 12, Tòa A, Đường Lê Lợi" required />
+              <input id="newStreetLine" class="form-control" placeholder="Ví dụ: Số 12, Tòa A, Đường Lê Lợi" minlength="5" maxlength="255" required />
+              <div class="invalid-feedback"></div>
             </div>
           </div>
           <div class="modal-footer">
@@ -388,31 +378,7 @@
   </div>
 
   <!-- FOOTER -->
-  <footer class="bg-dark text-light pt-4 mt-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <h5 th:text="${shopInfo.tenShop}">PGearShop</h5>
-          <p>Chuyên cung cấp linh kiện máy tính chính hãng.<br />
-            <span th:text="'Địa chỉ: ' + ${shopInfo.diaChiShop}">Địa chỉ: Km10 đường Trần Phú, quận Hà Đông, Hà Nội</span><br />
-            <span th:text="'SĐT: ' + ${shopInfo.soDienThoaiShop}">SĐT: 0999 999 999</span><br />
-            <span th:text="'Email: ' + ${shopInfo.emailShop}">Email: contact@pgearshop.vn</span>
-          </p>
-        </div>
-        <div class="col-md-4 mb-3">
-          <h5>Chính sách đổi trả</h5>
-          <p>Hỗ trợ đổi trả trong vòng <strong>7 ngày</strong> nếu sản phẩm lỗi kỹ thuật hoặc không đúng mô tả.</p>
-        </div>
-        <div class="col-md-4 mb-3">
-          <h5>Bảo hành chính hãng</h5>
-          <p>Tất cả sản phẩm bảo hành từ <strong>6–36 tháng</strong> tùy loại. Hỗ trợ nhanh tại cửa hàng.</p>
-        </div>
-      </div>
-      <div class="text-center py-3 border-top border-secondary">
-        <span th:text="'© 2025 ' + ${shopInfo.tenShop} + '. All rights reserved.'">© 2025 PGearShop. All rights reserved.</span>
-      </div>
-    </div>
-  </footer>
+  <div th:replace="~{clientTemplate/fragments/giao-dien-chung :: chan_trang}"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -762,8 +728,52 @@
       });
     });
 
+    function getReceiverFieldMessage(input) {
+      if (input.validity.valueMissing) {
+        if (input.id.includes('TinhThanh')) return 'Vui lòng chọn tỉnh/thành phố.';
+        if (input.id.includes('PhuongXa')) return 'Vui lòng chọn phường/xã.';
+        if (input.id.includes('StreetLine')) return 'Vui lòng nhập tên đường, tòa nhà, số nhà.';
+        if (input.id.includes('Sdt')) return 'Vui lòng nhập số điện thoại.';
+        if (input.id.includes('Email')) return 'Vui lòng nhập email.';
+        return 'Vui lòng nhập đầy đủ thông tin.';
+      }
+      if (input.validity.typeMismatch && input.type === 'email') {
+        return 'Email không đúng định dạng.';
+      }
+      if (input.validity.patternMismatch && input.id.includes('Sdt')) {
+        return 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.';
+      }
+      if (input.validity.tooShort && input.id.includes('StreetLine')) {
+        return 'Tên đường/tòa nhà/số nhà cần ít nhất 5 ký tự.';
+      }
+      return 'Giá trị nhập chưa hợp lệ.';
+    }
+
+    function bindReceiverFormValidation(formId) {
+      const form = document.getElementById(formId);
+      if (!form) return;
+      form.querySelectorAll('input').forEach((input) => {
+        input.addEventListener('invalid', function () {
+          const msg = getReceiverFieldMessage(input);
+          input.setCustomValidity(msg);
+          input.classList.add('is-invalid');
+          const fb = input.parentElement.querySelector('.invalid-feedback');
+          if (fb) fb.textContent = msg;
+        });
+
+        input.addEventListener('input', function () {
+          input.setCustomValidity('');
+          input.classList.remove('is-invalid');
+        });
+      });
+    }
+
+    bindReceiverFormValidation('addReceiverForm');
+    bindReceiverFormValidation('editReceiverForm');
+
     document.getElementById('addReceiverForm').addEventListener('submit', function (e) {
       e.preventDefault();
+      const form = this;
       const tenNguoiNhan = document.getElementById('newTen').value.trim();
       const email = document.getElementById('newEmail').value.trim();
       const sdt = document.getElementById('newSdt').value.trim();
@@ -771,8 +781,10 @@
       const phuongXa = document.getElementById('newPhuongXa').value;
       const streetLine = normalizeStreetLine(document.getElementById('newStreetLine').value);
 
-      if (!tenNguoiNhan || !email || !sdt || !tinhThanh || !phuongXa || !streetLine) {
-        alert('Vui lòng nhập đầy đủ thông tin địa chỉ.');
+      document.getElementById('newStreetLine').value = streetLine;
+      if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        form.reportValidity();
         return;
       }
 
@@ -813,6 +825,7 @@
 
     document.getElementById('editReceiverForm').addEventListener('submit', function (e) {
       e.preventDefault();
+      const form = this;
       const id = document.getElementById('editReceiverId').value;
       const tenNguoiNhan = document.getElementById('editTenNguoiNhan').value.trim();
       const sdt = document.getElementById('editSdt').value.trim();
@@ -821,8 +834,10 @@
       const phuongXa = document.getElementById('editPhuongXa').value;
       const streetLine = normalizeStreetLine(document.getElementById('editStreetLine').value);
 
-      if (!tenNguoiNhan || !sdt || !tinhThanh || !phuongXa || !streetLine) {
-        alert('Vui lòng nhập đầy đủ thông tin địa chỉ.');
+      document.getElementById('editStreetLine').value = streetLine;
+      if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        form.reportValidity();
         return;
       }
 

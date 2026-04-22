@@ -23,6 +23,7 @@ public class PasswordResetService {
         this.mailSender = mailSender;
     }
 
+    // Sinh OTP 6 so ngau nhien bang SecureRandom de tang do an toan.
     public String generateVerificationCode() {
         StringBuilder code = new StringBuilder(OTP_LENGTH);
         for (int i = 0; i < OTP_LENGTH; i++) {
@@ -32,6 +33,7 @@ public class PasswordResetService {
         return code.toString();
     }
 
+    // Tao va gui email chua ma xac nhan dat lai mat khau.
     public void sendVerificationCode(String toEmail, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);

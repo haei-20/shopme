@@ -71,14 +71,17 @@ public class SanPhamService {
         this.sanPhamVGARepository = sanPhamVGARepository;
     }
 
+    // Lay toan bo san pham de phuc vu trang danh sach va trang chu.
     public List<SanPham> getAllSanPham() {
         return sanPhamRepository.findAll();
     }
 
+    // Lay san pham theo ten loai de loc dung nhom mat hang.
     public List<SanPham> getByLoai(String tenLoai) {
         return sanPhamRepository.findByLoaiSanPham_TenLoaiSanPham(tenLoai);
     }
 
+    // Tra ve san pham theo ID de dung cho man hinh chi tiet va cap nhat.
     public SanPham getSanPhamById(Integer id) {
         return sanPhamRepository.findById(id);
     }
@@ -91,6 +94,7 @@ public class SanPhamService {
         return loaiSanPhamRepository.findAll();
     }
 
+    // Doc chi tiet theo tung loai san pham, vi moi loai co repository rieng.
     public Object layChiTietTheoLoai(SanPham sp) {
         String tenLoai = sp.getLoaiSanPham().getMaLoaiSP();
         System.out.println("Loại sản phẩm: " + tenLoai);
@@ -119,6 +123,7 @@ public class SanPhamService {
         }
     }
 
+    // Cap nhat phan chung o SanPham va phan chi tiet o bang con tuong ung.
     public void capNhatSanPhamVaChiTiet(SanPham sanPham, Object sanPhamMoi) {
 
         switch (sanPham.getLoaiSanPham().getMaLoaiSP().toLowerCase()) {
