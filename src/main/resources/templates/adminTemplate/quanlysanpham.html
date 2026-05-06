@@ -32,7 +32,12 @@
             <div class="card-body border-bottom admin-product-list-toolbar py-3 px-3 px-lg-4">
                 <form method="get" th:action="@{/admin/quanlysanpham}" id="filterForm" class="admin-product-filter-form">
                     <div class="row g-3 align-items-end">
-                        <div class="col-12 col-md-6 col-xl-3">
+                        <div class="col-12 col-lg-4">
+                            <label class="form-label small text-muted mb-1 fw-semibold" for="searchByName">Tìm theo tên sản phẩm</label>
+                            <input type="text" class="form-control form-control-sm" id="searchByName" name="q"
+                                placeholder="Nhập tên sản phẩm..." th:value="${tuKhoaTenSanPhamLoc}">
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-2">
                             <label class="form-label small text-muted mb-1 fw-semibold" for="filterLoai">Loại sản phẩm</label>
                             <select name="loai" id="filterLoai" onchange="this.form.submit()" class="form-select form-select-sm">
                                 <option value="" th:selected="${loaiDangChon == null or loaiDangChon == ''}">Tất cả</option>
@@ -40,7 +45,7 @@
                                     th:selected="${loai == loaiDangChon}"></option>
                             </select>
                         </div>
-                        <div class="col-12 col-md-6 col-xl-3">
+                        <div class="col-12 col-md-6 col-lg-2">
                             <label class="form-label small text-muted mb-1 fw-semibold" for="filterThuongHieu">Thương hiệu</label>
                             <select name="thuongHieuId" id="filterThuongHieu" onchange="this.form.submit()" class="form-select form-select-sm">
                                 <option value="" th:selected="${thuongHieuIdLoc == null}">Tất cả</option>
@@ -48,7 +53,7 @@
                                     th:selected="${thuongHieuIdLoc != null and thuongHieuIdLoc == th.id}"></option>
                             </select>
                         </div>
-                        <div class="col-12 col-md-6 col-xl-3">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <label class="form-label small text-muted mb-1 fw-semibold" for="filterNhanVien">Người thêm</label>
                             <select name="nhanVienId" id="filterNhanVien" onchange="this.form.submit()" class="form-select form-select-sm">
                                 <option value="" th:selected="${nhanVienIdLoc == null}">Tất cả</option>
@@ -57,7 +62,7 @@
                                     th:text="${nv.nguoiDung != null and nv.nguoiDung.tenNguoiDung != null ? nv.nguoiDung.tenNguoiDung : nv.maNhanVien}">NV</option>
                             </select>
                         </div>
-                        <div class="col-12 col-md-6 col-xl-3">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <label class="form-label small text-muted mb-1 fw-semibold" for="filterSort">Sắp xếp</label>
                             <select name="sort" id="filterSort" onchange="this.form.submit()"
                                 class="form-select form-select-sm admin-product-sort-select">
@@ -78,33 +83,20 @@
                         </div>
                     </div>
                     <div class="row g-3 align-items-end mt-1 pt-2 border-top border-light-subtle">
-                        <div class="col-6 col-md-3 col-xl-2">
-                            <label class="form-label small text-muted mb-1 fw-semibold" for="giaMin">Giá tối thiểu</label>
-                            <input type="text" class="form-control form-control-sm" name="giaMin" id="giaMin"
-                                inputmode="decimal" placeholder="VD: 1000000" th:value="${giaMinLoc}">
-                        </div>
-                        <div class="col-6 col-md-3 col-xl-2">
-                            <label class="form-label small text-muted mb-1 fw-semibold" for="giaMax">Giá tối đa</label>
-                            <input type="text" class="form-control form-control-sm" name="giaMax" id="giaMax"
-                                inputmode="decimal" placeholder="VD: 50000000" th:value="${giaMaxLoc}">
-                        </div>
-                        <div class="col-6 col-md-3 col-xl-2">
+                        <div class="col-6 col-md-3 col-lg-2">
                             <label class="form-label small text-muted mb-1 fw-semibold" for="tonKhoMin">Tồn tối thiểu</label>
                             <input type="number" class="form-control form-control-sm" name="tonKhoMin" id="tonKhoMin"
                                 min="0" step="1" placeholder="0" th:value="${tonKhoMinLoc}">
                         </div>
-                        <div class="col-6 col-md-3 col-xl-2">
+                        <div class="col-6 col-md-3 col-lg-2">
                             <label class="form-label small text-muted mb-1 fw-semibold" for="tonKhoMax">Tồn tối đa</label>
                             <input type="number" class="form-control form-control-sm" name="tonKhoMax" id="tonKhoMax"
                                 min="0" step="1" placeholder="Không giới hạn" th:value="${tonKhoMaxLoc}">
                         </div>
-                        <div class="col-12 col-md-6 col-xl-4 d-flex flex-wrap gap-2 align-items-end">
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="bi bi-funnel me-1"></i>Áp dụng lọc giá &amp; tồn
-                            </button>
+                        <div class="col-12 col-md-6 col-lg-4 d-flex flex-wrap gap-2 align-items-end">
                             <a th:href="@{/admin/quanlysanpham}" class="btn btn-sm btn-outline-secondary">Đặt lại bộ lọc</a>
                         </div>
-                        <div class="col-12 col-xl-12 text-xl-end">
+                        <div class="col-12 col-lg-4 text-lg-end">
                             <span class="small text-muted">Số dòng sau lọc:</span>
                             <span class="fw-semibold text-dark ms-1" th:text="${#lists.size(dsSanPham)}">0</span>
                         </div>
@@ -122,14 +114,15 @@
                             <th scope="col">Thương hiệu</th>
                             <th scope="col" class="d-none d-xl-table-cell">Người thêm</th>
                             <th scope="col">Ngày sửa</th>
-                            <th scope="col" class="text-end">Giá</th>
+                            <th scope="col" class="text-end">Giá bán</th>
+                            <th scope="col" class="text-end">Giá nhập</th>
                             <th scope="col" class="text-end">Tồn kho</th>
                             <th scope="col" class="text-end pe-3" style="width: 7rem;">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${#lists.isEmpty(dsSanPham)}">
-                            <td colspan="9" class="text-center text-muted py-5">
+                            <td colspan="10" class="text-center text-muted py-5">
                                 <i class="bi bi-inbox d-block fs-2 mb-2 opacity-50"></i>
                                 Chưa có sản phẩm nào. Thêm sản phẩm mới hoặc đổi bộ lọc.
                             </td>
@@ -142,9 +135,11 @@
                             </td>
                             <td class="small" th:text="${#strings.defaultString(sp.loaiSanPham?.tenLoaiSanPham, '—')}">Loại</td>
                             <td class="small" th:text="${sp.thuongHieu.tenThuongHieu}">TH</td>
-                            <td class="small d-none d-xl-table-cell text-muted" th:text="${sp.nguoiThem.nguoiDung.tenNguoiDung}">—</td>
+                            <td class="small d-none d-xl-table-cell text-muted"
+                                th:text="${#strings.defaultString(sp.nguoiThem?.nguoiDung?.tenNguoiDung, '—')}">—</td>
                             <td class="small text-muted text-nowrap" th:text="${#temporals.format(sp.ngayThem, 'dd/MM/yyyy')}">—</td>
                             <td class="text-end fw-semibold text-nowrap" th:text="${#numbers.formatDecimal(sp.gia, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                            <td class="text-end text-nowrap" th:text="${sp.giaNhap != null ? #numbers.formatDecimal(sp.giaNhap, 0, 'COMMA', 0, 'POINT') + ' đ' : '—'}">—</td>
                             <td class="text-end">
                                 <th:block th:with="tk=${sp.tonKho != null ? sp.tonKho : 0}">
                                     <span th:if="${tk == 0}" class="badge rounded-pill bg-danger">0</span>
@@ -166,6 +161,29 @@
             </div>
         </div>
     </main>
+
+    <script>
+        (function initAutoFilterSubmit() {
+            const form = document.getElementById('filterForm');
+            if (!form) return;
+
+            const autoFields = ['searchByName', 'tonKhoMin', 'tonKhoMax'];
+            let debounceTimer = null;
+
+            const submitDebounced = () => {
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+                debounceTimer = setTimeout(() => form.submit(), 350);
+            };
+
+            autoFields.forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', submitDebounced);
+            });
+        })();
+    </script>
 
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>
 </body>

@@ -1,28 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const thongBaoDropdown = document.getElementById("thongBaoDropdown");
-    if (thongBaoDropdown) {
-        thongBaoDropdown.addEventListener("click", function () {
-            fetch("/thongbao/markAsRead", { method: "POST" })
-                .then((response) => response.text())
-                .then(() => {
-                    const unreadBadge = document.querySelector(".badge.bg-danger");
-                    if (unreadBadge) {
-                        unreadBadge.innerText = "0";
-                    }
-                });
-        });
-    }
-});
-
-document.addEventListener("DOMContentLoaded", function () {
     const cartItemsContainer = document.getElementById("cartItems");
     const cartItemCount = document.getElementById("cartItemCount");
     if (!cartItemsContainer || !cartItemCount) return;
 
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-    function updateCartUI() {
-        cartItemCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+    function renderCartUI(cart) {
+        cartItemCount.textContent = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
 
         if (cart.length === 0) {
             cartItemsContainer.innerHTML = '<p class="text-muted">Giỏ hàng của bạn đang trống.</p>';
@@ -44,7 +26,32 @@ document.addEventListener("DOMContentLoaded", function () {
             .join("");
     }
 
-    updateCartUI();
+    async function updateCartUIFromServer() {
+        try {
+            const response = await fetch("/api/cart", { method: "GET", headers: { "Content-Type": "application/json" } });
+            if (!response.ok) {
+                renderCartUI([]);
+                return;
+            }
+            const data = await response.json();
+            renderCartUI(Array.isArray(data.cart) ? data.cart : []);
+        } catch (error) {
+            renderCartUI([]);
+        }
+    }
+
+    updateCartUIFromServer();
+    window.addEventListener("storage", function (event) {
+        if (event.key === "cart" || event.key === "cartItemCount") {
+            updateCartUIFromServer();
+        }
+    });
+    window.addEventListener("cart:updated", updateCartUIFromServer);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) {
+            updateCartUIFromServer();
+        }
+    });
 });
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -134,6 +141,114 @@ document.addEventListener("DOMContentLoaded", function () {
         const controls = form.querySelectorAll("select");
         controls.forEach((control) => {
             control.addEventListener("change", () => form.submit());
+        });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    if (!document.body.classList.contains("with-category-nav")) return;
+
+    const productLinks = document.querySelectorAll(
+        '.product-card[href*="/chitietsanpham/"], .product-card-image > a[href*="/chitietsanpham/"]'
+    );
+    if (productLinks.length === 0) return;
+    const processedCards = new Set();
+
+    function extractProductId(url) {
+        if (!url) return null;
+        const cleanUrl = url.split("?")[0].replace(/\/+$/, "");
+        const parts = cleanUrl.split("/");
+        return parts.length ? parts[parts.length - 1] : null;
+    }
+
+    function normalizePrice(rawPrice) {
+        return (rawPrice || "").replace(/\s+/g, " ").trim();
+    }
+
+    function writeCartToStorage(nextCart) {
+        const cart = Array.isArray(nextCart) ? nextCart : [];
+        localStorage.setItem("cart", JSON.stringify(cart));
+        localStorage.setItem(
+            "cartItemCount",
+            cart.reduce((total, item) => total + Number(item.quantity || 0), 0)
+        );
+        window.dispatchEvent(new Event("cart:updated"));
+    }
+
+    function showAddToCartToast(message) {
+        const toastNode = document.createElement("div");
+        toastNode.className = "floating-cart-toast";
+        toastNode.textContent = message;
+        document.body.appendChild(toastNode);
+        window.setTimeout(() => toastNode.classList.add("show"), 10);
+        window.setTimeout(() => {
+            toastNode.classList.remove("show");
+            window.setTimeout(() => toastNode.remove(), 220);
+        }, 1700);
+    }
+
+    productLinks.forEach((link) => {
+        const card = link.classList.contains("product-card") ? link : link.closest(".product-card-image");
+        if (!card || card.querySelector(".btn-quick-add-cart")) return;
+        if (processedCards.has(card)) return;
+
+        card.classList.add("quick-add-host");
+        const sanPhamID = extractProductId(link.getAttribute("href"));
+        if (!sanPhamID) return;
+
+        const titleNode = card.querySelector(".card-title");
+        const priceNode = card.querySelector(".card-text, .text-danger");
+        const imageNode = card.querySelector("img");
+
+        const addBtn = document.createElement("button");
+        addBtn.type = "button";
+        addBtn.className = "btn btn-sm btn-warning btn-quick-add-cart";
+        addBtn.innerHTML = '<i class="bi bi-cart-plus" aria-hidden="true"></i>';
+        addBtn.setAttribute("aria-label", "Thêm sản phẩm vào giỏ hàng");
+        addBtn.title = "Thêm vào giỏ hàng";
+        addBtn.dataset.productId = sanPhamID;
+        addBtn.dataset.productName = titleNode ? titleNode.textContent.trim() : "Sản phẩm";
+        addBtn.dataset.productPrice = normalizePrice(priceNode ? priceNode.textContent : "");
+        addBtn.dataset.productImage = imageNode ? imageNode.getAttribute("src") || "" : "";
+        card.appendChild(addBtn);
+        processedCards.add(card);
+
+        addBtn.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (addBtn.dataset.loading === "1") return;
+
+            const product = {
+                sanPhamID: addBtn.dataset.productId,
+                name: addBtn.dataset.productName || "Sản phẩm",
+                price: addBtn.dataset.productPrice || "",
+                image: addBtn.dataset.productImage || "",
+                quantity: 1,
+            };
+
+            addBtn.dataset.loading = "1";
+            addBtn.disabled = true;
+
+            fetch("/chitietsanpham/add-to-cart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(product),
+            })
+                .then(async (response) => {
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error((data && data.message) || "Không thể thêm vào giỏ hàng");
+                    }
+                    writeCartToStorage(data.cart || []);
+                    showAddToCartToast("Đã thêm sản phẩm vào giỏ hàng");
+                })
+                .catch((error) => {
+                    showAddToCartToast(error.message || "Lỗi khi thêm giỏ hàng");
+                })
+                .finally(() => {
+                    addBtn.dataset.loading = "0";
+                    addBtn.disabled = false;
+                });
         });
     });
 });

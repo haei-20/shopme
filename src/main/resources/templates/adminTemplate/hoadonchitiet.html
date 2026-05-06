@@ -37,9 +37,17 @@
                             <div class="col-md-6"><strong>Email:</strong> <span th:text="${hoaDon.thongTinNhanHang.email}"></span></div>
                             <div class="col-md-6"><strong>Ngày tạo:</strong> <span th:text="${#temporals.format(hoaDon.ngayTao, 'dd/MM/yyyy HH:mm')}"></span></div>
                             <div class="col-12"><strong>Địa chỉ:</strong> <span th:text="${hoaDon.thongTinNhanHang.diachi}"></span></div>
-                            <div class="col-md-6"><strong>Tổng giá:</strong>
+                            <div class="col-md-6"><strong>Tạm tính:</strong>
+                                <span class="fw-semibold"
+                                    th:text="${#numbers.formatDecimal(tamTinh, 0, 'COMMA', 0, 'POINT')}"></span> đ
+                            </div>
+                            <div class="col-md-6"><strong>Giảm giá:</strong>
+                                <span class="text-success fw-semibold"
+                                    th:text="${#numbers.formatDecimal(giamGia, 0, 'COMMA', 0, 'POINT')}"></span> đ
+                            </div>
+                            <div class="col-md-6"><strong>Tổng thanh toán:</strong>
                                 <span class="text-danger fw-bold"
-                                    th:text="${#numbers.formatDecimal(hoaDon.tongGia, 0, 'COMMA', 0, 'POINT')}"></span> đ
+                                    th:text="${#numbers.formatDecimal(tongThanhToan, 0, 'COMMA', 0, 'POINT')}"></span> đ
                             </div>
                             <div class="col-md-6"><strong>Trạng thái hiện tại:</strong>
                                 <th:block th:replace="~{clientTemplate/fragments/trangthaidon :: badge(trangThai=${hoaDon.trangThaiDonHang})}"></th:block>

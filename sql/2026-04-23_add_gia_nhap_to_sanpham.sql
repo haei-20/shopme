@@ -1,0 +1,9 @@
+ALTER TABLE sanpham
+ADD COLUMN IF NOT EXISTS giaNhap DECIMAL(18,0) NULL;
+
+UPDATE sanpham
+SET giaNhap = gia
+WHERE giaNhap IS NULL;
+
+ALTER TABLE sanpham
+MODIFY COLUMN giaNhap DECIMAL(18,0) NOT NULL;

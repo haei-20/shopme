@@ -41,6 +41,21 @@ public class ThongBaoService {
         thongBaoRepository.saveAll(thongBaos);
     }
 
+    public boolean danhDauDaDoc(Integer khachHangId, Integer thongBaoId) {
+        if (khachHangId == null || thongBaoId == null) {
+            return false;
+        }
+        return thongBaoRepository.findByIdAndKhachHangId(thongBaoId, khachHangId)
+                .map(tb -> {
+                    if (tb.getTrangThaiThongBao() != TrangThaiThongBao.DA_DOC) {
+                        tb.setTrangThaiThongBao(TrangThaiThongBao.DA_DOC);
+                        thongBaoRepository.save(tb);
+                    }
+                    return true;
+                })
+                .orElse(false);
+    }
+
     public void taoThongBaoChoKhachHang(Integer khachHangId, String noiDung) {
         if (khachHangId == null || noiDung == null || noiDung.isBlank()) {
             return;

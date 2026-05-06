@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 
@@ -36,6 +37,8 @@ public class GiaoDichController {
     public String lichSuGiaoDich(HttpSession session,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String trangThai,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Model model) {
 
         NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
@@ -45,15 +48,25 @@ public class GiaoDichController {
 
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
         List<HoaDon> hoaDoncuaKhachHang;
+        int totalPages = 0;
+        long totalItems = 0;
         if (khachHang == null) {
             hoaDoncuaKhachHang = Collections.emptyList();
         } else {
-            // Theo khachHangID trên ThongTinNhanHang — trùng với cách tạo đơn (không dùng JOIN NguoiDung dễ lệch)
-            hoaDoncuaKhachHang = hoaDonService.getHoaDonsByKhachHangID(khachHang.getId(), sortBy, trangThai);
+            // Theo khachHangID trên ThongTinNhanHang, có phân trang bằng Pageable.
+            Page<HoaDon> hoaDonPage = hoaDonService.getHoaDonsPageByKhachHangID(khachHang.getId(), sortBy, trangThai,
+                    page, size);
+            hoaDoncuaKhachHang = hoaDonPage.getContent();
+            totalPages = hoaDonPage.getTotalPages();
+            totalItems = hoaDonPage.getTotalElements();
         }
         model.addAttribute("hoaDonKhachHang", hoaDoncuaKhachHang);
         model.addAttribute("selectedSort", sortBy);
         model.addAttribute("selectedTrangThai", trangThai);
+        model.addAttribute("currentPage", Math.max(page, 0));
+        model.addAttribute("pageSize", Math.max(size, 1));
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", totalItems);
 
         return "clientTemplate/lichsugiaodich";
     }

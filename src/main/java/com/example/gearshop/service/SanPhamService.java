@@ -132,6 +132,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = cpuMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -155,6 +156,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = mbMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -181,6 +183,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = ramMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -204,6 +207,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = vgaMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -228,6 +232,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = ocungMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -251,6 +256,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = psuMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -274,6 +280,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = coolerMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -297,6 +304,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = caseMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -320,6 +328,7 @@ public class SanPhamService {
                     SanPham sanPhamTuForm = mhMoi.getSanPham();
                     sanPham.setTenSanPham(sanPhamTuForm.getTenSanPham());
                     sanPham.setGia(sanPhamTuForm.getGia());
+                    sanPham.setGiaNhap(sanPhamTuForm.getGiaNhap());
                     sanPham.setLoaiSanPham(sanPhamTuForm.getLoaiSanPham());
                     sanPham.setThuongHieu(sanPhamTuForm.getThuongHieu());
                     sanPham.setNguoiThem(sanPhamTuForm.getNguoiThem());
@@ -400,6 +409,10 @@ public class SanPhamService {
         if (tonKhoMoi == null || tonKhoMoi < 0) {
             throw new IllegalArgumentException("Tồn kho phải là số nguyên lớn hơn hoặc bằng 0.");
         }
+        int tonKhoHienTai = sanPham.getTonKho() != null ? sanPham.getTonKho() : 0;
+        if (tonKhoMoi <= tonKhoHienTai) {
+            throw new IllegalArgumentException("Tồn kho mới phải lớn hơn tồn kho hiện tại (" + tonKhoHienTai + ").");
+        }
         int tonKhoMoiValue = tonKhoMoi;
         sanPham.setTonKho(tonKhoMoiValue);
         sanPham.setNgayThem(LocalDateTime.now());
@@ -424,7 +437,7 @@ public class SanPhamService {
     }
 
     public SanPham themSanPhamChung(String tenSanPham, String maSanPham, String hinhAnh, Integer thuongHieuID,
-            Integer loaiSPID, Integer tonKho, BigDecimal giaBan, NguoiDung nguoiDung) {
+            Integer loaiSPID, Integer tonKho, BigDecimal giaBan, BigDecimal giaNhap, NguoiDung nguoiDung) {
         SanPham sanPham = new SanPham();
         Optional<NhanVien> nhanVien = nhanVienRepo.findByNguoiDung_Id(nguoiDung.getId());
         ThuongHieu thuongHieu = thuongHieuRepo.findById(thuongHieuID.longValue()).get();
@@ -437,6 +450,7 @@ public class SanPhamService {
         sanPham.setTonKho(tonKho);
         sanPham.setDaBan(0);
         sanPham.setGia(giaBan);
+        sanPham.setGiaNhap(giaNhap);
         sanPham.setNguoiThem(nhanVien.get());
         sanPham.setNgayThem(LocalDateTime.now());
 

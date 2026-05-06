@@ -2,8 +2,8 @@ package com.example.gearshop.controller;
 
 import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
@@ -11,12 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.gearshop.model.NguoiDung;
@@ -78,6 +78,7 @@ public class AdminThemSanPhamController {
     public String themSanPham(@RequestParam("tenSanPham") String tenSanPham,
             @RequestParam("hinhAnhFile") MultipartFile hinhAnhFile, @RequestParam("thuongHieuID") Integer thuongHieuID,
             @RequestParam("loaiSPID") Integer loaiSPID, @RequestParam("giaBan") BigDecimal giaBan,
+            @RequestParam("giaNhap") BigDecimal giaNhap,
             @RequestParam("tonKho") Integer tonKho, @RequestParam Map<String, String> allParams, HttpSession session,
             Model model, RedirectAttributes redirectAttributes) {
 
@@ -114,7 +115,7 @@ public class AdminThemSanPhamController {
         }
         SanPham sanPham = sanPhamService.themSanPhamChung(tenSanPham, sanPhamService.sinhMaSanPham(), fileName,
                 thuongHieuID, loaiSPID,
-                tonKho, giaBan, nguoiDung);
+                tonKho, giaBan, giaNhap, nguoiDung);
 
         try {
             switch (loaiSPID) {

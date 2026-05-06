@@ -19,7 +19,7 @@
         <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-        <form th:action="@{/admin/quanlyhienthi}" method="post" enctype="multipart/form-data" class="card shadow-sm p-4">
+        <form id="homeDisplayForm" th:action="@{/admin/quanlyhienthi}" method="post" enctype="multipart/form-data" class="card shadow-sm p-4">
             <div class="mb-4">
                 <h4 class="mb-3">1. Banner trang chủ</h4>
 
@@ -54,28 +54,166 @@
                 </div>
 
                 <div id="sliderBannerBlock" class="mb-3" style="display: none;">
-                    <label class="form-label">Ảnh slider (chọn nhiều)</label>
-                    <input type="file" class="form-control" id="bannerSliderFiles" name="bannerSliderFiles" accept="image/*" multiple>
-                    <div class="form-text">Chọn một hoặc nhiều ảnh; ảnh mới sẽ được thêm vào slider. Tick <strong>Xóa</strong> dưới ảnh cũ để gỡ khỏi slider (file cũng bị xóa trên máy chủ).</div>
-                    <div class="row g-2 mt-2">
-                        <div class="col-md-6">
-                            <label class="form-label">Thời gian mỗi ảnh (ms)</label>
-                            <input type="number" class="form-control" name="bannerSliderIntervalMs" min="2000" max="60000" step="500"
-                                   th:value="${displayConfig.bannerSliderIntervalMs != null ? displayConfig.bannerSliderIntervalMs : 5000}">
+                    <style>
+                        .slider-config-card,
+                        .slider-content-card {
+                            border: 1px solid #e9ecef;
+                            border-radius: 0.6rem;
+                            padding: 0.9rem;
+                            background: #fff;
+                        }
+                        .slider-thumb-card { border: 1px solid #e9ecef; border-radius: 0.55rem; background: #fff; overflow: hidden; }
+                        .slider-thumb-toolbar {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 0.5rem;
+                            padding: 0.4rem 0.55rem;
+                            background: #f8f9fa;
+                            border-bottom: 1px solid #e9ecef;
+                        }
+                        .slider-thumb-drag { cursor: grab; color: #6c757d; }
+                        .slider-thumb-drag:active { cursor: grabbing; }
+                        .slider-thumb-delete-btn {
+                            border: none;
+                            background: transparent;
+                            color: #dc3545;
+                            font-size: 1.1rem;
+                            line-height: 1;
+                            padding: 0.1rem;
+                            opacity: 0;
+                            pointer-events: none;
+                            transition: opacity 0.2s ease-in-out;
+                        }
+                        .slider-thumb-card:hover .slider-thumb-delete-btn { opacity: 1; pointer-events: auto; }
+                        .slider-thumb-card.removed { opacity: 0.35; }
+                        .slider-thumb-card.dragging { opacity: 0.6; }
+                        .slider-thumb-media {
+                            position: relative;
+                            width: 100%;
+                            aspect-ratio: 16 / 9;
+                            overflow: hidden;
+                            background: #f8f9fa;
+                        }
+                        .slider-thumb-media > img {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                        }
+                        .slider-upload-dropzone {
+                            border: 2px dashed #ced4da;
+                            border-radius: 0.75rem;
+                            background: #fcfcfd;
+                            min-height: 152px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            text-align: center;
+                            cursor: pointer;
+                            transition: border-color 0.2s ease, background 0.2s ease;
+                            padding: 1rem;
+                        }
+                        .slider-upload-dropzone:hover,
+                        .slider-upload-dropzone.dragover {
+                            border-color: #0d6efd;
+                            background: #f0f6ff;
+                        }
+                        .slider-upload-dropzone .bi {
+                            font-size: 2rem;
+                            color: #0d6efd;
+                        }
+                        .slider-upload-progress {
+                            display: none;
+                        }
+                        .slider-preview-badge {
+                            position: absolute;
+                            left: 0.4rem;
+                            bottom: 0.4rem;
+                            font-size: 0.72rem;
+                            background: rgba(33, 37, 41, 0.72);
+                            color: #fff;
+                            border-radius: 999px;
+                            padding: 0.1rem 0.45rem;
+                        }
+                        .floating-save-btn {
+                            position: fixed;
+                            right: 20px;
+                            bottom: 18px;
+                            z-index: 1200;
+                            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.25);
+                        }
+                    </style>
+
+                    <input type="hidden" id="bannerSliderOrder" name="bannerSliderOrder">
+                    <div id="removeBannerSliderInputs"></div>
+
+                    <div class="slider-config-card mb-3">
+                        <div class="fw-semibold mb-2">Nhóm Cấu hình</div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label" for="bannerSourceType">Nguồn banner</label>
+                                <div class="form-text mt-0">Đang dùng lựa chọn ở mục phía trên.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Thời gian chuyển ảnh</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="bannerSliderIntervalMs" min="2000" max="60000" step="500"
+                                           th:value="${displayConfig.bannerSliderIntervalMs != null ? displayConfig.bannerSliderIntervalMs : 5000}"
+                                           placeholder="Ví dụ: 5000">
+                                    <span class="input-group-text">ms</span>
+                                </div>
+                                <div class="form-text">Quy đổi: <strong>1000 ms = 1 giây</strong>. Phạm vi cho phép: <strong>2000 - 60000 ms</strong> (2s - 60s) để tránh chuyển quá nhanh gây chói mắt.</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="row g-2 mt-2" th:if="${bannerSliderFilenames != null and !#lists.isEmpty(bannerSliderFilenames)}">
-                        <div class="col-6 col-md-4" th:each="fn : ${bannerSliderFilenames}">
-                            <div class="border rounded p-2 bg-white">
-                                <img th:src="@{/images/banner/{f}(f=${fn})}" alt="" class="img-fluid rounded w-100"
-                                     style="max-height: 110px; object-fit: cover;">
-                                <div class="form-check mt-2 mb-0">
-                                    <input class="form-check-input" type="checkbox" name="removeBannerSliderImage"
-                                           th:id="${'removeSlider-' + fn}"
-                                           th:value="${fn}">
-                                    <label class="form-check-label small" th:for="${'removeSlider-' + fn}">Xóa ảnh này</label>
+
+                    <div class="slider-content-card">
+                        <div class="fw-semibold mb-2">Nhóm Nội dung</div>
+                        <div class="mb-2">
+                            <label class="form-label">Nút thêm ảnh mới</label>
+                            <div id="bannerSliderDropzone" class="slider-upload-dropzone">
+                                <div>
+                                    <i class="bi bi-cloud-arrow-up"></i>
+                                    <div class="fw-semibold mt-2">Kéo &amp; thả ảnh vào đây</div>
+                                    <div class="text-muted small">hoặc bấm để chọn tệp từ máy tính</div>
                                 </div>
                             </div>
+                            <input type="file" class="form-control mt-2" id="bannerSliderFiles" name="bannerSliderFiles" accept="image/*" multiple>
+                            <div class="form-text">Có thể chọn nhiều ảnh một lần. Ảnh sẽ xem trước ngay, chưa lưu vào hệ thống cho đến khi bấm Lưu thay đổi.</div>
+                            <div id="sliderUploadProgress" class="slider-upload-progress mt-2">
+                                <div class="d-flex align-items-center gap-2 small text-muted mb-1">
+                                    <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                                    <span>Đang xử lý ảnh, vui lòng chờ...</span>
+                                </div>
+                                <div class="progress" role="progressbar" aria-label="Tiến trình xử lý ảnh">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="bannerSliderSelectedPreview" class="mt-2" style="display:none;">
+                            <div class="small text-muted mb-1">Ảnh mới đã chọn (xem trước):</div>
+                            <div id="bannerSliderSelectedPreviewGrid" class="row g-2"></div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">Danh sách ảnh hiện có (kéo-thả để đổi thứ tự)</label>
+                            <div id="existingSliderGrid" class="row g-2" th:if="${bannerSliderFilenames != null and !#lists.isEmpty(bannerSliderFilenames)}">
+                                <div class="col-6 col-md-4 existing-slider-item" th:each="fn : ${bannerSliderFilenames}" th:attr="data-file-name=${fn}">
+                                    <div class="slider-thumb-card">
+                                        <div class="slider-thumb-toolbar">
+                                            <span class="slider-thumb-drag" draggable="true" title="Kéo để đổi thứ tự"><i class="bi bi-grip-vertical"></i></span>
+                                            <button type="button" class="slider-thumb-delete-btn remove-slider-image-btn" th:attr="data-file-name=${fn}" title="Xóa ảnh">
+                                                <i class="bi bi-x-circle-fill"></i>
+                                            </button>
+                                        </div>
+                                        <div class="slider-thumb-media">
+                                            <img th:src="@{/images/banner/{f}(f=${fn})}" alt="">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-muted small" th:if="${bannerSliderFilenames == null or #lists.isEmpty(bannerSliderFilenames)}">Chưa có ảnh slider nào.</div>
                         </div>
                     </div>
                 </div>
@@ -148,42 +286,12 @@
                     <div class="row g-2">
                         <div class="col-md-6">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="showBanner" value="true" id="showBanner"
-                                       th:checked="${displayConfig.showBanner != false}">
-                                <label class="form-check-label" for="showBanner">Hiển thị banner (ảnh nền)</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="showBannerOverlayText" value="true" id="showBannerOverlayText"
-                                       th:checked="${displayConfig.showBannerOverlayText != false}">
-                                <label class="form-check-label" for="showBannerOverlayText">Chữ trên banner (tiêu đề + mô tả)</label>
-                            </div>
-                            <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="showCategoryNav" value="true" id="showCategoryNav"
                                        th:checked="${displayConfig.showCategoryNav != false}">
                                 <label class="form-check-label" for="showCategoryNav">Thanh danh mục (Mainboard, CPU, …)</label>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="showSectionFeatured" value="true" id="showSectionFeatured"
-                                       th:checked="${displayConfig.showSectionFeatured != false}">
-                                <label class="form-check-label" for="showSectionFeatured">Khối sản phẩm nổi bật / bán chạy</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="showSectionRecommended" value="true" id="showSectionRecommended"
-                                       th:checked="${displayConfig.showSectionRecommended != false}">
-                                <label class="form-check-label" for="showSectionRecommended">Khối gợi ý (sản phẩm tương tự)</label>
-                            </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="showSectionRecentlyViewed" value="true" id="showSectionRecentlyViewed"
-                                       th:checked="${displayConfig.showSectionRecentlyViewed != false}">
-                                <label class="form-check-label" for="showSectionRecentlyViewed">Khối vừa xem</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="showSectionByCategory" value="true" id="showSectionByCategory"
-                                       th:checked="${displayConfig.showSectionByCategory != false}">
-                                <label class="form-check-label" for="showSectionByCategory">Khối sản phẩm theo từng loại</label>
-                            </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="showFooter" value="true" id="showFooter"
                                        th:checked="${displayConfig.showFooter != false}">
@@ -201,6 +309,53 @@
                 <div class="border rounded p-3 mt-2">
                     <div class="fw-semibold mb-2">Cấu hình từng danh mục</div>
                     <p class="text-muted small mb-3">Kéo thả theo <strong>thanh có biểu tượng ≡</strong> để đổi thứ tự hiển thị trên trang chủ. Các khối sản phẩm có thêm cấu hình số sản phẩm 1 hàng và số hàng; banner chỉ có tiêu đề.</p>
+                    <div class="border rounded p-3 mb-3 bg-light">
+                        <div class="fw-semibold mb-2">Thêm khối mới</div>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label" for="newBlockType">Loại khối cần thêm</label>
+                                <select class="form-select" id="newBlockType" name="newBlockType">
+                                    <option value="">-- Chọn loại khối --</option>
+                                    <option value="PRODUCT_CUSTOM">Tạo khối mới (Sản phẩm tùy chọn)</option>
+                                    <option th:each="entry : ${missingBuiltInBlocks}" th:value="${entry.key}" th:text="${'Khối hệ thống: ' + entry.value}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 new-text-block-fields" style="display:none;">
+                                <label class="form-label">Tiêu đề khối</label>
+                                <input type="text" class="form-control" id="newTextBlockTitle" name="newTextBlockTitle" maxlength="300" placeholder="Ví dụ: Khuyến mãi hôm nay">
+                            </div>
+                            <div class="col-md-2 new-text-block-fields" style="display:none;">
+                                <label class="form-label">SP / hàng</label>
+                                <input type="number" class="form-control" name="newProductBlockProductsPerRow" min="1" max="6" value="4">
+                            </div>
+                            <div class="col-md-2 new-text-block-fields" style="display:none;">
+                                <label class="form-label">Số hàng</label>
+                                <input type="number" class="form-control" name="newProductBlockNumberOfRows" min="1" max="6" value="2">
+                            </div>
+                            <div class="col-12 new-text-block-fields" style="display:none;">
+                                <label class="form-label">Chọn sản phẩm</label>
+                                <input type="hidden" id="newProductBlockProductIds" name="newProductBlockProductIds">
+                                <div class="product-picker-box product-picker" data-target-hidden-id="newProductBlockProductIds">
+                                    <input type="text" class="form-control form-control-sm mb-2 product-picker-search"
+                                           placeholder="Nhập tên hoặc mã sản phẩm để lọc...">
+                                    <div class="product-picker-list">
+                                        <label class="product-picker-item" th:each="sp : ${dsSanPham}"
+                                               th:attr="data-search=|${sp.maSanPham} ${sp.tenSanPham}|,data-label=|${sp.maSanPham} - ${sp.tenSanPham}|,data-image=@{/images/product/{img}(img=${sp.hinhAnh})}">
+                                            <div class="product-picker-item-row">
+                                                <input class="form-check-input product-picker-checkbox" type="checkbox"
+                                                       th:value="${sp.id}">
+                                                <img class="product-picker-thumb" th:src="@{/images/product/{img}(img=${sp.hinhAnh})}" alt="">
+                                                <span th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}">SP</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                        <div class="selected-products-list product-picker-selected-list"></div>
+                                    <div class="small text-muted mt-1">Đã chọn: <span class="product-picker-selected-count">0</span> sản phẩm</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text">Dropdown chỉ hiện khối hệ thống đang thiếu; khối đã có sẽ không hiển thị lại. Bạn có thể tìm theo tên/mã và tick để chọn nhiều sản phẩm.</div>
+                    </div>
                     <input type="hidden" name="homeSectionOrder" id="homeSectionOrder" th:value="${homeSectionOrderCsv}">
 
                     <style>
@@ -225,6 +380,80 @@
                         .by-category-drag-handle { cursor: grab; }
                         .by-category-drag-handle:active { cursor: grabbing; }
                         .by-category-sort-row.dragging { opacity: 0.65; }
+                        .product-picker-box {
+                            border: 1px solid #dee2e6;
+                            border-radius: 8px;
+                            background: #fff;
+                            padding: 0.5rem;
+                        }
+                        .product-picker-list {
+                            max-height: 180px;
+                            overflow: auto;
+                            border: 1px solid #edf0f3;
+                            border-radius: 6px;
+                            padding: 0.35rem 0.5rem;
+                            background: #fcfdff;
+                        }
+                        .product-picker-item {
+                            display: block;
+                            font-size: 0.9rem;
+                            padding: 0.18rem 0;
+                        }
+                        .product-picker-item-row {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                        }
+                        .product-picker-thumb {
+                            width: 34px;
+                            height: 34px;
+                            object-fit: cover;
+                            border-radius: 6px;
+                            border: 1px solid #e5e7eb;
+                            flex-shrink: 0;
+                        }
+                        .selected-products-list {
+                            margin-top: 0.5rem;
+                            border: 1px solid #edf0f3;
+                            border-radius: 6px;
+                            background: #f8fafc;
+                            min-height: 44px;
+                            padding: 0.35rem;
+                        }
+                        .selected-product-item {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 0.45rem;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 6px;
+                            background: #fff;
+                            padding: 0.3rem 0.4rem;
+                            margin-bottom: 0.3rem;
+                            cursor: grab;
+                        }
+                        .selected-product-item:last-child { margin-bottom: 0; }
+                        .selected-product-item.dragging { opacity: 0.6; }
+                        .selected-product-meta {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.45rem;
+                            min-width: 0;
+                        }
+                        .selected-product-name {
+                            font-size: 0.85rem;
+                            line-height: 1.2;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
+                        .selected-product-remove {
+                            border: none;
+                            background: transparent;
+                            color: #dc3545;
+                            padding: 0;
+                            line-height: 1;
+                        }
                     </style>
 
                     <div id="homeSectionSortList" class="home-section-sort-list d-flex flex-column gap-2">
@@ -235,6 +464,20 @@
                                         <div class="card-body pt-2">
                                             <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Banner (chữ trên banner)</div>
                                             <div class="row g-3 align-items-end">
+                                                <div class="col-12">
+                                                    <div class="d-flex flex-wrap gap-4">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="showBanner" value="true" id="showBanner"
+                                                                   th:checked="${displayConfig.showBanner != false}">
+                                                            <label class="form-check-label" for="showBanner">Bật banner</label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="showBannerOverlayText" value="true" id="showBannerOverlayText"
+                                                                   th:checked="${displayConfig.showBannerOverlayText != false}">
+                                                            <label class="form-check-label" for="showBannerOverlayText">Bật chữ trên banner</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="col-12">
                                                     <label class="form-label">Tiêu đề banner</label>
                                                     <input type="text" class="form-control" name="bannerTitleCustom" maxlength="300"
@@ -249,44 +492,37 @@
                                         <div class="card-body pt-2">
                                             <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối nổi bật</div>
                                             <div class="row g-3 align-items-end">
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="showSectionFeatured" value="true" id="showSectionFeatured"
+                                                               th:checked="${displayConfig.showSectionFeatured != false}">
+                                                        <label class="form-check-label" for="showSectionFeatured">Bật khối nổi bật</label>
+                                                    </div>
+                                                </div>
                                                 <div class="col-md-8">
                                                     <label class="form-label">Tiêu đề khối nổi bật</label>
                                                     <input type="text" class="form-control" name="titleSectionFeatured" maxlength="200"
                                                            th:value="${displayConfig.titleSectionFeatured}" placeholder="Mặc định: Sản phẩm nổi bật">
                                                 </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Nguồn dữ liệu khối nổi bật</label>
+                                                    <select class="form-select" name="featuredProductDisplayOrder" id="featuredProductDisplayOrder">
+                                                        <option value="BEST_SELLING" th:selected="${displayConfig.featuredProductDisplayOrder == null || displayConfig.featuredProductDisplayOrder == 'BEST_SELLING'}">Sản phẩm bán chạy nhất</option>
+                                                        <option value="NEWEST" th:selected="${displayConfig.featuredProductDisplayOrder == 'NEWEST'}">Sản phẩm mới nhất</option>
+                                                        <option value="PRICE_ASC" th:selected="${displayConfig.featuredProductDisplayOrder == 'PRICE_ASC'}">Giá thấp nhất trước</option>
+                                                        <option value="PRICE_DESC" th:selected="${displayConfig.featuredProductDisplayOrder == 'PRICE_DESC'}">Giá cao nhất trước</option>
+                                                        <option value="NAME_ASC" th:selected="${displayConfig.featuredProductDisplayOrder == 'NAME_ASC'}">Tên sản phẩm A-Z</option>
+                                                    </select>
+                                                </div>
                                                 <div class="col-md-2">
                                                     <label class="form-label">SP / hàng</label>
-                                                    <input type="number" class="form-control" name="featuredProductsPerRow" min="1" max="6"
+                                                    <input type="number" class="form-control" id="featuredProductsPerRow" name="featuredProductsPerRow" min="1" max="6"
                                                            th:value="${displayConfig.featuredProductsPerRow}">
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label class="form-label">Số hàng</label>
-                                                    <input type="number" class="form-control" name="featuredNumberOfRows" min="1" max="6"
+                                                    <input type="number" class="form-control" id="featuredNumberOfRows" name="featuredNumberOfRows" min="1" max="6"
                                                            th:value="${displayConfig.featuredNumberOfRows}">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </th:block>
-                                <th:block th:case="'recommended'">
-                                    <div class="home-section-sort-item card shadow-sm mb-0" data-section-key="recommended">
-                                        <div class="card-body pt-2">
-                                            <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối gợi ý</div>
-                                            <div class="row g-3 align-items-end">
-                                                <div class="col-md-8">
-                                                    <label class="form-label">Tiêu đề khối gợi ý</label>
-                                                    <input type="text" class="form-control" name="titleSectionRecommended" maxlength="200"
-                                                           th:value="${displayConfig.titleSectionRecommended}" placeholder="Mặc định: Danh mục sản phẩm dành cho bạn">
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label class="form-label">SP / hàng</label>
-                                                    <input type="number" class="form-control" name="recommendedProductsPerRow" min="1" max="6"
-                                                           th:value="${displayConfig.recommendedProductsPerRow}">
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label class="form-label">Số hàng</label>
-                                                    <input type="number" class="form-control" name="recommendedNumberOfRows" min="1" max="6"
-                                                           th:value="${displayConfig.recommendedNumberOfRows}">
                                                 </div>
                                             </div>
                                         </div>
@@ -297,6 +533,13 @@
                                         <div class="card-body pt-2">
                                             <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối vừa xem</div>
                                             <div class="row g-3 align-items-end">
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="showSectionRecentlyViewed" value="true" id="showSectionRecentlyViewed"
+                                                               th:checked="${displayConfig.showSectionRecentlyViewed != false}">
+                                                        <label class="form-check-label" for="showSectionRecentlyViewed">Bật khối vừa xem</label>
+                                                    </div>
+                                                </div>
                                                 <div class="col-md-8">
                                                     <label class="form-label">Tiêu đề khối vừa xem</label>
                                                     <input type="text" class="form-control" name="titleSectionRecentlyViewed" maxlength="200"
@@ -321,6 +564,13 @@
                                         <div class="card-body pt-2">
                                             <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối theo loại</div>
                                             <div class="row g-3 align-items-end">
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="showSectionByCategory" value="true" id="showSectionByCategory"
+                                                               th:checked="${displayConfig.showSectionByCategory != false}">
+                                                        <label class="form-check-label" for="showSectionByCategory">Bật khối theo loại</label>
+                                                    </div>
+                                                </div>
                                                 <div class="col-md-8">
                                                     <label class="form-label">Tiêu đề khối theo loại</label>
                                                     <input type="text" class="form-control" name="titleSectionByCategory" maxlength="200"
@@ -361,18 +611,80 @@
                                         </div>
                                     </div>
                                 </th:block>
+                                <th:block th:case="*">
+                                    <div class="home-section-sort-item card shadow-sm mb-0"
+                                         th:if="${customTextBlockMap != null and customTextBlockMap.containsKey(sectionKey)}"
+                                         th:attr="data-section-key=${sectionKey}">
+                                        <div class="card-body pt-2">
+                                            <div class="home-section-sort-handle" draggable="true"><i class="bi bi-grip-vertical"></i> Khối sản phẩm tùy chọn</div>
+                                            <div class="row g-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Tiêu đề</label>
+                                                    <input type="text" class="form-control"
+                                                           th:name="${'customTextTitle__' + sectionKey}"
+                                                           th:value="${customTextBlockMap.get(sectionKey).title}" maxlength="300">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">SP / hàng</label>
+                                                    <input type="number" class="form-control"
+                                                           th:name="${'customProductsPerRow__' + sectionKey}"
+                                                           th:value="${customTextBlockMap.get(sectionKey).productsPerRow != null ? customTextBlockMap.get(sectionKey).productsPerRow : 4}"
+                                                           min="1" max="6">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">Số hàng</label>
+                                                    <input type="number" class="form-control"
+                                                           th:name="${'customNumberOfRows__' + sectionKey}"
+                                                           th:value="${customTextBlockMap.get(sectionKey).numberOfRows != null ? customTextBlockMap.get(sectionKey).numberOfRows : 2}"
+                                                           min="1" max="6">
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label">Chọn sản phẩm</label>
+                                                    <input type="hidden"
+                                                           th:id="${'customProductIds__' + sectionKey}"
+                                                           th:name="${'customProductIds__' + sectionKey}"
+                                                           th:value="${customTextBlockMap.get(sectionKey).content}">
+                                                    <div class="product-picker-box product-picker"
+                                                         th:attr="data-target-hidden-id=${'customProductIds__' + sectionKey}">
+                                                        <input type="text" class="form-control form-control-sm mb-2 product-picker-search"
+                                                               placeholder="Nhập tên hoặc mã sản phẩm để lọc...">
+                                                        <div class="product-picker-list">
+                                                            <label class="product-picker-item" th:each="sp : ${dsSanPham}"
+                                                                   th:attr="data-search=|${sp.maSanPham} ${sp.tenSanPham}|,data-label=|${sp.maSanPham} - ${sp.tenSanPham}|,data-image=@{/images/product/{img}(img=${sp.hinhAnh})}">
+                                                                <div class="product-picker-item-row">
+                                                                    <input class="form-check-input product-picker-checkbox" type="checkbox"
+                                                                           th:value="${sp.id}"
+                                                                           th:checked="${#strings.contains(',' + (customTextBlockMap.get(sectionKey).content != null ? customTextBlockMap.get(sectionKey).content : '') + ',', ',' + sp.id + ',')}">
+                                                                    <img class="product-picker-thumb" th:src="@{/images/product/{img}(img=${sp.hinhAnh})}" alt="">
+                                                                    <span th:text="${sp.maSanPham + ' - ' + sp.tenSanPham}">SP</span>
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                        <div class="selected-products-list product-picker-selected-list"></div>
+                                                        <div class="small text-muted mt-1">Đã chọn: <span class="product-picker-selected-count">0</span> sản phẩm</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="removeBlockKey"
+                                                               th:id="${'removeBlock-' + sectionKey}"
+                                                               th:value="${sectionKey}">
+                                                        <label class="form-check-label" th:for="${'removeBlock-' + sectionKey}">Xóa khối</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th:block>
                             </th:block>
                         </th:block>
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-floppy"></i> Lưu thay đổi
-                </button>
-                <a th:href="@{/admin/trangchu}" class="btn btn-secondary">Quay lại</a>
-            </div>
+            <button type="submit" class="btn btn-primary floating-save-btn">
+                <i class="bi bi-floppy"></i> Lưu thay đổi
+            </button>
         </form>
     </div>
 
@@ -384,7 +696,87 @@
         const bannerProductId = document.getElementById('bannerProductId');
         const bannerPreviewImage = document.getElementById('bannerPreviewImage');
         const sliderBannerBlock = document.getElementById('sliderBannerBlock');
+        const bannerSliderFiles = document.getElementById('bannerSliderFiles');
+        const bannerSliderSelectedPreview = document.getElementById('bannerSliderSelectedPreview');
+        const bannerSliderSelectedPreviewGrid = document.getElementById('bannerSliderSelectedPreviewGrid');
+        const bannerSliderDropzone = document.getElementById('bannerSliderDropzone');
+        const sliderUploadProgress = document.getElementById('sliderUploadProgress');
+        const existingSliderGrid = document.getElementById('existingSliderGrid');
+        const removeBannerSliderInputs = document.getElementById('removeBannerSliderInputs');
+        const bannerSliderOrderInput = document.getElementById('bannerSliderOrder');
+        const homeDisplayForm = document.getElementById('homeDisplayForm');
+        const newBlockType = document.getElementById('newBlockType');
+        const newTextBlockFields = document.querySelectorAll('.new-text-block-fields');
+        const newTextBlockTitleInput = document.getElementById('newTextBlockTitle');
+        const newProductBlockProductIdsInput = document.getElementById('newProductBlockProductIds');
         const initialBannerPreviewSrc = bannerPreviewImage.src;
+        let sliderSelectedPreviewUrls = [];
+
+        function revokeSliderSelectedPreviewUrls() {
+            sliderSelectedPreviewUrls.forEach(function (u) {
+                try {
+                    URL.revokeObjectURL(u);
+                } catch (err) { /* ignore */ }
+            });
+            sliderSelectedPreviewUrls = [];
+        }
+
+        function renderSliderSelectedPreview(files) {
+            if (!bannerSliderSelectedPreview || !bannerSliderSelectedPreviewGrid) return;
+            revokeSliderSelectedPreviewUrls();
+            bannerSliderSelectedPreviewGrid.innerHTML = '';
+            if (!files || files.length === 0) {
+                bannerSliderSelectedPreview.style.display = 'none';
+                return;
+            }
+
+            Array.prototype.forEach.call(files, function (file) {
+                if (!file || !String(file.type || '').startsWith('image/')) return;
+                const url = URL.createObjectURL(file);
+                sliderSelectedPreviewUrls.push(url);
+
+                const col = document.createElement('div');
+                col.className = 'col-6 col-md-4';
+                col.innerHTML = ''
+                    + '<div class="slider-thumb-card h-100">'
+                    + '  <div class="slider-thumb-media position-relative">'
+                    + '    <img src="' + url + '" alt="">'
+                    + '    <span class="slider-preview-badge">Mới</span>'
+                    + '  </div>'
+                    + '  <div class="small text-muted p-2 text-truncate" title="' + file.name.replace(/"/g, '&quot;') + '">'
+                    +       file.name
+                    + '  </div>'
+                    + '</div>';
+                bannerSliderSelectedPreviewGrid.appendChild(col);
+            });
+            bannerSliderSelectedPreview.style.display = bannerSliderSelectedPreviewGrid.children.length > 0 ? 'block' : 'none';
+        }
+
+        function syncBannerSliderOrder() {
+            if (!existingSliderGrid || !bannerSliderOrderInput) return;
+            const ordered = Array.prototype.map.call(
+                existingSliderGrid.querySelectorAll('.existing-slider-item:not(.removed)'),
+                function (el) { return el.getAttribute('data-file-name'); }
+            ).filter(Boolean);
+            bannerSliderOrderInput.value = ordered.join(',');
+        }
+
+        function markSliderImageRemoved(fileName, cardEl) {
+            if (!fileName || !removeBannerSliderInputs) return;
+            const exists = removeBannerSliderInputs.querySelector('input[name="removeBannerSliderImage"][value="' + fileName.replace(/"/g, '\\"') + '"]');
+            if (!exists) {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'removeBannerSliderImage';
+                hidden.value = fileName;
+                removeBannerSliderInputs.appendChild(hidden);
+            }
+            if (cardEl) {
+                cardEl.classList.add('removed');
+                cardEl.style.display = 'none';
+            }
+            syncBannerSliderOrder();
+        }
 
         function toggleBannerInputs() {
             const mode = bannerSourceType.value;
@@ -438,6 +830,114 @@
 
         bannerSourceType.addEventListener('change', toggleBannerInputs);
         toggleBannerInputs();
+
+        if (bannerSliderFiles) {
+            bannerSliderFiles.addEventListener('change', function () {
+                bannerSourceType.value = 'SLIDER';
+                toggleBannerInputs();
+                renderSliderSelectedPreview(this.files);
+                const firstFile = this.files && this.files.length > 0 ? this.files[0] : null;
+                if (firstFile) {
+                    bannerPreviewImage.src = URL.createObjectURL(firstFile);
+                }
+            });
+        }
+
+        (function initSliderDropzone() {
+            if (!bannerSliderDropzone || !bannerSliderFiles) return;
+            bannerSliderDropzone.addEventListener('click', function () {
+                bannerSliderFiles.click();
+            });
+            bannerSliderDropzone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                bannerSliderDropzone.classList.add('dragover');
+            });
+            bannerSliderDropzone.addEventListener('dragleave', function () {
+                bannerSliderDropzone.classList.remove('dragover');
+            });
+            bannerSliderDropzone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                bannerSliderDropzone.classList.remove('dragover');
+                const files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;
+                if (!files || files.length === 0) return;
+                try {
+                    const dt = new DataTransfer();
+                    Array.prototype.forEach.call(files, function (file) {
+                        if (file && String(file.type || '').startsWith('image/')) {
+                            dt.items.add(file);
+                        }
+                    });
+                    bannerSliderFiles.files = dt.files;
+                } catch (err) {
+                    // fallback: nếu trình duyệt không hỗ trợ DataTransfer thì vẫn preview trực tiếp
+                }
+                bannerSourceType.value = 'SLIDER';
+                toggleBannerInputs();
+                renderSliderSelectedPreview(bannerSliderFiles.files && bannerSliderFiles.files.length > 0 ? bannerSliderFiles.files : files);
+                const firstFile = files[0];
+                if (firstFile) {
+                    bannerPreviewImage.src = URL.createObjectURL(firstFile);
+                }
+            });
+        })();
+
+        (function initExistingSliderActions() {
+            if (!existingSliderGrid) return;
+            syncBannerSliderOrder();
+
+            existingSliderGrid.querySelectorAll('.remove-slider-image-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const fileName = btn.getAttribute('data-file-name');
+                    const card = btn.closest('.existing-slider-item');
+                    const confirmed = window.confirm('Bạn có chắc muốn xóa ảnh này khỏi slider không?');
+                    if (!confirmed) {
+                        return;
+                    }
+                    markSliderImageRemoved(fileName, card);
+                });
+            });
+
+            let dragEl = null;
+            existingSliderGrid.querySelectorAll('.existing-slider-item').forEach(function (item) {
+                const handle = item.querySelector('.slider-thumb-drag');
+                if (!handle) return;
+                handle.addEventListener('dragstart', function (e) {
+                    dragEl = item;
+                    item.classList.add('dragging');
+                    try {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', item.getAttribute('data-file-name') || '');
+                    } catch (err) { /* ignore */ }
+                });
+                handle.addEventListener('dragend', function () {
+                    item.classList.remove('dragging');
+                    dragEl = null;
+                    syncBannerSliderOrder();
+                });
+            });
+
+            existingSliderGrid.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                if (!dragEl) return;
+                const nodes = Array.prototype.slice.call(
+                    existingSliderGrid.querySelectorAll('.existing-slider-item:not(.dragging):not(.removed)')
+                );
+                const after = nodes.reduce(function (closest, child) {
+                    const box = child.getBoundingClientRect();
+                    const offset = e.clientY - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    }
+                    return closest;
+                }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+
+                if (after == null) {
+                    existingSliderGrid.appendChild(dragEl);
+                } else {
+                    existingSliderGrid.insertBefore(dragEl, after);
+                }
+            });
+        })();
 
         (function initBannerPreviewResize() {
             var viewport = document.getElementById('bannerPreviewViewport');
@@ -666,11 +1166,229 @@
             const form = sortList.closest('form');
             if (form) {
                 form.addEventListener('submit', function () {
+                    syncBannerSliderOrder();
                     syncByCategoryOrder();
                     syncByCategoryVisible();
                 });
             }
         })();
+
+        if (homeDisplayForm) {
+            homeDisplayForm.addEventListener('submit', function (e) {
+                if (newBlockType && newBlockType.value === 'PRODUCT_CUSTOM' && newTextBlockTitleInput) {
+                    const t = String(newTextBlockTitleInput.value || '').trim();
+                    if (!t) {
+                        e.preventDefault();
+                        newTextBlockTitleInput.focus();
+                        newTextBlockTitleInput.setCustomValidity('Vui lòng nhập tiêu đề khi chọn khối sản phẩm tùy chọn.');
+                        newTextBlockTitleInput.reportValidity();
+                        return;
+                    }
+                    newTextBlockTitleInput.setCustomValidity('');
+                    if (newProductBlockProductIdsInput) {
+                        const ids = String(newProductBlockProductIdsInput.value || '').trim();
+                        if (!ids) {
+                            e.preventDefault();
+                            window.alert('Vui lòng chọn ít nhất 1 sản phẩm cho khối mới.');
+                            return;
+                        }
+                    }
+                }
+                if (sliderUploadProgress) {
+                    sliderUploadProgress.style.display = 'block';
+                }
+            });
+        }
+
+        (function initNewBlockTypeToggle() {
+            if (!newBlockType) return;
+            const applyState = function () {
+                const isText = newBlockType.value === 'PRODUCT_CUSTOM';
+                newTextBlockFields.forEach(function (el) {
+                    el.style.display = isText ? '' : 'none';
+                });
+                if (!isText && newTextBlockTitleInput) {
+                    newTextBlockTitleInput.value = '';
+                    newTextBlockTitleInput.setCustomValidity('');
+                }
+                if (!isText && newProductBlockProductIdsInput) {
+                    newProductBlockProductIdsInput.value = '';
+                    newProductBlockProductIdsInput.setCustomValidity('');
+                }
+            };
+            newBlockType.addEventListener('change', applyState);
+            applyState();
+        })();
+
+        (function initBlockRemoveControls() {
+            const items = document.querySelectorAll('#homeSectionSortList .home-section-sort-item');
+            items.forEach(function (item) {
+                const sectionKey = item.getAttribute('data-section-key');
+                if (!sectionKey) return;
+                const body = item.querySelector('.card-body');
+                if (!body) return;
+                if (body.querySelector('input[name="removeBlockKey"]')) return;
+
+                const wrap = document.createElement('div');
+                wrap.className = 'form-check mt-2';
+                const inputId = 'removeBlock-' + sectionKey;
+                wrap.innerHTML = ''
+                    + '<input class="form-check-input" type="checkbox" name="removeBlockKey" id="' + inputId + '" value="' + sectionKey + '">'
+                    + '<label class="form-check-label" for="' + inputId + '">Xóa khối</label>';
+                body.appendChild(wrap);
+            });
+        })();
+
+        (function initProductPickers() {
+            const pickers = document.querySelectorAll('.product-picker');
+            pickers.forEach(function (picker) {
+                const targetId = picker.getAttribute('data-target-hidden-id');
+                const hidden = targetId ? document.getElementById(targetId) : null;
+                const search = picker.querySelector('.product-picker-search');
+                const checkboxes = Array.prototype.slice.call(picker.querySelectorAll('.product-picker-checkbox'));
+                const countEl = picker.querySelector('.product-picker-selected-count');
+                const selectedList = picker.querySelector('.product-picker-selected-list');
+                if (!hidden) return;
+
+                let selectedOrder = [];
+
+                function parseInitialOrder(value) {
+                    return String(value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+                }
+
+                function getMetaByCheckbox(cb) {
+                    const item = cb.closest('.product-picker-item');
+                    if (!item) return { label: cb.value, image: '' };
+                    return {
+                        label: item.getAttribute('data-label') || cb.value,
+                        image: item.getAttribute('data-image') || ''
+                    };
+                }
+                function escapeHtml(text) {
+                    return String(text || '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                }
+
+                function syncCheckboxStateFromOrder() {
+                    const set = new Set(selectedOrder);
+                    checkboxes.forEach(function (cb) {
+                        cb.checked = set.has(String(cb.value));
+                    });
+                }
+
+                const syncHidden = function () {
+                    selectedOrder = selectedOrder.filter(function (id, idx, arr) {
+                        return id && arr.indexOf(id) === idx;
+                    });
+                    hidden.value = selectedOrder.join(',');
+                    if (countEl) countEl.textContent = String(selectedOrder.length);
+                };
+
+                function renderSelectedList() {
+                    if (!selectedList) {
+                        syncHidden();
+                        return;
+                    }
+                    selectedList.innerHTML = '';
+                    selectedOrder.forEach(function (id) {
+                        const cb = checkboxes.find(function (x) { return String(x.value) === String(id); });
+                        if (!cb) return;
+                        const meta = getMetaByCheckbox(cb);
+                        const row = document.createElement('div');
+                        row.className = 'selected-product-item';
+                        row.setAttribute('draggable', 'true');
+                        row.setAttribute('data-product-id', String(id));
+                        row.innerHTML = ''
+                            + '<div class="selected-product-meta">'
+                            + '  <i class="bi bi-grip-vertical text-muted"></i>'
+                            + '  <img class="product-picker-thumb" src="' + escapeHtml(meta.image) + '" alt="">'
+                            + '  <span class="selected-product-name" title="' + escapeHtml(meta.label) + '">' + escapeHtml(meta.label) + '</span>'
+                            + '</div>'
+                            + '<button type="button" class="selected-product-remove" title="Bỏ chọn"><i class="bi bi-x-circle-fill"></i></button>';
+                        row.querySelector('.selected-product-remove').addEventListener('click', function () {
+                            selectedOrder = selectedOrder.filter(function (x) { return x !== String(id); });
+                            syncCheckboxStateFromOrder();
+                            renderSelectedList();
+                        });
+                        selectedList.appendChild(row);
+                    });
+
+                    let dragEl = null;
+                    selectedList.querySelectorAll('.selected-product-item').forEach(function (item) {
+                        item.addEventListener('dragstart', function () {
+                            dragEl = item;
+                            item.classList.add('dragging');
+                        });
+                        item.addEventListener('dragend', function () {
+                            item.classList.remove('dragging');
+                            dragEl = null;
+                            selectedOrder = Array.prototype.map.call(
+                                selectedList.querySelectorAll('.selected-product-item'),
+                                function (el) { return el.getAttribute('data-product-id'); }
+                            );
+                            syncHidden();
+                        });
+                    });
+                    selectedList.addEventListener('dragover', function (e) {
+                        e.preventDefault();
+                        if (!dragEl) return;
+                        const nodes = Array.prototype.slice.call(
+                            selectedList.querySelectorAll('.selected-product-item:not(.dragging)')
+                        );
+                        const after = nodes.reduce(function (closest, child) {
+                            const box = child.getBoundingClientRect();
+                            const offset = e.clientY - box.top - box.height / 2;
+                            if (offset < 0 && offset > closest.offset) {
+                                return { offset: offset, element: child };
+                            }
+                            return closest;
+                        }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+                        if (after == null) {
+                            selectedList.appendChild(dragEl);
+                        } else {
+                            selectedList.insertBefore(dragEl, after);
+                        }
+                    });
+
+                    syncHidden();
+                }
+
+                if (search) {
+                    search.addEventListener('input', function () {
+                        const kw = String(search.value || '').trim().toLowerCase();
+                        picker.querySelectorAll('.product-picker-item').forEach(function (item) {
+                            const haystack = String(item.getAttribute('data-search') || '').toLowerCase();
+                            item.style.display = !kw || haystack.includes(kw) ? '' : 'none';
+                        });
+                    });
+                }
+                checkboxes.forEach(function (cb) {
+                    cb.addEventListener('change', function () {
+                        const id = String(cb.value);
+                        if (cb.checked) {
+                            if (!selectedOrder.includes(id)) selectedOrder.push(id);
+                        } else {
+                            selectedOrder = selectedOrder.filter(function (x) { return x !== id; });
+                        }
+                        renderSelectedList();
+                    });
+                });
+                selectedOrder = parseInitialOrder(hidden.value);
+                if (selectedOrder.length === 0) {
+                    selectedOrder = checkboxes.filter(function (cb) { return cb.checked; }).map(function (cb) { return String(cb.value); });
+                }
+                syncCheckboxStateFromOrder();
+                renderSelectedList();
+            });
+        })();
+
+        if (newProductBlockProductIdsInput) {
+            newProductBlockProductIdsInput.setCustomValidity('');
+        }
     </script>
 
 

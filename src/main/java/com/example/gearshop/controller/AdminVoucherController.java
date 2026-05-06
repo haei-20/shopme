@@ -194,7 +194,15 @@ public class AdminVoucherController {
         if (voucher.getNgayBatDau() == null) {
             voucher.setNgayBatDau(voucher.getThoiHan() != null ? voucher.getThoiHan() : LocalDateTime.now());
         }
+        List<KhachHang> danhSachKhachHang = khachHangRepository.findAll();
+        List<VoucherKhachHang> mappings = voucherKhachHangRepository.findByVoucherId(id);
+        List<Integer> selectedKhachHangIds = mappings.stream()
+                .map(vkh -> vkh.getKhachHang() != null ? vkh.getKhachHang().getId() : null)
+                .filter(khId -> khId != null)
+                .toList();
         model.addAttribute("voucher", voucher);
+        model.addAttribute("danhSachKhachHang", danhSachKhachHang);
+        model.addAttribute("selectedKhachHangIds", selectedKhachHangIds);
 
         return "adminTemplate/suavoucher";
     }
@@ -212,7 +220,9 @@ public class AdminVoucherController {
             @RequestParam String ngayBatDau,
             @RequestParam String thoiHan,
             @RequestParam(required = false) Integer soLuongNguoiDungToiDa,
-            @RequestParam BigDecimal donToiThieu, RedirectAttributes redirectAttributes) {
+            @RequestParam BigDecimal donToiThieu,
+            @RequestParam(value = "khachHangIds", required = false) String khachHangIdsString,
+            RedirectAttributes redirectAttributes) {
         Voucher voucher = voucherRepository.findById(id).orElseThrow();
         LocalDateTime startDate = parseDateTime(ngayBatDau);
         LocalDateTime endDate = parseDateTime(thoiHan);
@@ -244,6 +254,21 @@ public class AdminVoucherController {
         voucher.setSoLuongNguoiDungToiDa(soLuongNguoiDungToiDa);
         voucher.setDonToiThieu(donToiThieu);
         voucherRepository.save(voucher);
+
+        voucherKhachHangRepository.deleteByVoucherID(id);
+        if (khachHangIdsString != null && !khachHangIdsString.isBlank()) {
+            String[] ids = khachHangIdsString.split(",");
+            for (String idStr : ids) {
+                Integer khachHangId = Integer.valueOf(idStr.trim());
+                VoucherKhachHang vkh = new VoucherKhachHang();
+                vkh.setVoucher(voucher);
+                vkh.setKhachHang(khachHangRepository.findById(khachHangId).orElseThrow());
+                vkh.setMaVoucherKhachHang("VCKH" + voucher.getId() + khachHangId);
+                vkh.setDaDung(false);
+                voucherKhachHangRepository.save(vkh);
+            }
+        }
+
         redirectAttributes.addFlashAttribute("successMessage", "Sửa voucher thành công.");
         return "redirect:/admin/voucher";
     }

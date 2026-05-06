@@ -89,11 +89,10 @@ public class AdminQuanLySanPhamController {
 
     @GetMapping("/quanlysanpham")
     public String quanLySanPham(@RequestParam(value = "loai", required = false) String loai,
+            @RequestParam(value = "q", required = false) String tuKhoaTenSanPham,
             @RequestParam(value = "sort", required = false) String sort,
             @RequestParam(value = "thuongHieuId", required = false) Integer thuongHieuId,
             @RequestParam(value = "nhanVienId", required = false) Integer nhanVienId,
-            @RequestParam(value = "giaMin", required = false) String giaMinRaw,
-            @RequestParam(value = "giaMax", required = false) String giaMaxRaw,
             @RequestParam(value = "tonKhoMin", required = false) String tonKhoMinRaw,
             @RequestParam(value = "tonKhoMax", required = false) String tonKhoMaxRaw,
             Model model) {
@@ -104,11 +103,10 @@ public class AdminQuanLySanPhamController {
             danhSachSanPham = new ArrayList<>(sanPhamService.getByLoai(loai));
         }
 
-        BigDecimal giaMin = parseBigDecimalParam(giaMinRaw);
-        BigDecimal giaMax = parseBigDecimalParam(giaMaxRaw);
         Integer tonKhoMin = parseIntParam(tonKhoMinRaw);
         Integer tonKhoMax = parseIntParam(tonKhoMaxRaw);
-        apDungLocNangCao(danhSachSanPham, thuongHieuId, nhanVienId, giaMin, giaMax, tonKhoMin, tonKhoMax);
+        apDungLocNangCao(danhSachSanPham, thuongHieuId, nhanVienId, tonKhoMin, tonKhoMax);
+        apDungLocTheoTen(danhSachSanPham, tuKhoaTenSanPham);
 
         // Sắp xếp danh sách
         if (sort != null) {
@@ -154,10 +152,9 @@ public class AdminQuanLySanPhamController {
         model.addAttribute("dsNhanVien", dsNhanVien);
         model.addAttribute("thuongHieuIdLoc", thuongHieuId);
         model.addAttribute("nhanVienIdLoc", nhanVienId);
-        model.addAttribute("giaMinLoc", giaMinRaw != null ? giaMinRaw.trim() : "");
-        model.addAttribute("giaMaxLoc", giaMaxRaw != null ? giaMaxRaw.trim() : "");
         model.addAttribute("tonKhoMinLoc", tonKhoMinRaw != null ? tonKhoMinRaw.trim() : "");
         model.addAttribute("tonKhoMaxLoc", tonKhoMaxRaw != null ? tonKhoMaxRaw.trim() : "");
+        model.addAttribute("tuKhoaTenSanPhamLoc", tuKhoaTenSanPham != null ? tuKhoaTenSanPham.trim() : "");
         return "adminTemplate/quanlysanpham";
     }
 
@@ -172,31 +169,14 @@ public class AdminQuanLySanPhamController {
         }
     }
 
-    private static BigDecimal parseBigDecimalParam(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
-        try {
-            return new BigDecimal(raw.trim().replace(" ", "").replace(",", ""));
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /** Lọc theo thương hiệu, người thêm, khoảng giá, khoảng tồn kho (đã có danh sách theo loại nếu có). */
+    /** Lọc theo thương hiệu, người thêm, khoảng tồn kho (đã có danh sách theo loại nếu có). */
     private static void apDungLocNangCao(List<SanPham> ds, Integer thuongHieuId, Integer nhanVienId,
-            BigDecimal giaMin, BigDecimal giaMax, Integer tonKhoMin, Integer tonKhoMax) {
+            Integer tonKhoMin, Integer tonKhoMax) {
         if (thuongHieuId != null) {
             ds.removeIf(sp -> sp.getThuongHieu() == null || !Objects.equals(thuongHieuId, sp.getThuongHieu().getId()));
         }
         if (nhanVienId != null) {
             ds.removeIf(sp -> sp.getNguoiThem() == null || !Objects.equals(nhanVienId, sp.getNguoiThem().getId()));
-        }
-        if (giaMin != null) {
-            ds.removeIf(sp -> sp.getGia() == null || sp.getGia().compareTo(giaMin) < 0);
-        }
-        if (giaMax != null) {
-            ds.removeIf(sp -> sp.getGia() == null || sp.getGia().compareTo(giaMax) > 0);
         }
         if (tonKhoMin != null) {
             ds.removeIf(sp -> {
@@ -210,6 +190,17 @@ public class AdminQuanLySanPhamController {
                 return tk > tonKhoMax;
             });
         }
+    }
+
+    private static void apDungLocTheoTen(List<SanPham> ds, String tuKhoa) {
+        if (tuKhoa == null || tuKhoa.isBlank()) {
+            return;
+        }
+        String kw = tuKhoa.trim().toLowerCase();
+        ds.removeIf(sp -> {
+            String ten = sp.getTenSanPham();
+            return ten == null || !ten.toLowerCase().contains(kw);
+        });
     }
 
     @GetMapping("/quanlysanpham/chitiet/{id}")

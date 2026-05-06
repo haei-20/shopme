@@ -17,8 +17,8 @@ body.admin-product-view {
 
 /* Thanh lọc ở các trang loại sản phẩm không làm phần đầu trang trông cao hơn stack cố định */
 body.with-category-nav > nav.bg-light.py-4.border-bottom {
-    margin-top: 0;
-    padding-top: 0.25rem !important;
+    margin-top: -0.18rem;
+    padding-top: 0 !important;
     padding-bottom: 0.25rem !important;
 }
 
@@ -30,7 +30,7 @@ body.with-category-nav > nav.bg-light.py-4.border-bottom {
 
 body.with-category-nav > nav.bg-light.py-4.border-bottom > .container {
     max-width: 1320px;
-    margin: 0.65rem auto 0;
+    margin: 0 auto 0;
     padding: 1rem 1rem 0.9rem;
     background: linear-gradient(180deg, #fffdf6 0%, #ffffff 100%);
     border: 1px solid rgba(255, 193, 7, 0.28);
@@ -109,6 +109,55 @@ body.with-category-nav > .row.row-cols-1.row-cols-sm-2.row-cols-md-3.row-cols-lg
     word-break: break-word;
     overflow-wrap: anywhere;
     line-height: 1.35;
+}
+
+.btn-quick-add-cart {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 34px;
+    height: 34px;
+    transform: none;
+    z-index: 5;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 0.9rem;
+    line-height: 1;
+    font-weight: 700;
+    box-shadow: 0 8px 16px rgba(80, 60, 22, 0.2);
+}
+
+.quick-add-host {
+    position: relative;
+}
+
+.quick-add-host.product-card,
+.quick-add-host.product-card-image {
+    padding-bottom: 52px !important;
+}
+
+.floating-cart-toast {
+    position: fixed;
+    right: 16px;
+    bottom: 22px;
+    z-index: 1085;
+    background: #2f855a;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 0.65rem 0.9rem;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.floating-cart-toast.show {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .banner {

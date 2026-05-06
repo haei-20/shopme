@@ -47,8 +47,8 @@ public class NguoiDungService {
             throw new IllegalArgumentException(
                     "Tên đăng nhập chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang (4-30 ký tự).");
         }
-        if (tenNguoiDung.length() < 2) {
-            throw new IllegalArgumentException("Họ tên cần ít nhất 2 ký tự.");
+        if (!isValidFullName(tenNguoiDung)) {
+            throw new IllegalArgumentException("Họ tên phải có ít nhất 2 từ và không được chỉ gồm số.");
         }
         if (matKhauXacNhan == null || matKhauXacNhan.isBlank()) {
             throw new IllegalArgumentException("Vui lòng nhập mật khẩu hiện tại để xác nhận.");
@@ -57,8 +57,8 @@ public class NguoiDungService {
             throw new IllegalArgumentException("Mật khẩu xác nhận không đúng.");
         }
 
-        if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new IllegalArgumentException("Email không đúng định dạng (vd: abc@gmail.com).");
+        if (!email.toLowerCase().matches("^[a-z0-9._%+-]+@gmail\\.com$")) {
+            throw new IllegalArgumentException("Email phải đúng định dạng và kết thúc bằng @gmail.com.");
         }
         if (!sdt.matches("^(0|\\+84)[0-9]{9}$")) {
             throw new IllegalArgumentException("Số điện thoại phải bắt đầu bằng 0 và có 10 số.");
@@ -79,6 +79,23 @@ public class NguoiDungService {
         nd.setSdt(sdt);
         nd.setDiaChi(diaChi);
         nguoiDungRepository.save(nd);
+    }
+
+    private boolean isValidFullName(String value) {
+        if (value == null) {
+            return false;
+        }
+        String normalized = value.trim().replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return false;
+        }
+        String[] parts = normalized.split(" ");
+        if (parts.length < 2) {
+            return false;
+        }
+        boolean hasLetter = normalized.matches(".*[\\p{L}].*");
+        boolean allDigitsAndSpaces = normalized.matches("^[0-9\\s]+$");
+        return hasLetter && !allDigitsAndSpaces;
     }
 
     public String doiMatKhau(String tenDangNhap, String matKhauCu, String matKhauMoi, String xacNhan) {

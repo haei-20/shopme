@@ -148,10 +148,10 @@
 })();
 
 (function () {
-    function updateUnreadBadgeToZero() {
+    function updateUnreadBadgeCount(nextCount) {
         const badge = document.querySelector('#thongBaoDropdown .badge');
         if (badge) {
-            badge.textContent = '0';
+            badge.textContent = String(Math.max(0, Number(nextCount || 0)));
         }
     }
 
@@ -162,6 +162,57 @@
                 item.classList.add('tb-read');
             }
         });
+    }
+
+    function renderThongBaoItems(menu, items) {
+        if (!menu) return;
+        menu.querySelectorAll('li').forEach(function (li) {
+            if (!li.querySelector('.dropdown-header')) {
+                li.remove();
+            }
+        });
+
+        if (!Array.isArray(items) || items.length === 0) {
+            const emptyLi = document.createElement('li');
+            emptyLi.className = 'thongbao-empty';
+            emptyLi.innerHTML = '<i class="bi bi-inbox" aria-hidden="true"></i><p class="mb-0">Không có thông báo mới.</p>';
+            menu.appendChild(emptyLi);
+            return;
+        }
+
+        items.forEach(function (item) {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.className = 'dropdown-item thong-bao-item ' + (item.cssClass || 'tb-default');
+            link.href = item.link || '#';
+            link.setAttribute('data-thong-bao-id', String(item.id || ''));
+
+            const content = document.createElement('div');
+            content.textContent = item.noiDung || '';
+            const time = document.createElement('small');
+            time.textContent = item.ngayThongBao || '';
+            link.appendChild(content);
+            link.appendChild(time);
+            li.appendChild(link);
+            menu.appendChild(li);
+        });
+    }
+
+    function refreshThongBaoMenu(menu) {
+        if (!menu) return;
+        fetch('/thongbao/list', { method: 'GET' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('Không thể tải thông báo');
+                return res.json();
+            })
+            .then(function (data) {
+                if (!data || data.success !== true) return;
+                renderThongBaoItems(menu, data.items || []);
+                updateUnreadBadgeCount(data.unreadCount || 0);
+            })
+            .catch(function () {
+                // Giữ nguyên danh sách hiện tại nếu lỗi mạng.
+            });
     }
 
     function ensureMarkAllButton(menu) {
@@ -191,15 +242,17 @@
             fetch('/thongbao/markAsRead?all=true', { method: 'POST' })
                 .then(function () {
                     markItemsAsReadInUI(menu);
-                    updateUnreadBadgeToZero();
+                    updateUnreadBadgeCount(0);
+                    refreshThongBaoMenu(menu);
                 });
         });
 
-        menu.addEventListener('click', function (e) {
-            const link = e.target.closest('.thong-bao-item');
-            if (!link) return;
-            fetch('/thongbao/markAsRead?all=true', { method: 'POST' });
-        });
+        const dropdownTrigger = document.getElementById('thongBaoDropdown');
+        if (dropdownTrigger) {
+            dropdownTrigger.addEventListener('shown.bs.dropdown', function () {
+                refreshThongBaoMenu(menu);
+            });
+        }
 
         menu.dataset.markBtnBound = '1';
     }

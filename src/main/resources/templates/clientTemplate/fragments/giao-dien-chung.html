@@ -49,6 +49,7 @@
                                 <li class="thongbao-empty" th:if="${#lists.isEmpty(thongBaos)}"><i class="bi bi-inbox" aria-hidden="true"></i><p class="mb-0">Không có thông báo mới.</p></li>
                                 <li th:each="tb : ${thongBaos}">
                                     <a class="dropdown-item thong-bao-item"
+                                        th:attr="data-thong-bao-id=${tb.id}"
                                         th:classappend="${thongBaoLoaiCssById != null ? thongBaoLoaiCssById[tb.id] : 'tb-default'}"
                                         th:href="${thongBaoLinkById != null and thongBaoLinkById[tb.id] != null ? thongBaoLinkById[tb.id] : '#'}">
                                         <div th:text="${thongBaoNoiDungById != null ? thongBaoNoiDungById[tb.id] : tb.noiDung}"></div>

@@ -52,27 +52,37 @@
                     <th>Số lượng</th>
                     <th>Đơn giá</th>
                     <th>Thành tiền</th>
-                    <th>Đánh giá</th>
+                    <th th:if="${hoaDon.trangThaiDonHang == 'Đã giao'}">Đánh giá</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="item : ${danhSachSanPham}">
-                    <td th:text="${item.sanPham != null ? item.sanPham.tenSanPham : '(Sản phẩm không còn trong hệ thống)'}"></td>
+                    <td>
+                        <a th:if="${item.sanPham != null}"
+                            th:href="@{/chitietsanpham/{id}(id=${item.sanPham.id})}"
+                            th:text="${item.sanPham.tenSanPham}"
+                            class="text-decoration-none"></a>
+                        <span th:if="${item.sanPham == null}">(Sản phẩm không còn trong hệ thống)</span>
+                    </td>
                     <td th:text="${item.hoaDonChiTiet.soLuongSP}"></td>
                     <td>
-                        <span th:if="${item.sanPham != null}"
-                            th:text="${#numbers.formatDecimal(item.sanPham.gia, 0, 'COMMA', 0, 'POINT')}"></span>
-                        <span th:if="${item.sanPham == null}">—</span>
+                        <span th:text="${#numbers.formatDecimal(item.hoaDonChiTiet.soLuongSP != null and item.hoaDonChiTiet.soLuongSP > 0
+                            ? item.hoaDonChiTiet.thanhTien / item.hoaDonChiTiet.soLuongSP
+                            : 0, 0, 'COMMA', 0, 'POINT')}"></span>
                     </td>
                     <td th:text="${#numbers.formatDecimal(item.hoaDonChiTiet.thanhTien, 0, 'COMMA', 0, 'POINT')}"></td>
-                    <td>
-                        <th:block th:if="${item.sanPham != null and coTheDanhGiaSanPham != null and coTheDanhGiaSanPham[item.sanPham.id] == true}">
-                            <a th:href="@{/chitietsanpham/{id}(id=${item.sanPham.id})}"
-                                class="btn btn-sm btn-outline-primary"
-                                th:text="${daDanhGiaSanPham != null and daDanhGiaSanPham[item.sanPham.id] == true} ? 'Sửa đánh giá' : 'Đánh giá'">Đánh giá</a>
+                    <td th:if="${hoaDon.trangThaiDonHang == 'Đã giao'}">
+                        <th:block th:if="${item.sanPham != null}">
+                            <a th:if="${coTheDanhGiaSanPham[item.sanPham.id] and !daDanhGiaSanPham[item.sanPham.id]}"
+                                th:href="@{/danhgia/{id}(id=${item.sanPham.id})}"
+                                class="btn btn-sm btn-outline-primary">
+                                Đánh giá
+                            </a>
+                            <span th:if="${daDanhGiaSanPham[item.sanPham.id]}" class="badge bg-success">Đã đánh giá</span>
+                            <span th:if="${!coTheDanhGiaSanPham[item.sanPham.id] and !daDanhGiaSanPham[item.sanPham.id]}"
+                                class="text-muted">Không khả dụng</span>
                         </th:block>
-                        <span th:if="${item.sanPham == null or coTheDanhGiaSanPham == null or (item.sanPham != null and coTheDanhGiaSanPham[item.sanPham.id] != true)}"
-                            class="text-muted small">—</span>
+                        <span th:if="${item.sanPham == null}" class="text-muted">—</span>
                     </td>
                 </tr>
             </tbody>

@@ -1,113 +1,263 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:with="pageTitle='Quản lý voucher'">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:with="pageTitle='Sửa Voucher'">
 
-<head th:replace="~{adminTemplate/fragments/admin-head :: head('Quản lý voucher')}">
+<head th:replace="~{adminTemplate/fragments/admin-head :: head(${pageTitle})}">
 </head>
 
 <body class="admin-body">
 
     <th:block th:replace="adminTemplate/fragments/admin-topbar :: adminTopbar('voucher')"></th:block>
-    <h2>Sửa Voucher</h2>
-    <div class="container mt-4">
-        <form th:action="@{'/admin/voucher/sua/' + ${voucher.id}}" method="post">
-            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-
-            <div class="mb-3">
-                <label for="maVoucher" class="form-label">Mã Voucher</label>
-                <input type="text" class="form-control" id="maVoucher" name="maVoucher" th:value="${voucher.maVoucher}" required>
+    <div class="container mt-4 mb-5">
+        <div class="voucher-form-wrap">
+            <div class="voucher-header d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+                <div>
+                    <h2 class="mb-1">Sửa Voucher</h2>
+                    <p class="text-muted mb-0">Cập nhật lại thông tin voucher theo từng nhóm để đảm bảo cấu hình chính xác.</p>
+                </div>
+                <a href="/admin/voucher" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
             </div>
 
-            <!-- Tên voucher -->
-            <div class="mb-3">
-                <label for="tenVoucher" class="form-label">Tên Voucher</label>
-                <input type="text" class="form-control" id="tenVoucher" name="tenVoucher"
-                    th:value="${voucher.tenVoucher}" required>
-            </div>
+            <form th:action="@{'/admin/voucher/sua/' + ${voucher.id}}" method="post">
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-            <div class="mb-3">
-                <label for="moTa" class="form-label">Mô tả</label>
-                <textarea class="form-control" id="moTa" name="moTa" rows="3" th:text="${voucher.moTa}"></textarea>
-            </div>
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="card voucher-section">
+                            <div class="card-header"><i class="bi bi-ticket-detailed me-2"></i>Thông tin cơ bản</div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="maVoucher" class="form-label">Mã Voucher</label>
+                                    <input type="text" class="form-control" id="maVoucher" name="maVoucher" th:value="${voucher.maVoucher}" required>
+                                </div>
 
-            <div class="mb-3">
-                <label class="form-label d-block">Trạng thái</label>
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="kichHoat" name="kichHoat" th:checked="${voucher.kichHoat == null or voucher.kichHoat}">
-                    <label class="form-check-label" for="kichHoat">Kích hoạt</label>
+                                <div class="mb-3">
+                                    <label for="tenVoucher" class="form-label">Tên Voucher</label>
+                                    <input type="text" class="form-control" id="tenVoucher" name="tenVoucher" th:value="${voucher.tenVoucher}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="moTa" class="form-label">Mô tả</label>
+                                    <textarea class="form-control" id="moTa" name="moTa" rows="3" th:text="${voucher.moTa}"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="form-label d-block">Trạng thái</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="kichHoat" name="kichHoat" th:checked="${voucher.kichHoat == null or voucher.kichHoat}">
+                                        <label class="form-check-label" for="kichHoat">Kích hoạt</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card voucher-section">
+                            <div class="card-header"><i class="bi bi-percent me-2"></i>Cấu hình giảm giá</div>
+                            <div class="card-body">
+                                <div class="discount-radio">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="discountType" id="discountTypePercent"
+                                            value="percent" th:checked="${voucher.giamGiaTheoPhanTram != null}">
+                                        <label class="form-check-label" for="discountTypePercent">Giảm theo phần trăm (%)</label>
+                                    </div>
+                                    <input type="number" step="1" min="0" max="100" class="form-control"
+                                        name="giamGiaTheoPhanTram" id="inputPhanTram" th:value="${voucher.giamGiaTheoPhanTram}">
+                                </div>
+
+                                <div class="discount-radio">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="discountType" id="discountTypeVnd"
+                                            value="vnd" th:checked="${voucher.giamGiaTheoPhanTram == null}">
+                                        <label class="form-check-label" for="discountTypeVnd">Giảm theo số tiền cố định (VND)</label>
+                                    </div>
+                                    <input type="number" step="1000" min="0" class="form-control"
+                                        name="giamGiaCuThe" id="inputVND" th:value="${voucher.giamGiaCuThe}">
+                                </div>
+
+                                <div>
+                                    <label for="giamGiaToiDa" class="form-label">Giảm tối đa (chỉ áp dụng với %)</label>
+                                    <input type="number" step="1000" min="0" class="form-control" id="giamGiaToiDa" name="giamGiaToiDa"
+                                        th:value="${voucher.giamGiaToiDa}" placeholder="VD: 200000">
+                                    <div class="form-text">Nếu dùng giảm cố định, hệ thống sẽ bỏ qua trường này.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mt-1">
+                    <div class="col-lg-6">
+                        <div class="card voucher-section">
+                            <div class="card-header"><i class="bi bi-calendar-check me-2"></i>Thời gian & điều kiện</div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="ngayBatDau" class="form-label">Thời gian bắt đầu</label>
+                                    <input type="datetime-local" class="form-control" id="ngayBatDau" name="ngayBatDau"
+                                        th:value="${#temporals.format(voucher.ngayBatDau, 'yyyy-MM-dd''T''HH:mm')}" step="60" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="thoiHan" class="form-label">Thời hạn kết thúc</label>
+                                    <input type="datetime-local" class="form-control" id="thoiHan" name="thoiHan"
+                                        th:value="${#temporals.format(voucher.thoiHan, 'yyyy-MM-dd''T''HH:mm')}" step="60" required>
+                                    <div class="form-text">Thời điểm kết thúc phải sau thời điểm bắt đầu.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="khongGioiHanSoLuong"
+                                            th:checked="${voucher.soLuongNguoiDungToiDa == null}" onchange="toggleSoLuongNguoiDung()">
+                                        <label class="form-check-label" for="khongGioiHanSoLuong">Không giới hạn số lượng sử dụng</label>
+                                    </div>
+                                    <label for="soLuongNguoiDungToiDa" class="form-label">Số lượng người sử dụng tối đa</label>
+                                    <input type="number" class="form-control" id="soLuongNguoiDungToiDa" name="soLuongNguoiDungToiDa" min="1"
+                                        th:value="${voucher.soLuongNguoiDungToiDa}" th:disabled="${voucher.soLuongNguoiDungToiDa == null}">
+                                </div>
+
+                                <div>
+                                    <label for="donToiThieu" class="form-label">Đơn tối thiểu (VND)</label>
+                                    <input type="number" step="1000" min="0" class="form-control" id="donToiThieu" name="donToiThieu"
+                                        th:value="${voucher.donToiThieu}" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card voucher-section">
+                            <div class="card-header"><i class="bi bi-people me-2"></i>Người được áp dụng</div>
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="chonTatCa()">Tất cả khách hàng</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalChonKhachHang">
+                                        Chọn khách hàng cụ thể
+                                    </button>
+                                </div>
+                                <div class="customer-summary mb-3" id="selectedKhachHang">Đã chọn: Tất cả khách hàng</div>
+                                <input type="hidden" id="khachHangIds" name="khachHangIds">
+
+                                <div class="small text-muted">Nếu không chọn khách hàng cụ thể, voucher sẽ áp dụng cho toàn bộ khách hàng.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end mt-4">
+                    <a href="/admin/voucher" class="btn btn-outline-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-floppy"></i> Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalChonKhachHang" tabindex="-1" aria-labelledby="modalChonKhachHangLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalChonKhachHangLabel">Chọn khách hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Chọn</th>
+                                <th>Mã KH</th>
+                                <th>Tên người dùng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="kh : ${danhSachKhachHang}">
+                                <td>
+                                    <input type="checkbox" class="form-check-input customer-checkbox"
+                                        th:value="${kh.id}"
+                                        th:attr="data-ten=${kh.nguoiDung.tenNguoiDung}"
+                                        th:checked="${selectedKhachHangIds != null and selectedKhachHangIds.contains(kh.id)}"
+                                        onchange="chonKhachHang(this)">
+                                </td>
+                                <td th:text="${kh.maKhachHang}"></td>
+                                <td th:text="${kh.nguoiDung.tenNguoiDung}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Xong</button>
                 </div>
             </div>
-
-            <!-- Giảm giá -->
-            <div class="mb-3">
-                <label class="form-label">Giảm giá</label>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="checkPhanTram"
-                        th:checked="${voucher.giamGiaTheoPhanTram != null}" onclick="toggleInput('phanTram')">
-                    <label class="form-check-label" for="checkPhanTram">Giảm theo phần trăm (%)</label>
-                    <input type="number" step="1" min="0" max="100" class="form-control mt-1" name="giamGiaTheoPhanTram"
-                        id="inputPhanTram" th:value="${voucher.giamGiaTheoPhanTram}"
-                        th:disabled="${voucher.giamGiaTheoPhanTram == null}">
-                </div>
-                <div class="form-check mt-2">
-                    <input class="form-check-input" type="checkbox" id="checkVND"
-                        th:checked="${voucher.giamGiaCuThe != null}" onclick="toggleInput('vnd')">
-                    <label class="form-check-label" for="checkVND">Giảm theo VND</label>
-                    <input type="number" step="1000" min="0" class="form-control mt-1" name="giamGiaCuThe" id="inputVND"
-                        th:value="${voucher.giamGiaCuThe}" th:disabled="${voucher.giamGiaCuThe == null}">
-                </div>
-                <div class="mt-3">
-                    <label for="giamGiaToiDa" class="form-label">Giảm tối đa (chỉ áp dụng với %)</label>
-                    <input type="number" step="1000" min="0" class="form-control" id="giamGiaToiDa" name="giamGiaToiDa"
-                        th:value="${voucher.giamGiaToiDa}" placeholder="VD: 200000">
-                </div>
-            </div>
-
-            <!-- Thời gian áp dụng -->
-            <div class="mb-3">
-                <label for="ngayBatDau" class="form-label">Thời gian bắt đầu</label>
-                <input type="datetime-local" class="form-control" id="ngayBatDau" name="ngayBatDau"
-                    th:value="${#temporals.format(voucher.ngayBatDau, 'yyyy-MM-dd''T''HH:mm')}" step="60" required>
-                <div class="form-text">Chọn theo định dạng ngày giờ: dd/mm/yyyy HH:mm</div>
-            </div>
-
-            <div class="mb-3">
-                <label for="thoiHan" class="form-label">Thời hạn kết thúc</label>
-                <input type="datetime-local" class="form-control" id="thoiHan" name="thoiHan"
-                    th:value="${#temporals.format(voucher.thoiHan, 'yyyy-MM-dd''T''HH:mm')}" step="60" required>
-                <div class="form-text">Thời điểm kết thúc phải sau thời điểm bắt đầu.</div>
-            </div>
-
-            <div class="mb-3">
-                <label for="soLuongNguoiDungToiDa" class="form-label">Số lượng người sử dụng tối đa</label>
-                <input type="number" class="form-control" id="soLuongNguoiDungToiDa" name="soLuongNguoiDungToiDa" min="1"
-                    th:value="${voucher.soLuongNguoiDungToiDa}" placeholder="Để trống nếu không giới hạn">
-            </div>
-
-            <!-- Đơn tối thiểu -->
-            <div class="mb-3">
-                <label for="donToiThieu" class="form-label">Đơn tối thiểu (VND)</label>
-                <input type="number" step="1000" min="0" class="form-control" id="donToiThieu" name="donToiThieu"
-                    th:value="${voucher.donToiThieu}" required>
-            </div>
-
-            <!-- Submit -->
-            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-            <a href="/admin/voucher" class="btn btn-secondary">Hủy</a>
-        </form>
+        </div>
     </div>
 
     <script>
-        function toggleInput(type) {
-            if (type === 'phanTram') {
-                document.getElementById('inputPhanTram').disabled = !document.getElementById('inputPhanTram').disabled;
-                document.getElementById('checkVND').checked = false;
-                document.getElementById('inputVND').disabled = true;
-            } else if (type === 'vnd') {
-                document.getElementById('inputVND').disabled = !document.getElementById('inputVND').disabled;
-                document.getElementById('checkPhanTram').checked = false;
-                document.getElementById('inputPhanTram').disabled = true;
+        const selectedKhachHang = new Map();
+
+        function updateDiscountTypeUI() {
+            const isPercent = document.getElementById('discountTypePercent').checked;
+            const inputPhanTram = document.getElementById('inputPhanTram');
+            const inputVND = document.getElementById('inputVND');
+
+            inputPhanTram.disabled = !isPercent;
+            inputVND.disabled = isPercent;
+
+            if (isPercent) {
+                inputVND.value = '';
+            } else {
+                inputPhanTram.value = '';
             }
         }
+
+        function toggleSoLuongNguoiDung() {
+            const checkbox = document.getElementById('khongGioiHanSoLuong');
+            const input = document.getElementById('soLuongNguoiDungToiDa');
+            input.disabled = checkbox.checked;
+            if (checkbox.checked) {
+                input.value = '';
+            }
+        }
+
+        function updateSelectedKhachHangSummary() {
+            const selectedDiv = document.getElementById('selectedKhachHang');
+            const hiddenInput = document.getElementById('khachHangIds');
+            if (selectedKhachHang.size > 0) {
+                selectedDiv.textContent = 'Đã chọn: ' + Array.from(selectedKhachHang.values()).join(', ');
+            } else {
+                selectedDiv.textContent = 'Đã chọn: Tất cả khách hàng';
+            }
+            hiddenInput.value = Array.from(selectedKhachHang.keys()).join(',');
+        }
+
+        function chonTatCa() {
+            selectedKhachHang.clear();
+            document.querySelectorAll('.customer-checkbox').forEach(cb => cb.checked = false);
+            updateSelectedKhachHangSummary();
+        }
+
+        function chonKhachHang(checkbox) {
+            const id = checkbox.value;
+            const name = checkbox.dataset.ten || ('KH' + id);
+            if (checkbox.checked) {
+                selectedKhachHang.set(id, name);
+            } else {
+                selectedKhachHang.delete(id);
+            }
+            updateSelectedKhachHangSummary();
+        }
+
+        function initSelectedKhachHangFromCheckboxes() {
+            selectedKhachHang.clear();
+            document.querySelectorAll('.customer-checkbox:checked').forEach(cb => {
+                selectedKhachHang.set(cb.value, cb.dataset.ten || ('KH' + cb.value));
+            });
+            updateSelectedKhachHangSummary();
+        }
+
+        document.getElementById('discountTypePercent').addEventListener('change', updateDiscountTypeUI);
+        document.getElementById('discountTypeVnd').addEventListener('change', updateDiscountTypeUI);
+
+        updateDiscountTypeUI();
+        toggleSoLuongNguoiDung();
+        initSelectedKhachHangFromCheckboxes();
     </script>
 
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>

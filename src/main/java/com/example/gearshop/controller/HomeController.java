@@ -20,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.example.gearshop.model.KhachHang;
 import com.example.gearshop.model.LoaiSanPham;
 import com.example.gearshop.model.HomeDisplayConfig;
+import com.example.gearshop.model.HomeSectionBlock;
 import com.example.gearshop.model.NguoiDung;
 import com.example.gearshop.model.NhanVien;
 import com.example.gearshop.model.SanPham;
@@ -29,8 +30,9 @@ import com.example.gearshop.repository.NguoiDungRepository;
 import com.example.gearshop.repository.NhanVienRepository;
 import com.example.gearshop.repository.SanPhamRepository;
 import com.example.gearshop.service.DangKyService;
-import com.example.gearshop.service.GioHangService;
 import com.example.gearshop.service.HomeDisplayConfigService;
+import com.example.gearshop.service.HomeSectionBlockService;
+import com.example.gearshop.service.LichSuXemSanPhamService;
 import com.example.gearshop.service.NguoiDungService;
 import com.example.gearshop.service.PasswordResetService;
 import com.example.gearshop.service.SanPhamService;
@@ -65,9 +67,11 @@ public class HomeController {
 
     @Autowired
     private HomeDisplayConfigService homeDisplayConfigService;
+    @Autowired
+    private HomeSectionBlockService homeSectionBlockService;
 
     @Autowired
-    private GioHangService gioHangService;
+    private LichSuXemSanPhamService lichSuXemSanPhamService;
 
     @Value("${app.forgot-password.otp-expiration-ms:300000}")
     private long otpExpirationMs;
@@ -103,11 +107,20 @@ public class HomeController {
         model.addAttribute("homeBannerTitleCustom", btc != null && !btc.isBlank() ? btc.trim() : null);
         String bst = displayConfig.getBannerSubtitleCustom();
         model.addAttribute("homeBannerSubtitleCustom", bst != null && !bst.isBlank() ? bst.trim() : null);
-        model.addAttribute("homeSectionOrder", homeDisplayConfigService.sectionKeysSortedByDisplayOrder(displayConfig));
+        List<String> homeSectionOrder = homeSectionBlockService.getOrderedBlockKeys();
+        model.addAttribute("homeSectionOrder", homeSectionOrder);
+        Map<String, HomeSectionBlock> customProductBlocks = homeSectionBlockService.getCustomProductBlocksByKey();
+        model.addAttribute("customProductBlocks", customProductBlocks);
+        model.addAttribute("customProductBlockProducts",
+                homeSectionBlockService.resolveCustomProductBlocks(customProductBlocks));
         int featuredProductsPerRow = getPositiveOrDefault(displayConfig.getFeaturedProductsPerRow(),
                 displayConfig.getProductsPerRow(), 4);
         int featuredNumberOfRows = getPositiveOrDefault(displayConfig.getFeaturedNumberOfRows(),
                 displayConfig.getNumberOfRows(), 2);
+        String featuredProductOrder = displayConfig.getFeaturedProductDisplayOrder() != null
+                ? displayConfig.getFeaturedProductDisplayOrder()
+                : displayConfig.getProductDisplayOrder();
+        model.addAttribute("featuredProductDisplayOrder", featuredProductOrder);
         int recommendedProductsPerRow = getPositiveOrDefault(displayConfig.getRecommendedProductsPerRow(),
                 displayConfig.getProductsPerRow(), 4);
         int recommendedNumberOfRows = getPositiveOrDefault(displayConfig.getRecommendedNumberOfRows(),
@@ -132,16 +145,26 @@ public class HomeController {
         }
 
         List<Integer> sanPhamDaXem = (List<Integer>) session.getAttribute("sanPhamDaXem");
+        KhachHang khachHangDangNhap = (KhachHang) session.getAttribute("khachHang");
+        if (khachHangDangNhap != null) {
+            List<Integer> idsDaXemTheoTaiKhoan = lichSuXemSanPhamService
+                    .layDanhSachIdDaXemGanNhat(khachHangDangNhap.getId(), 10);
+            if (!idsDaXemTheoTaiKhoan.isEmpty()) {
+                sanPhamDaXem = idsDaXemTheoTaiKhoan;
+                session.setAttribute("sanPhamDaXem", idsDaXemTheoTaiKhoan);
+            }
+        }
 
         List<SanPham> danhSachSanPhamDaXem = new ArrayList<>();
         if (sanPhamDaXem != null && !sanPhamDaXem.isEmpty()) {
+            final List<Integer> sanPhamDaXemThuTu = new ArrayList<>(sanPhamDaXem);
             List<Long> sanPhamDaXemLong = new ArrayList<>();
-            for (Integer id : sanPhamDaXem) {
+            for (Integer id : sanPhamDaXemThuTu) {
                 sanPhamDaXemLong.add(id.longValue());
             }
             danhSachSanPhamDaXem = new ArrayList<>(sanPhamRepo.findAllById(sanPhamDaXemLong));
             // Nếu cần giữ thứ tự như Session lưu (id mới nhất ở đầu)
-            danhSachSanPhamDaXem.sort(Comparator.comparingInt(sp -> sanPhamDaXem.indexOf(sp.getId().intValue())));
+            danhSachSanPhamDaXem.sort(Comparator.comparingInt(sp -> sanPhamDaXemThuTu.indexOf(sp.getId().intValue())));
         }
 
         model.addAttribute("danhSachSanPhamDaXem",
@@ -159,7 +182,7 @@ public class HomeController {
                 homeDisplayConfigService.limitProducts(sanPhamGoiY, recommendedProductsPerRow, recommendedNumberOfRows));
         // Thêm các sản phẩm bán chạy vào model
         model.addAttribute("sanPhamBanChay",
-                homeDisplayConfigService.sortAndLimitProducts(sanPhamRepo.findAll(), displayConfig.getProductDisplayOrder(),
+                homeDisplayConfigService.sortAndLimitProducts(sanPhamRepo.findAll(), featuredProductOrder,
                         featuredProductsPerRow, featuredNumberOfRows));
 
         // Thêm danh mục sản phẩm theo loại vào model
@@ -395,7 +418,6 @@ public class HomeController {
     }
 
     @PostMapping("/dangnhap")
-    @SuppressWarnings("unchecked")
     public String login(@RequestParam String tenDangNhap,
             @RequestParam String matKhau,
             HttpSession session,
@@ -413,30 +435,13 @@ public class HomeController {
             if (optionalKhachHang.isPresent()) {
                 KhachHang khachHang = optionalKhachHang.get();
                 session.setAttribute("khachHang", khachHang);
-
-                List<Map<String, Object>> sessionCart = (List<Map<String, Object>>) session.getAttribute("cart");
-                if (sessionCart != null && !sessionCart.isEmpty()) {
-                    List<String> loiGopGio = new ArrayList<>();
-                    for (Map<String, Object> item : sessionCart) {
-                        Object idObj = item.get("sanPhamID");
-                        Object qtyObj = item.get("quantity");
-                        if (idObj == null || qtyObj == null) {
-                            continue;
-                        }
-                        int spId = Integer.parseInt(idObj.toString());
-                        int quantity = Integer.parseInt(qtyObj.toString());
-                        SanPham sp = sanPhamService.getSanPhamById(spId);
-                        if (sp != null) {
-                            try {
-                                gioHangService.addOrUpdateCartItem(khachHang.getId(), sp, quantity);
-                            } catch (IllegalArgumentException ex) {
-                                loiGopGio.add(ex.getMessage());
-                            }
-                        }
+                List<Integer> daXemTruocDangNhap = (List<Integer>) session.getAttribute("sanPhamDaXem");
+                if (daXemTruocDangNhap != null) {
+                    for (Integer spId : daXemTruocDangNhap) {
+                        lichSuXemSanPhamService.ghiNhanLuotXem(khachHang, spId);
                     }
-                    // Không hiển thị cảnh báo gộp giỏ hàng sau khi đăng nhập.
                 }
-                session.setAttribute("cart", gioHangService.buildSessionCartPayload(khachHang.getId()));
+
                 return "redirect:/";
             } else if (optionalNhanVien.isPresent()) {
                 session.setAttribute("nhanVien", optionalNhanVien.get()); // Tạo session nhân viên

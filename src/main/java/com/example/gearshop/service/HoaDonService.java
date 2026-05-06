@@ -10,6 +10,10 @@ import com.example.gearshop.repository.SanPhamRepository;
 import com.example.gearshop.repository.ThongTinNhanHangRepository;
 import com.example.gearshop.repository.HoaDonChiTietRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -180,9 +184,49 @@ public class HoaDonService {
         return applyFiltersAndSorting(hoaDons, sortBy, trangThai);
     }
 
+    public Page<HoaDon> getHoaDonsPageByKhachHangID(Integer khachHangID, String sortBy, String trangThai, int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.max(1, size);
+        Pageable pageable = PageRequest.of(safePage, safeSize, resolveSort(sortBy));
+
+        List<String> trangThaiDb = resolveDbTrangThaiList(trangThai);
+        if (trangThaiDb == null) {
+            return hoaDonRepository.findByThongTinNhanHang_KhachHangID(khachHangID, pageable);
+        }
+        return hoaDonRepository.findByThongTinNhanHang_KhachHangIDAndTrangThaiDonHangIn(khachHangID, trangThaiDb, pageable);
+    }
+
     public List<HoaDon> getHoaDonsByNguoiDungId(Integer nguoiDungId, String sortBy, String trangThai) {
         List<HoaDon> hoaDons = hoaDonRepository.findByNguoiDungId(nguoiDungId);
         return applyFiltersAndSorting(hoaDons, sortBy, trangThai);
+    }
+
+    private Sort resolveSort(String sortBy) {
+        if ("ngayTaoAsc".equals(sortBy)) {
+            return Sort.by(Sort.Direction.ASC, "ngayTao");
+        }
+        if ("tongGia".equals(sortBy)) {
+            return Sort.by(Sort.Direction.DESC, "tongGia");
+        }
+        return Sort.by(Sort.Direction.DESC, "ngayTao");
+    }
+
+    private List<String> resolveDbTrangThaiList(String trangThai) {
+        if (trangThai == null || trangThai.isBlank()) {
+            return null;
+        }
+        String loc = trangThai.trim();
+        if (TrangThaiHoaDonHang.DANG_CHUAN_BI_HANG.equals(loc)) {
+            return List.of(TrangThaiHoaDonHang.DANG_CHUAN_BI_HANG, TrangThaiHoaDonHang.LEGACY_CHO_LAY_HANG,
+                    TrangThaiHoaDonHang.LEGACY_PAID, TrangThaiHoaDonHang.LEGACY_DU, TrangThaiHoaDonHang.LEGACY_EXTRA,
+                    TrangThaiHoaDonHang.LEGACY_THUA);
+        }
+        if (TrangThaiHoaDonHang.CHO_XAC_NHAN.equals(loc)) {
+            return List.of(TrangThaiHoaDonHang.CHO_XAC_NHAN, TrangThaiHoaDonHang.LEGACY_UNPAID,
+                    TrangThaiHoaDonHang.LEGACY_CHUA_TT, TrangThaiHoaDonHang.LEGACY_MISSING,
+                    TrangThaiHoaDonHang.LEGACY_THIEU);
+        }
+        return List.of(loc);
     }
 
     public boolean belongsToNguoiDung(Integer hoaDonId, Integer nguoiDungId) {

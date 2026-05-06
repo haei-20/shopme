@@ -183,6 +183,7 @@ public class HomeDisplayConfigService {
         config.setShowChatbot(Boolean.TRUE);
         config.setFeaturedProductsPerRow(DEFAULT_PRODUCTS_PER_ROW);
         config.setFeaturedNumberOfRows(DEFAULT_NUMBER_OF_ROWS);
+        config.setFeaturedProductDisplayOrder(DEFAULT_PRODUCT_ORDER);
         config.setRecommendedProductsPerRow(DEFAULT_PRODUCTS_PER_ROW);
         config.setRecommendedNumberOfRows(DEFAULT_NUMBER_OF_ROWS);
         config.setRecentlyViewedProductsPerRow(DEFAULT_PRODUCTS_PER_ROW);

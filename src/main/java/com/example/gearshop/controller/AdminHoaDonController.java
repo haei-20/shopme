@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.math.BigDecimal;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -67,6 +68,20 @@ public class AdminHoaDonController {
         String tenKhachHang = hoaDonService
                 .getTenKhachHangByThongTinNhanHangID(hoaDon.getThongTinNhanHang().getKhachHangID());
         List<Map<String, Object>> sanPhamTrongHoaDon = hoaDonService.getSanPhamTrongHoaDon(id);
+        BigDecimal tamTinh = BigDecimal.ZERO;
+        for (Map<String, Object> sp : sanPhamTrongHoaDon) {
+            Object thanhTienObj = sp.get("thanhTien");
+            if (thanhTienObj instanceof BigDecimal thanhTien) {
+                tamTinh = tamTinh.add(thanhTien);
+            } else if (thanhTienObj != null) {
+                tamTinh = tamTinh.add(new BigDecimal(thanhTienObj.toString()));
+            }
+        }
+        BigDecimal tongThanhToan = hoaDon.getTongGia() != null ? hoaDon.getTongGia() : BigDecimal.ZERO;
+        BigDecimal giamGia = tamTinh.subtract(tongThanhToan);
+        if (giamGia.compareTo(BigDecimal.ZERO) < 0) {
+            giamGia = BigDecimal.ZERO;
+        }
 
         String chuan = HoaDonService.chuanHoaTrangThai(hoaDon.getTrangThaiDonHang());
         boolean trongDanhSach = chuan != null && !chuan.isBlank()
@@ -76,6 +91,9 @@ public class AdminHoaDonController {
         model.addAttribute("hoaDon", hoaDon);
         model.addAttribute("tenKhachHang", tenKhachHang);
         model.addAttribute("sanPhamList", sanPhamTrongHoaDon);
+        model.addAttribute("tamTinh", tamTinh);
+        model.addAttribute("giamGia", giamGia);
+        model.addAttribute("tongThanhToan", tongThanhToan);
         model.addAttribute("cacTrangThaiDon", TrangThaiHoaDonHang.danhSachLoc());
         model.addAttribute("trangThaiChuan", trongDanhSach ? chuan : null);
         model.addAttribute("trangThaiTiepTheo", trangThaiTiepTheo);

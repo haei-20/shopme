@@ -85,10 +85,11 @@ public class HoaDonController {
 
         // Áp dụng giảm giá từ voucher (nếu có)
         double tongGiaSauGiam = tongGia;
-        if (voucherCode != null && !voucherCode.isEmpty()) {
+        if (voucherCode != null && !voucherCode.trim().isEmpty()) {
+            String code = voucherCode.trim();
             Voucher voucher;
             try {
-                voucher = voucherService.getVoucherByMaVoucher(voucherCode);
+                voucher = voucherService.getVoucherByMaVoucher(code);
             } catch (IllegalArgumentException ex) {
                 redirectAttributes.addFlashAttribute("error", ex.getMessage());
                 return "redirect:/order";
@@ -99,11 +100,16 @@ public class HoaDonController {
                 return "redirect:/order";
             }
 
-            if (voucher.getGiamGiaTheoPhanTram() != null) {
-                tongGiaSauGiam -= (tongGia * voucher.getGiamGiaTheoPhanTram() / 100);
-            } else if (voucher.getGiamGiaCuThe() != null) {
-                tongGiaSauGiam -= voucher.getGiamGiaCuThe().doubleValue();
+            try {
+                voucherService.assertCoCauHinhGiamGia(voucher);
+                voucherService.assertDonHangDuDieuKien(voucher, tongGia);
+            } catch (IllegalArgumentException ex) {
+                redirectAttributes.addFlashAttribute("error", ex.getMessage());
+                return "redirect:/order";
             }
+
+            double discount = voucherService.tinhSoTienGiam(voucher, tongGia);
+            tongGiaSauGiam = tongGia - discount;
         }
 
         tongGiaSauGiam = Math.max(tongGiaSauGiam, 0); // Đảm bảo tổng tiền không âm
@@ -125,16 +131,14 @@ public class HoaDonController {
         HoaDon hoaDon = ketQua.hoaDon();
         List<Integer> purchasedSanPhamIds = ketQua.purchasedSanPhamIds();
 
-        if (voucherCode != null && !voucherCode.isEmpty()) {
-            Voucher voucher = voucherService.getVoucherByMaVoucher(voucherCode);
+        if (voucherCode != null && !voucherCode.trim().isEmpty()) {
+            Voucher voucher = voucherService.getVoucherByMaVoucher(voucherCode.trim());
             voucherService.markVoucherAsUsed(voucher, khachHang);
         }
 
         model.addAttribute("hoaDon", hoaDon);
         session.setAttribute("hoaDon", hoaDon);
-        session.removeAttribute("selectedItems");
         gioHangService.removeSelectedCartItems(khachHang.getId(), purchasedSanPhamIds);
-        session.setAttribute("cart", gioHangService.buildSessionCartPayload(khachHang.getId()));
         thongBaoService.taoThongBaoDonHang(
                 khachHang.getId(),
                 hoaDon.getId(),

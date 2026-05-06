@@ -3,6 +3,7 @@ package com.example.gearshop.controller;
 import com.example.gearshop.model.*;
 import com.example.gearshop.service.DanhGiaService;
 import com.example.gearshop.service.GioHangService;
+import com.example.gearshop.service.LichSuXemSanPhamService;
 import com.example.gearshop.service.SanPhamService;
 
 import jakarta.servlet.http.HttpSession;
@@ -23,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import java.util.Map;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/chitietsanpham")
@@ -37,6 +37,8 @@ public class ChiTietSanPhamController {
 
     @Autowired
     private DanhGiaService danhGiaService;
+    @Autowired
+    private LichSuXemSanPhamService lichSuXemSanPhamService;
 
     @GetMapping("/{id}")
     public String chiTietSanPham(@PathVariable("id") Integer id, Model model, HttpSession session) {
@@ -132,12 +134,16 @@ public class ChiTietSanPhamController {
         // Lưu riêng sản phẩm mới xem nhất để gợi ý
         session.setAttribute("sanPhamMoiXem", sanPham);
 
+        KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
+        if (khachHang != null) {
+            lichSuXemSanPhamService.ghiNhanLuotXem(khachHang, sanPham.getId());
+        }
+
         model.addAttribute("danhGias", danhGiaService.layDanhSachHienThi(id));
         long soLuongDanhGia = danhGiaService.demSoDanhGia(id);
         model.addAttribute("soLuongDanhGia", soLuongDanhGia);
         danhGiaService.tinhDiemTrungBinh(id).ifPresent(v -> model.addAttribute("diemTrungBinhDanhGia", Math.round(v * 10.0) / 10.0));
 
-        KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
         model.addAttribute("isAdminView", session.getAttribute("nhanVien") != null);
         model.addAttribute("khachHang", khachHang);
         if (khachHang != null) {
@@ -153,7 +159,6 @@ public class ChiTietSanPhamController {
     }
 
     @PostMapping("/add-to-cart")
-    @SuppressWarnings("unchecked")
     public ResponseEntity<Map<String, Object>> addToCart(@RequestBody Map<String, Object> product, HttpSession session) {
         Map<String, Object> errorBody = new HashMap<>();
         errorBody.put("success", false);
@@ -180,52 +185,19 @@ public class ChiTietSanPhamController {
         }
 
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
-        List<Map<String, Object>> cart = (List<Map<String, Object>>) session.getAttribute("cart");
-        if (cart == null) {
-            cart = new ArrayList<>();
+        if (khachHang == null) {
+            errorBody.put("message", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
+            return ResponseEntity.status(401).body(errorBody);
         }
 
-        if (khachHang != null) {
-            try {
-                gioHangService.addOrUpdateCartItem(khachHang.getId(), sanPham, quantity);
-                cart = gioHangService.buildSessionCartPayload(khachHang.getId());
-            } catch (IllegalArgumentException ex) {
-                errorBody.put("message", ex.getMessage());
-                return ResponseEntity.badRequest().body(errorBody);
-            }
-        } else {
-            int daCoTrongGio = cart.stream()
-                    .filter(item -> item.get("sanPhamID") != null
-                            && Integer.parseInt(item.get("sanPhamID").toString()) == sanPhamID)
-                    .mapToInt(item -> Integer.parseInt(item.get("quantity").toString()))
-                    .sum();
-            try {
-                gioHangService.assertTongSoLuongKhongVuotTonKho(sanPham, daCoTrongGio + quantity);
-            } catch (IllegalArgumentException ex) {
-                errorBody.put("message", ex.getMessage());
-                return ResponseEntity.badRequest().body(errorBody);
-            }
-
-            Optional<Map<String, Object>> existingProduct = cart.stream()
-                    .filter(item -> Integer.parseInt(item.get("sanPhamID").toString()) == sanPhamID)
-                    .findFirst();
-
-            if (existingProduct.isPresent()) {
-                Map<String, Object> line = existingProduct.get();
-                line.put("quantity", Integer.parseInt(line.get("quantity").toString()) + quantity);
-                line.put("tonKho", sanPham.getTonKho());
-                if (!line.containsKey("duocChonThanhToan")) {
-                    line.put("duocChonThanhToan", false);
-                }
-            } else {
-                product.put("sanPhamID", sanPhamID);
-                product.put("tonKho", sanPham.getTonKho());
-                product.put("duocChonThanhToan", false);
-                cart.add(product);
-            }
+        final List<Map<String, Object>> cart;
+        try {
+            gioHangService.addOrUpdateCartItem(khachHang.getId(), sanPham, quantity);
+            cart = gioHangService.buildSessionCartPayload(khachHang.getId());
+        } catch (IllegalArgumentException ex) {
+            errorBody.put("message", ex.getMessage());
+            return ResponseEntity.badRequest().body(errorBody);
         }
-
-        session.setAttribute("cart", cart);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);

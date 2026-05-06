@@ -185,7 +185,7 @@
           </tbody>
         </table>
         <h4 class="text-end">
-          Tổng tiền: <span id="totalPrice"
+          Tổng tiền: <span id="totalPrice" th:attr="data-tong-tien=${totalPrice}"
             th:text="${#numbers.formatDecimal(totalPrice,0,'COMMA',0,'POINT')}+'₫'"></span>
         </h4>
         <div class="mt-3">
@@ -274,7 +274,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Số điện thoại</label>
-              <input id="editSdt" class="form-control" pattern="^0\\d{9}$" required />
+              <input id="editSdt" class="form-control" pattern="^0\d{9}$" required />
               <div class="invalid-feedback"></div>
             </div>
             <div class="mb-3">
@@ -333,7 +333,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Số điện thoại</label>
-              <input id="newSdt" name="sdt" class="form-control" pattern="^0\\d{9}$" required />
+              <input id="newSdt" name="sdt" class="form-control" pattern="^0\d{9}$" required />
               <div class="invalid-feedback"></div>
             </div>
             <div class="mb-3">
@@ -919,7 +919,25 @@
         .catch(error => alert(error.message || 'Không thể xóa địa chỉ.'));
     });
 
+    function getOrderSubtotalVnd() {
+      const el = document.getElementById('totalPrice');
+      if (el == null) {
+        return 0;
+      }
+      const raw = el.dataset.tongTien;
+      if (raw != null && String(raw).trim() !== '') {
+        const n = Number(raw);
+        return Number.isFinite(n) ? n : 0;
+      }
+      const digits = (el.textContent || '').replace(/\D/g, '');
+      return digits === '' ? 0 : Number(digits);
+    }
+
     function calculateVoucherDiscount(voucher, totalPrice) {
+      if (voucher.donToiThieu != null && totalPrice < Number(voucher.donToiThieu)) {
+        throw new Error('Đơn hàng chưa đạt giá trị tối thiểu để dùng voucher này.');
+      }
+
       let discountAmount = 0;
 
       if (voucher.giamGiaTheoPhanTram) {
@@ -931,14 +949,14 @@
         discountAmount = Number(voucher.giamGiaCuThe);
       }
 
-      return discountAmount;
+      return Math.min(discountAmount, totalPrice);
     }
 
     async function updateDiscountedTotal() {
       const voucherSelect = document.getElementById('voucherSelect');
       const selectedVoucher = voucherSelect.value;
       const totalPriceText = document.getElementById('totalPrice').textContent;
-      const totalPrice = parseFloat(totalPriceText.replace(/[₫,]/g, ''));
+      const totalPrice = getOrderSubtotalVnd();
 
       if (!selectedVoucher) {
         document.getElementById('discountedTotal').textContent = totalPriceText;
@@ -961,7 +979,9 @@
         document.getElementById('discountedTotal').textContent = discountedTotal.toLocaleString('vi-VN') + '₫';
       } catch (error) {
         console.error('Lỗi khi lấy thông tin voucher:', error);
+        alert(error.message || 'Không áp dụng được voucher.');
         document.getElementById('discountedTotal').textContent = totalPriceText;
+        voucherSelect.value = '';
       }
     }
 
@@ -988,9 +1008,7 @@
         return;
       }
 
-      // Lấy giá trị của trường voucherCode
-      const voucherCode = document.getElementById('voucherSelect').value;
-      // Gán giá trị cho trường ẩn voucherCode trong form
+      const voucherCode = (document.getElementById('voucherSelect').value || '').trim();
       document.getElementById('voucherCode').value = voucherCode;
 
       // Gửi form

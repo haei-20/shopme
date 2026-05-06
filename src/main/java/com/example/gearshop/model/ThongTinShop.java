@@ -1,5 +1,7 @@
 package com.example.gearshop.model;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,4 +31,19 @@ public class ThongTinShop {
     private String soDienThoaiShop;
 
     private String emailShop;
+
+    /** Ngưỡng miễn phí ship (VND). */
+    private BigDecimal freeShipThreshold;
+
+    /** Phí ship cơ bản (VND). */
+    private BigDecimal shippingBaseFee;
+
+    /** Phí ship theo mỗi km (VND/km). */
+    private BigDecimal shippingFeePerKm;
+
+    /** Mã giảm riêng cho phí ship. */
+    private String shippingDiscountCode;
+
+    /** Số tiền giảm phí ship khi nhập đúng mã (VND). */
+    private BigDecimal shippingDiscountAmount;
 }

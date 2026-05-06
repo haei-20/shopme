@@ -64,6 +64,7 @@ create table sanPham(
     thuongHieuID int,
     ngayThem datetime,
     gia decimal(18,0),
+    giaNhap decimal(18,0),
     foreign key (nguoiThemID) references nhanVien(ID),
     foreign key (loaiSPID) references loaiSanPham(ID),
     foreign key (thuongHieuID) references thuongHieu(ID)
@@ -275,6 +276,8 @@ create table phieuBaoHanh(
 
 
 alter table sanpham add column tonKho int;
+alter table sanpham add column giaNhap decimal(18,0);
+update sanpham set giaNhap = gia where giaNhap is null;
 ALTER TABLE sanPham
 modify COLUMN tenSanPham NVARCHAR(150);
 alter table sanphammainboard modify column mota nvarchar(500);

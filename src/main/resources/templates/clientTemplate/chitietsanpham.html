@@ -77,7 +77,8 @@
                     <div class="modal-body">
                         <div class="d-flex justify-content-center align-items-center gap-3">
                             <button id="btnMinus" class="btn btn-outline-warning" style="border-radius: 999px; width: 50px; height: 50px; font-size: 24px;">−</button>
-                            <div id="quantityDisplay" class="border rounded px-4 py-2" style="min-width: 100px; text-align: center; font-size: 18px; font-weight: bold;">1</div>
+                            <input id="quantityDisplay" type="number" min="1" step="1" inputmode="numeric"
+                                class="form-control text-center fw-bold" style="max-width: 100px;" value="1" />
                             <button id="btnPlus" class="btn btn-outline-warning" style="border-radius: 999px; width: 50px; height: 50px; font-size: 24px;">+</button>
                         </div>
                     </div>
@@ -461,13 +462,14 @@
             cart = Array.isArray(nextCart) ? nextCart : [];
             localStorage.setItem('cart', JSON.stringify(cart));
             localStorage.setItem('cartItemCount', cart.reduce((total, item) => total + Number(item.quantity || 0), 0));
+            window.dispatchEvent(new Event('cart:updated'));
         }
 
         // Cập nhật giao diện giỏ hàng
         function updateCartUI() {
             if (!cartItemsContainer || !cartItemCount) return;
             syncCartFromStorage();
-            cartItemCount.textContent = cart.reduce((total, item) => total + item.quantity, 0);
+            cartItemCount.textContent = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
 
             if (cart.length === 0) {
                 cartItemsContainer.innerHTML = '<p class="text-muted">Giỏ hàng của bạn đang trống.</p>';
@@ -493,27 +495,39 @@
         }
 
         // Mở modal khi nhấn "Thêm vào giỏ hàng"
+        function getSafeQuantity() {
+            const parsed = parseInt(quantityDisplay.value, 10);
+            return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+        }
+
         btnAddToCart.addEventListener('click', function () {
-            quantityDisplay.textContent = '1'; // Reset số lượng về 1
+            quantityDisplay.value = '1'; // Reset số lượng về 1
             quantityModal.show();
         });
 
         // Xử lý nút giảm số lượng
         btnMinus.addEventListener('click', function () {
-            let currentQuantity = parseInt(quantityDisplay.textContent, 10);
+            let currentQuantity = getSafeQuantity();
             if (currentQuantity > 1) {
-                quantityDisplay.textContent = currentQuantity - 1;
+                quantityDisplay.value = String(currentQuantity - 1);
             }
         });
 
         // Xử lý nút tăng số lượng
         btnPlus.addEventListener('click', function () {
-            let currentQuantity = parseInt(quantityDisplay.textContent, 10);
-            quantityDisplay.textContent = currentQuantity + 1;
+            let currentQuantity = getSafeQuantity();
+            quantityDisplay.value = String(currentQuantity + 1);
+        });
+
+        quantityDisplay.addEventListener('input', function () {
+            quantityDisplay.value = quantityDisplay.value.replace(/[^0-9]/g, '');
+        });
+        quantityDisplay.addEventListener('blur', function () {
+            quantityDisplay.value = String(getSafeQuantity());
         });
 
         btnConfirm.addEventListener('click', function () {
-            const quantity = parseInt(quantityDisplay.textContent, 10);
+            const quantity = getSafeQuantity();
 
             if (quantity > 0) {
                 // Lấy ID sản phẩm từ URL
@@ -564,10 +578,11 @@
         updateCartUI();
 
         window.addEventListener('storage', function (event) {
-            if (event.key === 'cart') {
+            if (event.key === 'cart' || event.key === 'cartItemCount') {
                 updateCartUI();
             }
         });
+        window.addEventListener('cart:updated', updateCartUI);
 
         document.addEventListener('visibilitychange', function () {
             if (!document.hidden) {

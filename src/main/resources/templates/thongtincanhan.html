@@ -130,8 +130,8 @@
 
     <div class="container profile-wrap page-content-shell mb-5">
         <div class="d-flex justify-content-start mb-3">
-            <a th:if="${isNhanVien}" th:href="@{/admin/trangchu}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Trang chủ quản trị
+            <a th:if="${session.nhanVien != null or isNhanVien}" th:href="@{/admin/trangchu}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại trang quản lý
             </a>
         </div>
         <div th:if="${thongBaoCapNhat}" class="alert alert-success alert-dismissible fade show" role="alert">
@@ -167,7 +167,9 @@
                                         <label for="tenNguoiDung" class="form-label">Họ tên</label>
                                         <input type="text" class="form-control" id="tenNguoiDung" name="tenNguoiDung"
                                             th:classappend="${tenNguoiDungError != null ? ' is-invalid' : ''}"
-                                            th:value="${tenNguoiDung != null ? tenNguoiDung : nguoiDung.tenNguoiDung}" minlength="2" maxlength="100" required>
+                                            th:value="${tenNguoiDung != null ? tenNguoiDung : nguoiDung.tenNguoiDung}"
+                                            pattern="^(?=.*[\p{L}])(?![0-9\s]+)\S+(?:\s+\S+)+$"
+                                            minlength="2" maxlength="100" required>
                                         <div class="invalid-feedback"
                                             th:text="${tenNguoiDungError != null ? tenNguoiDungError : ''}"></div>
                                     </div>
@@ -176,7 +178,7 @@
                                         <input type="email" class="form-control" id="email" name="email"
                                             th:classappend="${emailError != null ? ' is-invalid' : ''}"
                                             th:value="${email != null ? email : nguoiDung.email}"
-                                            pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+                                            pattern="^[A-Za-z0-9._%+-]+@gmail\.com$"
                                             maxlength="100" required>
                                         <div class="invalid-feedback" th:text="${emailError != null ? emailError : ''}"></div>
                                     </div>
@@ -323,7 +325,8 @@
                 tenNguoiDung: {
                     valueMissing: 'Không được để trống họ tên.',
                     tooShort: 'Họ tên phải từ 2 ký tự trở lên.',
-                    tooLong: 'Họ tên không được vượt quá 100 ký tự.'
+                    tooLong: 'Họ tên không được vượt quá 100 ký tự.',
+                    patternMismatch: 'Họ tên phải có ít nhất 2 từ và không được chỉ gồm số.'
                 },
                 tenDangNhap: {
                     valueMissing: 'Không được để trống tên đăng nhập.',
@@ -333,8 +336,8 @@
                 },
                 email: {
                     valueMissing: 'Không được để trống email.',
-                    typeMismatch: 'Email không đúng định dạng (vd: abc@gmail.com).',
-                    patternMismatch: 'Email không đúng định dạng (vd: abc@gmail.com).',
+                    typeMismatch: 'Email phải đúng định dạng và kết thúc bằng @gmail.com.',
+                    patternMismatch: 'Email phải đúng định dạng và kết thúc bằng @gmail.com.',
                     tooLong: 'Email không được vượt quá 100 ký tự.'
                 },
                 sdt: {

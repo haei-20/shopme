@@ -47,15 +47,15 @@
                         </button>
                     </div>
                     <div class="banner-text position-relative" style="z-index: 2;" th:if="${displayConfig.showBannerOverlayText != false}">
-                        <h1 th:text="${homeBannerTitleCustom != null} ? ${homeBannerTitleCustom} : ('Chào mừng đến với ' + ${shopInfo.tenShop})"></h1>
-                        <p th:text="${homeBannerSubtitleCustom != null} ? ${homeBannerSubtitleCustom} : 'Nơi cung cấp linh kiện máy tính chất lượng và giá tốt nhất!'"></p>
+                        <h1 th:text="${homeBannerTitleCustom != null ? homeBannerTitleCustom : 'Chào mừng đến với ' + shopInfo.tenShop}"></h1>
+                        <p th:text="${homeBannerSubtitleCustom != null ? homeBannerSubtitleCustom : 'Nơi cung cấp linh kiện máy tính chất lượng và giá tốt nhất!'}"></p>
                     </div>
                 </div>
                 <div class="banner" th:if="${displayConfig.showBanner != false and !useBannerSlider}"
                     th:style="|--home-banner-h: ${homeBannerHeightPx}px; height: var(--home-banner-h); min-height: var(--home-banner-h); background-image: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 255, 255, 0.2)), url('${bannerImageUrl}');|">
                     <div class="banner-text" th:if="${displayConfig.showBannerOverlayText != false}">
-                        <h1 th:text="${homeBannerTitleCustom != null} ? ${homeBannerTitleCustom} : ('Chào mừng đến với ' + ${shopInfo.tenShop})"></h1>
-                        <p th:text="${homeBannerSubtitleCustom != null} ? ${homeBannerSubtitleCustom} : 'Nơi cung cấp linh kiện máy tính chất lượng và giá tốt nhất!'"></p>
+                        <h1 th:text="${homeBannerTitleCustom != null ? homeBannerTitleCustom : 'Chào mừng đến với ' + shopInfo.tenShop}"></h1>
+                        <p th:text="${homeBannerSubtitleCustom != null ? homeBannerSubtitleCustom : 'Nơi cung cấp linh kiện máy tính chất lượng và giá tốt nhất!'}"></p>
                     </div>
                 </div>
             </th:block>
@@ -72,20 +72,6 @@
                         </a>
                     </div>
                 </div>
-            </th:block>
-            <th:block th:case="'recommended'">
-                <th:block th:if="${displayConfig.showSectionRecommended != false}">
-                    <h2 class="mb-4 border-bottom border-warning pb-2" th:text="${homeTitleRecommended}">Danh mục sản phẩm dành cho bạn</h2>
-                    <div class="home-product-grid"
-                        th:style="'--products-per-row:' + ${recommendedProductsPerRow}">
-                        <a th:each="sp : ${sanPhamGoiY}" th:href="@{/chitietsanpham/{id}(id=${sp.id})}" class="product-card">
-                            <img th:src="@{/images/product/{img}(img=${sp.hinhAnh})}" alt="Ảnh sản phẩm" class="product-image">
-                            <div class="product-name" th:text="${sp.tenSanPham}">Tên Sản phẩm</div>
-                            <div class="product-info" th:text="'Đã bán: ' + ${sp.daBan}">Đã bán</div>
-                            <div class="product-price" th:text="${#numbers.formatDecimal(sp.gia, 0, 'COMMA', 0, 'POINT')} + '₫'">Giá</div>
-                        </a>
-                    </div>
-                </th:block>
             </th:block>
             <th:block th:case="'recentlyViewed'">
                 <th:block th:if="${displayConfig.showSectionRecentlyViewed != false}">
@@ -112,6 +98,24 @@
                                 <img th:src="@{/images/product/{img}(img=${sp.hinhAnh})}" th:alt="${sp.tenSanPham}"
                                     class="product-image" />
                                 <div class="product-name" th:text="${sp.tenSanPham}">Tên Sản phẩm</div>
+                                <div class="product-price" th:text="${#numbers.formatDecimal(sp.gia, 0, 'COMMA', 0, 'POINT')} + '₫'">Giá</div>
+                            </a>
+                        </div>
+                    </section>
+                </th:block>
+            </th:block>
+            <th:block th:case="*">
+                <th:block th:if="${customProductBlocks != null and customProductBlocks.containsKey(sectionKey)}">
+                    <section class="home-product-section">
+                        <h2 class="mb-4 border-bottom border-warning pb-2"
+                            th:text="${customProductBlocks.get(sectionKey).title}">Khối sản phẩm tùy chọn</h2>
+                        <div class="home-product-grid"
+                             th:style="'--products-per-row:' + ${(customProductBlocks.get(sectionKey).productsPerRow != null and customProductBlocks.get(sectionKey).productsPerRow > 0) ? customProductBlocks.get(sectionKey).productsPerRow : 4}">
+                            <a th:each="sp : ${customProductBlockProducts.get(sectionKey)}"
+                               th:href="@{/chitietsanpham/{id}(id=${sp.id})}" class="product-card">
+                                <img th:src="@{/images/product/{img}(img=${sp.hinhAnh})}" th:alt="${sp.tenSanPham}" class="product-image" />
+                                <div class="product-name" th:text="${sp.tenSanPham}">Tên Sản phẩm</div>
+                                <div class="product-info" th:text="'Đã bán: ' + ${sp.daBan}">Đã bán</div>
                                 <div class="product-price" th:text="${#numbers.formatDecimal(sp.gia, 0, 'COMMA', 0, 'POINT')} + '₫'">Giá</div>
                             </a>
                         </div>

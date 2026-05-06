@@ -1,6 +1,8 @@
 package com.example.gearshop.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,64 @@ public class VoucherService {
 
     public List<Voucher> getAllVouchers() {
         return voucherRepository.findAll();
+    }
+
+    /**
+     * Voucher có thể chọn trên trang đặt hàng: còn hiệu lực, áp dụng được cho KH này, có cấu hình giảm giá.
+     */
+    public List<Voucher> getVouchersEligibleForCheckout(KhachHang khachHang) {
+        List<Voucher> out = new ArrayList<>();
+        for (Voucher v : voucherRepository.findAll()) {
+            try {
+                validateVoucherAvailability(v);
+            } catch (IllegalArgumentException ex) {
+                continue;
+            }
+            if (!isVoucherAvailableForCustomer(v, khachHang)) {
+                continue;
+            }
+            try {
+                assertCoCauHinhGiamGia(v);
+            } catch (IllegalArgumentException ex) {
+                continue;
+            }
+            out.add(v);
+        }
+        return out;
+    }
+
+    public void assertCoCauHinhGiamGia(Voucher voucher) {
+        boolean coPt = voucher.getGiamGiaTheoPhanTram() != null && voucher.getGiamGiaTheoPhanTram() > 0;
+        boolean coTien = voucher.getGiamGiaCuThe() != null
+                && voucher.getGiamGiaCuThe().compareTo(BigDecimal.ZERO) > 0;
+        if (!coPt && !coTien) {
+            throw new IllegalArgumentException("Voucher chưa được cấu hình mức giảm giá hợp lệ.");
+        }
+    }
+
+    public void assertDonHangDuDieuKien(Voucher voucher, double tongGiaTruocGiam) {
+        if (voucher.getDonToiThieu() == null) {
+            return;
+        }
+        if (tongGiaTruocGiam + 1e-6 < voucher.getDonToiThieu().doubleValue()) {
+            throw new IllegalArgumentException("Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher ("
+                    + voucher.getDonToiThieu().stripTrailingZeros().toPlainString() + " ₫).");
+        }
+    }
+
+    /** Số tiền giảm (VND), không vượt quá tổng đơn trước giảm. */
+    public double tinhSoTienGiam(Voucher voucher, double tongGiaTruocGiam) {
+        if (voucher.getGiamGiaTheoPhanTram() != null && voucher.getGiamGiaTheoPhanTram() > 0) {
+            double giam = tongGiaTruocGiam * voucher.getGiamGiaTheoPhanTram() / 100.0;
+            if (voucher.getGiamGiaToiDa() != null) {
+                giam = Math.min(giam, voucher.getGiamGiaToiDa().doubleValue());
+            }
+            return Math.min(giam, tongGiaTruocGiam);
+        }
+        if (voucher.getGiamGiaCuThe() != null) {
+            return Math.min(Math.max(0, voucher.getGiamGiaCuThe().doubleValue()), tongGiaTruocGiam);
+        }
+        return 0;
     }
 
     public Voucher getVoucherByMaVoucher(String maVoucher) {

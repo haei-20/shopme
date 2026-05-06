@@ -1,6 +1,5 @@
 package com.example.gearshop.model;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
@@ -19,32 +18,20 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "sanpham")
 @Entity
-public class SanPham {
+@Table(name = "lichsuxemsanpham")
+public class LichSuXemSanPham {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    private String maSanPham;
-    private String tenSanPham;
-    private String hinhAnh;
-    private LocalDateTime ngayThem;
-    private BigDecimal gia;
-    private BigDecimal giaNhap;
-    private Integer tonKho;
-    private Integer daBan;
+    private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "nguoiThemID")
-    private NhanVien nguoiThem;
+    @JoinColumn(name = "khachHangID")
+    private KhachHang khachHang;
 
     @ManyToOne
-    @JoinColumn(name = "loaiSPID")
-    private LoaiSanPham loaiSanPham;
+    @JoinColumn(name = "sanPhamID")
+    private SanPham sanPham;
 
-    @ManyToOne
-    @JoinColumn(name = "thuongHieuID")
-    private ThuongHieu thuongHieu;
-
+    private LocalDateTime thoiGianXem;
 }

@@ -1,13 +1,15 @@
 package com.example.gearshop.controller;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -20,11 +22,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import com.example.gearshop.model.HomeDisplayConfig;
+import com.example.gearshop.model.HomeSectionBlock;
 import com.example.gearshop.service.HomeDisplayConfigService;
+import com.example.gearshop.service.HomeSectionBlockService;
 import com.example.gearshop.service.SanPhamService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 @RequestMapping("/admin/quanlyhienthi")
@@ -35,19 +39,32 @@ public class AdminQuanLyHienThiController {
 
     @Autowired
     private SanPhamService sanPhamService;
+    @Autowired
+    private HomeSectionBlockService homeSectionBlockService;
 
     @GetMapping
     public String hienThiTrangQuanLy(Model model) {
         HomeDisplayConfig config = homeDisplayConfigService.getOrCreateConfig();
+        List<HomeSectionBlock> orderedBlocks = homeSectionBlockService.getOrderedBlocks();
         model.addAttribute("displayConfig", config);
         model.addAttribute("bannerImageUrl", homeDisplayConfigService.resolveBannerImageUrl(config));
         List<String> sliderUrls = homeDisplayConfigService.getBannerSliderImageUrls(config);
         model.addAttribute("firstBannerSliderUrl", sliderUrls.isEmpty() ? null : sliderUrls.get(0));
         model.addAttribute("bannerSliderFilenames", homeDisplayConfigService.listBannerSliderFilenames(config));
         model.addAttribute("dsSanPham", sanPhamService.getAllSanPham());
-        List<String> sectionOrder = homeDisplayConfigService.sectionKeysSortedByDisplayOrder(config);
+        List<String> sectionOrder = orderedBlocks.stream().map(HomeSectionBlock::getBlockKey).toList();
         model.addAttribute("homeSectionKeysOrder", sectionOrder);
         model.addAttribute("homeSectionOrderCsv", String.join(",", sectionOrder));
+        List<HomeSectionBlock> customTextBlocks = orderedBlocks.stream()
+                .filter(b -> HomeSectionBlockService.TYPE_PRODUCT_CUSTOM.equalsIgnoreCase(b.getBlockType()))
+                .toList();
+        Map<String, HomeSectionBlock> customTextBlockMap = new LinkedHashMap<>();
+        for (HomeSectionBlock b : customTextBlocks) {
+            customTextBlockMap.put(b.getBlockKey(), b);
+        }
+        model.addAttribute("customTextBlocks", customTextBlocks);
+        model.addAttribute("customTextBlockMap", customTextBlockMap);
+        model.addAttribute("missingBuiltInBlocks", homeSectionBlockService.getMissingBuiltInBlocks());
         model.addAttribute("byCategoryLabels", homeDisplayConfigService.getCategoryLabelsInOrder(config));
         model.addAttribute("byCategoryOrderCsv", String.join(",", homeDisplayConfigService.getOrderedCategoryKeys(config)));
         model.addAttribute("byCategoryVisibleCsv", String.join(",", homeDisplayConfigService.getVisibleCategoryKeys(config)));
@@ -61,6 +78,7 @@ public class AdminQuanLyHienThiController {
             @RequestParam(name = "bannerImageFile", required = false) MultipartFile bannerImageFile,
             @RequestParam(name = "bannerSliderFiles", required = false) MultipartFile[] bannerSliderFiles,
             @RequestParam(name = "bannerSliderIntervalMs", required = false) Integer bannerSliderIntervalMs,
+            @RequestParam(name = "bannerSliderOrder", required = false) String bannerSliderOrder,
             @RequestParam(name = "bannerHeightPx", required = false) Integer bannerHeightPx,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
@@ -71,6 +89,9 @@ public class AdminQuanLyHienThiController {
         if (config.getProductDisplayOrder() == null || config.getProductDisplayOrder().isBlank()) {
             config.setProductDisplayOrder("BEST_SELLING");
         }
+        if (config.getFeaturedProductDisplayOrder() == null || config.getFeaturedProductDisplayOrder().isBlank()) {
+            config.setFeaturedProductDisplayOrder(config.getProductDisplayOrder());
+        }
         if (config.getProductsPerRow() == null || config.getProductsPerRow() < 1) {
             config.setProductsPerRow(5);
         }
@@ -79,6 +100,10 @@ public class AdminQuanLyHienThiController {
         }
         config.setFeaturedProductsPerRow(parseOrder(request.getParameter("featuredProductsPerRow"), config.getProductsPerRow()));
         config.setFeaturedNumberOfRows(parseOrder(request.getParameter("featuredNumberOfRows"), config.getNumberOfRows()));
+        config.setFeaturedProductDisplayOrder(
+                trimToNull(request.getParameter("featuredProductDisplayOrder")) != null
+                        ? trimToNull(request.getParameter("featuredProductDisplayOrder"))
+                        : config.getProductDisplayOrder());
         config.setRecommendedProductsPerRow(parseOrder(request.getParameter("recommendedProductsPerRow"), config.getProductsPerRow()));
         config.setRecommendedNumberOfRows(parseOrder(request.getParameter("recommendedNumberOfRows"), config.getNumberOfRows()));
         config.setRecentlyViewedProductsPerRow(parseOrder(request.getParameter("recentlyViewedProductsPerRow"), config.getProductsPerRow()));
@@ -102,9 +127,37 @@ public class AdminQuanLyHienThiController {
         config.setTitleSectionRecommended(trimToNull(request.getParameter("titleSectionRecommended")));
         config.setTitleSectionRecentlyViewed(trimToNull(request.getParameter("titleSectionRecentlyViewed")));
         config.setTitleSectionByCategory(trimToNull(request.getParameter("titleSectionByCategory")));
-        homeDisplayConfigService.applyHomeSectionOrderCsv(config, request.getParameter("homeSectionOrder"));
+        homeSectionBlockService.applyOrderCsv(request.getParameter("homeSectionOrder"));
         homeDisplayConfigService.applyByCategoryOrderCsv(config, request.getParameter("byCategoryOrder"));
         homeDisplayConfigService.applyByCategoryVisibleCsv(config, request.getParameter("byCategoryVisible"));
+
+        String newBlockType = trimToNull(request.getParameter("newBlockType"));
+        String newTextBlockTitle = trimToNull(request.getParameter("newTextBlockTitle"));
+        String newProductBlockIds = trimToNull(request.getParameter("newProductBlockProductIds"));
+        Integer newProductBlockProductsPerRow = parseNullablePositive(request.getParameter("newProductBlockProductsPerRow"));
+        Integer newProductBlockNumberOfRows = parseNullablePositive(request.getParameter("newProductBlockNumberOfRows"));
+        if ("PRODUCT_CUSTOM".equalsIgnoreCase(newBlockType)) {
+            if (newTextBlockTitle != null) {
+                homeSectionBlockService.createCustomProductBlock(
+                        newTextBlockTitle, newProductBlockIds, newProductBlockProductsPerRow, newProductBlockNumberOfRows);
+            }
+        } else if (newBlockType != null) {
+            homeSectionBlockService.addBuiltInBlockIfMissing(newBlockType);
+        }
+        String[] removeBlockKey = request.getParameterValues("removeBlockKey");
+        if (removeBlockKey != null && removeBlockKey.length > 0) {
+            homeSectionBlockService.removeBlocks(List.of(removeBlockKey));
+        }
+        List<HomeSectionBlock> customBlocks = homeSectionBlockService.getCustomProductBlocksOrdered();
+        for (HomeSectionBlock block : customBlocks) {
+            String key = block.getBlockKey();
+            homeSectionBlockService.updateCustomProductBlock(
+                    key,
+                    request.getParameter("customTextTitle__" + key),
+                    request.getParameter("customProductIds__" + key),
+                    parseNullablePositive(request.getParameter("customProductsPerRow__" + key)),
+                    parseNullablePositive(request.getParameter("customNumberOfRows__" + key)));
+        }
 
         if (bannerSliderIntervalMs != null) {
             config.setBannerSliderIntervalMs(Math.max(2000, Math.min(60000, bannerSliderIntervalMs)));
@@ -157,6 +210,29 @@ public class AdminQuanLyHienThiController {
                                 uploadPath.resolve(savedFileName),
                                 StandardCopyOption.REPLACE_EXISTING);
                         sliderNames.add(savedFileName);
+                    }
+                }
+                if (bannerSliderOrder != null && !bannerSliderOrder.isBlank()) {
+                    LinkedHashSet<String> reordered = new LinkedHashSet<>();
+                    String[] orderedNames = bannerSliderOrder.split(",");
+                    for (String raw : orderedNames) {
+                        if (raw == null) {
+                            continue;
+                        }
+                        String name = raw.trim();
+                        if (HomeDisplayConfigService.isSafeBannerFileName(name) && sliderNames.contains(name)) {
+                            reordered.add(name);
+                        }
+                    }
+                    if (!reordered.isEmpty()) {
+                        List<String> leftovers = new ArrayList<>();
+                        for (String name : sliderNames) {
+                            if (!reordered.contains(name)) {
+                                leftovers.add(name);
+                            }
+                        }
+                        reordered.addAll(leftovers);
+                        sliderNames = reordered;
                     }
                 }
                 config.setBannerSliderImagesCsv(sliderNames.isEmpty() ? null : String.join(",", sliderNames));
@@ -225,6 +301,18 @@ public class AdminQuanLyHienThiController {
             return Math.max(1, Integer.parseInt(raw.trim()));
         } catch (NumberFormatException ex) {
             return macDinh;
+        }
+    }
+
+    private static Integer parseNullablePositive(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            int v = Integer.parseInt(raw.trim());
+            return v > 0 ? Integer.valueOf(v) : null;
+        } catch (NumberFormatException ex) {
+            return null;
         }
     }
 

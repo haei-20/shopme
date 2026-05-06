@@ -3,7 +3,8 @@ package com.example.gearshop.repository;
 import java.util.List;
 import java.time.LocalDateTime;
 
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,9 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     Optional<HoaDon> findTopByOrderByIdDesc();
 
     List<HoaDon> findByThongTinNhanHang_KhachHangID(Integer khachHangID);
+    Page<HoaDon> findByThongTinNhanHang_KhachHangID(Integer khachHangID, Pageable pageable);
+    Page<HoaDon> findByThongTinNhanHang_KhachHangIDAndTrangThaiDonHangIn(Integer khachHangID, List<String> trangThaiList,
+            Pageable pageable);
 
     boolean existsByIdAndThongTinNhanHang_KhachHangID(Integer id, Integer khachHangID);
 
@@ -40,10 +44,6 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
             WHERE hd.id = :hoaDonId AND nd.id = :nguoiDungId
             """)
     boolean existsByIdAndNguoiDungId(@Param("hoaDonId") Integer hoaDonId, @Param("nguoiDungId") Integer nguoiDungId);
-
-    List<HoaDon> findAll();
-
-    List<HoaDon> findAll(Sort sort);
 
     @Query("SELECT hd FROM HoaDon hd " +
             "JOIN ThongTinNhanHang ttnh ON hd.thongTinNhanHang.id = ttnh.id " +

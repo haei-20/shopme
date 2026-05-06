@@ -1,6 +1,7 @@
 package com.example.gearshop.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -14,4 +15,6 @@ public interface ThongBaoRepository extends JpaRepository<ThongBao, Integer> {
     List<ThongBao> findByKhachHangIdOrderByNgayThongBaoDesc(Integer khachHangId);
 
     List<ThongBao> findByKhachHang(KhachHang khachHang);
+
+    Optional<ThongBao> findByIdAndKhachHangId(Integer id, Integer khachHangId);
 }

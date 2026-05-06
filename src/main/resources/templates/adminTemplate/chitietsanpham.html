@@ -54,6 +54,10 @@
                                     th:text="${#numbers.formatDecimal(sanPham.gia, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                             </dd>
 
+                            <dt class="col-sm-4 col-md-3 text-muted">Giá nhập</dt>
+                            <dd class="col-sm-8 col-md-9 mb-3"
+                                th:text="${sanPham.giaNhap != null ? #numbers.formatDecimal(sanPham.giaNhap, 0, 'COMMA', 0, 'POINT') + ' ₫' : '—'}">—</dd>
+
                             <dt class="col-sm-4 col-md-3 text-muted">Thương hiệu</dt>
                             <dd class="col-sm-8 col-md-9 mb-3" th:text="${sanPham.thuongHieu.tenThuongHieu}">—</dd>
 
@@ -81,7 +85,7 @@
                                                 </button>
                                             </form>
                                             <div id="tonKhoErrorMessage" class="invalid-feedback d-block" style="display:none;">
-                                                Tồn kho chỉ được nhập số nguyên từ 0 trở lên.
+                                                Tồn kho mới phải là số nguyên và lớn hơn tồn kho hiện tại.
                                             </div>
                                         </div>
                                     </div>
@@ -261,6 +265,13 @@
                 newTonKhoValue.textContent = tonKhoInput.value || "0";
             };
 
+            const getCurrentTonKho = () => {
+                const el = document.getElementById("currentTonKhoValue");
+                if (!el) return 0;
+                const parsed = Number((el.textContent || "0").replace(/\D/g, ""));
+                return Number.isFinite(parsed) ? parsed : 0;
+            };
+
             tonKhoInput.addEventListener("keydown", function (event) {
                 if (["e", "E", "+", "-", ".", ","].includes(event.key)) {
                     event.preventDefault();
@@ -277,7 +288,14 @@
 
             openModalBtn.addEventListener("click", function (event) {
                 sanitizeTonKhoValue();
-                const message = getValidationMessage();
+                let message = getValidationMessage();
+                if (message === "") {
+                    const tonKhoMoi = Number(tonKhoInput.value);
+                    const tonKhoHienTai = getCurrentTonKho();
+                    if (!Number.isFinite(tonKhoMoi) || tonKhoMoi <= tonKhoHienTai) {
+                        message = `Tồn kho mới phải lớn hơn tồn kho hiện tại (${tonKhoHienTai}).`;
+                    }
+                }
                 showValidationState(message);
                 if (message !== "") {
                     tonKhoInput.setCustomValidity(message);

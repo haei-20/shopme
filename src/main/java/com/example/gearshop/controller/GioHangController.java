@@ -40,7 +40,10 @@ public class GioHangController {
     @PostMapping("/save-selected-items")
     public ResponseEntity<Void> saveSelectedItems(@RequestBody(required = false) List<Map<String, Object>> selectedItems, HttpSession session) {
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
-        if (khachHang != null && selectedItems != null) {
+        if (khachHang == null) {
+            return ResponseEntity.status(401).build();
+        }
+        if (selectedItems != null) {
             List<Integer> ids = new ArrayList<>();
             for (Map<String, Object> row : selectedItems) {
                 if (row.get("sanPhamID") != null) {
@@ -49,32 +52,32 @@ public class GioHangController {
             }
             gioHangService.syncDuocChonThanhToan(khachHang.getId(), ids);
         }
-        if (selectedItems != null) {
-            session.setAttribute("selectedItems", selectedItems);
-        }
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/cart")
-    public String showCartPage() {
+    public String showCartPage(HttpSession session) {
+        if (session.getAttribute("khachHang") == null) {
+            return "redirect:/dangnhap";
+        }
         // Trả về giao diện giohang.html
         return "clientTemplate/giohang";
     }
 
     @GetMapping("/api/cart")
-    @SuppressWarnings("unchecked")
     public ResponseEntity<Map<String, Object>> getCart(HttpSession session) {
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
-        List<Map<String, Object>> cart = khachHang != null
-                ? gioHangService.buildSessionCartPayload(khachHang.getId())
-                : getSessionCart(session);
-
-        session.setAttribute("cart", cart);
+        if (khachHang == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Vui lòng đăng nhập để xem giỏ hàng.");
+            return ResponseEntity.status(401).body(error);
+        }
+        List<Map<String, Object>> cart = gioHangService.buildSessionCartPayload(khachHang.getId());
         return ResponseEntity.ok(buildCartResponse(cart));
     }
 
     @PostMapping("/cart/update-quantity")
-    @SuppressWarnings("unchecked")
     public ResponseEntity<Map<String, Object>> updateCartQuantity(@RequestBody Map<String, Object> payload, HttpSession session) {
         Map<String, Object> result = new HashMap<>();
 
@@ -119,29 +122,20 @@ public class GioHangController {
         }
 
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
-        List<Map<String, Object>> cart;
-
-        if (khachHang != null) {
-            try {
-                gioHangService.updateCartItemQuantity(khachHang.getId(), sanPhamID, requestedQuantity);
-                cart = gioHangService.buildSessionCartPayload(khachHang.getId());
-            } catch (IllegalArgumentException ex) {
-                result.put("success", false);
-                result.put("message", ex.getMessage());
-                return ResponseEntity.badRequest().body(result);
-            }
-        } else {
-            cart = getSessionCart(session);
-            for (Map<String, Object> item : cart) {
-                if (item.get("sanPhamID") != null && Integer.parseInt(item.get("sanPhamID").toString()) == sanPhamID) {
-                    item.put("quantity", requestedQuantity);
-                    item.put("tonKho", tonKho);
-                    break;
-                }
-            }
+        if (khachHang == null) {
+            result.put("success", false);
+            result.put("message", "Vui lòng đăng nhập để cập nhật giỏ hàng.");
+            return ResponseEntity.status(401).body(result);
         }
-
-        session.setAttribute("cart", cart);
+        final List<Map<String, Object>> cart;
+        try {
+            gioHangService.updateCartItemQuantity(khachHang.getId(), sanPhamID, requestedQuantity);
+            cart = gioHangService.buildSessionCartPayload(khachHang.getId());
+        } catch (IllegalArgumentException ex) {
+            result.put("success", false);
+            result.put("message", ex.getMessage());
+            return ResponseEntity.badRequest().body(result);
+        }
 
         result.putAll(buildCartResponse(cart));
         result.put("quantity", requestedQuantity);
@@ -150,7 +144,6 @@ public class GioHangController {
     }
 
     @PostMapping("/cart/remove-item")
-    @SuppressWarnings("unchecked")
     public ResponseEntity<Map<String, Object>> removeCartItem(@RequestBody Map<String, Object> payload, HttpSession session) {
         Map<String, Object> result = new HashMap<>();
         if (payload.get("sanPhamID") == null) {
@@ -161,42 +154,31 @@ public class GioHangController {
 
         int sanPhamID = Integer.parseInt(payload.get("sanPhamID").toString());
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
-        List<Map<String, Object>> cart;
-
-        if (khachHang != null) {
-            gioHangService.removeCartItem(khachHang.getId(), sanPhamID);
-            cart = gioHangService.buildSessionCartPayload(khachHang.getId());
-        } else {
-            cart = getSessionCart(session);
-            cart.removeIf(item -> item.get("sanPhamID") != null
-                    && Integer.parseInt(item.get("sanPhamID").toString()) == sanPhamID);
+        if (khachHang == null) {
+            result.put("success", false);
+            result.put("message", "Vui lòng đăng nhập để cập nhật giỏ hàng.");
+            return ResponseEntity.status(401).body(result);
         }
-
-        session.setAttribute("cart", cart);
+        gioHangService.removeCartItem(khachHang.getId(), sanPhamID);
+        List<Map<String, Object>> cart = gioHangService.buildSessionCartPayload(khachHang.getId());
         return ResponseEntity.ok(buildCartResponse(cart));
     }
 
     @PostMapping("/cart/remove-selected")
-    @SuppressWarnings("unchecked")
     public ResponseEntity<Map<String, Object>> removeSelectedItems(@RequestBody List<Integer> sanPhamIds, HttpSession session) {
         KhachHang khachHang = (KhachHang) session.getAttribute("khachHang");
-        List<Map<String, Object>> cart;
-
-        if (khachHang != null) {
-            gioHangService.removeSelectedCartItems(khachHang.getId(), sanPhamIds);
-            cart = gioHangService.buildSessionCartPayload(khachHang.getId());
-        } else {
-            cart = getSessionCart(session);
-            cart.removeIf(item -> item.get("sanPhamID") != null
-                    && sanPhamIds.contains(Integer.parseInt(item.get("sanPhamID").toString())));
+        if (khachHang == null) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "Vui lòng đăng nhập để cập nhật giỏ hàng.");
+            return ResponseEntity.status(401).body(result);
         }
-
-        session.setAttribute("cart", cart);
+        gioHangService.removeSelectedCartItems(khachHang.getId(), sanPhamIds);
+        List<Map<String, Object>> cart = gioHangService.buildSessionCartPayload(khachHang.getId());
         return ResponseEntity.ok(buildCartResponse(cart));
     }
 
     @GetMapping("/order")
-    @SuppressWarnings("unchecked")
     public String showOrderPage(HttpSession session, Model model) {
         // Lấy thông tin người dùng từ session
         NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
@@ -226,8 +208,8 @@ public class GioHangController {
 
         model.addAttribute("matchedReceiver", matchedReceiver);
 
-        // Lấy danh sách voucher từ service
-        List<Voucher> vouchers = voucherService.getAllVouchers();
+        // Chỉ hiển thị voucher còn dùng được cho khách hàng này
+        List<Voucher> vouchers = voucherService.getVouchersEligibleForCheckout(khachHang);
         model.addAttribute("vouchers", vouchers);
 
         List<Map<String, Object>> selectedItems = gioHangService.buildSelectedLinesForOrder(khachHang.getId());
@@ -248,12 +230,6 @@ public class GioHangController {
 
         // Trả về giao diện xemhoadon.html
         return "clientTemplate/xemhoadon";
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> getSessionCart(HttpSession session) {
-        List<Map<String, Object>> cart = (List<Map<String, Object>>) session.getAttribute("cart");
-        return cart == null ? new ArrayList<>() : cart;
     }
 
     private Map<String, Object> buildCartResponse(List<Map<String, Object>> cart) {

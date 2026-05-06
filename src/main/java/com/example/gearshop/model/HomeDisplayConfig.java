@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,12 @@ public class HomeDisplayConfig {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Setter(AccessLevel.NONE)
     private String bannerSourceType;
+
+    public void setBannerSourceType(String bannerSourceType) {
+        this.bannerSourceType = bannerSourceType;
+    }
 
     private String uploadedBannerImage;
 
@@ -48,6 +54,7 @@ public class HomeDisplayConfig {
     /** Cấu hình số cột/số hàng riêng cho từng khối sản phẩm. */
     private Integer featuredProductsPerRow;
     private Integer featuredNumberOfRows;
+    private String featuredProductDisplayOrder;
     private Integer recommendedProductsPerRow;
     private Integer recommendedNumberOfRows;
     private Integer recentlyViewedProductsPerRow;
