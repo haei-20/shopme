@@ -28,11 +28,13 @@
                                 <div class="mb-3">
                                     <label for="maVoucher" class="form-label">Mã Voucher</label>
                                     <input type="text" class="form-control" id="maVoucher" name="maVoucher" th:value="${voucher.maVoucher}" required>
+                                                                    <div class="invalid-feedback">Vui lòng nhập mã voucher.</div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="tenVoucher" class="form-label">Tên Voucher</label>
                                     <input type="text" class="form-control" id="tenVoucher" name="tenVoucher" th:value="${voucher.tenVoucher}" required>
+                                                                    <div class="invalid-feedback">Vui lòng nhập tên voucher.</div>
                                 </div>
 
                                 <div class="mb-3">
@@ -63,6 +65,7 @@
                                     </div>
                                     <input type="number" step="1" min="0" max="100" class="form-control"
                                         name="giamGiaTheoPhanTram" id="inputPhanTram" th:value="${voucher.giamGiaTheoPhanTram}">
+                                                <div class="invalid-feedback">Nhập số từ 1 đến 100.</div>
                                 </div>
 
                                 <div class="discount-radio">
@@ -73,12 +76,14 @@
                                     </div>
                                     <input type="number" step="1000" min="0" class="form-control"
                                         name="giamGiaCuThe" id="inputVND" th:value="${voucher.giamGiaCuThe}">
+                                                <div class="invalid-feedback">Số tiền phải lớn hơn 0.</div>
                                 </div>
 
                                 <div>
                                     <label for="giamGiaToiDa" class="form-label">Giảm tối đa (chỉ áp dụng với %)</label>
                                     <input type="number" step="1000" min="0" class="form-control" id="giamGiaToiDa" name="giamGiaToiDa"
                                         th:value="${voucher.giamGiaToiDa}" placeholder="VD: 200000">
+                                                <div class="invalid-feedback">Giảm tối đa phải lớn hơn 0.</div>
                                     <div class="form-text">Nếu dùng giảm cố định, hệ thống sẽ bỏ qua trường này.</div>
                                 </div>
                             </div>
@@ -95,17 +100,19 @@
                                     <label for="ngayBatDau" class="form-label">Thời gian bắt đầu</label>
                                     <input type="datetime-local" class="form-control" id="ngayBatDau" name="ngayBatDau"
                                         th:value="${#temporals.format(voucher.ngayBatDau, 'yyyy-MM-dd''T''HH:mm')}" step="60" required>
+                                                <div class="invalid-feedback">Vui lòng chọn thời gian bắt đầu.</div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="thoiHan" class="form-label">Thời hạn kết thúc</label>
                                     <input type="datetime-local" class="form-control" id="thoiHan" name="thoiHan"
                                         th:value="${#temporals.format(voucher.thoiHan, 'yyyy-MM-dd''T''HH:mm')}" step="60" required>
+                                                <div class="invalid-feedback">Vui lòng chọn thời gian kết thúc hợp lệ.</div>
                                     <div class="form-text">Thời điểm kết thúc phải sau thời điểm bắt đầu.</div>
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="form-check mb-2">
+                                    <div class="form-check mb-2" id="wrapKhongGioiHanSoLuong">
                                         <input class="form-check-input" type="checkbox" id="khongGioiHanSoLuong"
                                             th:checked="${voucher.soLuongNguoiDungToiDa == null}" onchange="toggleSoLuongNguoiDung()">
                                         <label class="form-check-label" for="khongGioiHanSoLuong">Không giới hạn số lượng sử dụng</label>
@@ -113,12 +120,14 @@
                                     <label for="soLuongNguoiDungToiDa" class="form-label">Số lượng người sử dụng tối đa</label>
                                     <input type="number" class="form-control" id="soLuongNguoiDungToiDa" name="soLuongNguoiDungToiDa" min="1"
                                         th:value="${voucher.soLuongNguoiDungToiDa}" th:disabled="${voucher.soLuongNguoiDungToiDa == null}">
+                                                <div class="invalid-feedback">Số lượng phải lớn hơn 0.</div>
                                 </div>
 
                                 <div>
                                     <label for="donToiThieu" class="form-label">Đơn tối thiểu (VND)</label>
                                     <input type="number" step="1000" min="0" class="form-control" id="donToiThieu" name="donToiThieu"
                                         th:value="${voucher.donToiThieu}" required>
+                                                <div class="invalid-feedback">Đơn tối thiểu phải lớn hơn 0.</div>
                                 </div>
                             </div>
                         </div>
@@ -192,6 +201,98 @@
     <script>
         const selectedKhachHang = new Map();
 
+        // --- VALIDATION ---
+        function setInvalid(input, message) {
+            input.classList.add('is-invalid');
+            if (message) {
+                let feedback = input.parentElement.querySelector('.invalid-feedback');
+                if (feedback) feedback.textContent = message;
+            }
+        }
+        function setValid(input) {
+            input.classList.remove('is-invalid');
+        }
+
+        function validateInput(input) {
+            const id = input.id;
+            let value = input.value;
+            let valid = true;
+            switch (id) {
+                case 'maVoucher':
+                case 'tenVoucher':
+                    valid = value.trim().length > 0;
+                    break;
+                case 'inputPhanTram':
+                    if (!input.disabled) {
+                        let v = parseInt(value);
+                        valid = v > 0 && v <= 100;
+                    }
+                    break;
+                case 'inputVND':
+                    if (!input.disabled) {
+                        let v = parseInt(value);
+                        valid = v > 0;
+                    }
+                    break;
+                case 'giamGiaToiDa':
+                    if (!input.disabled && value) {
+                        let v = parseInt(value);
+                        valid = v > 0;
+                    }
+                    break;
+                case 'ngayBatDau':
+                case 'thoiHan':
+                    valid = !!value;
+                    break;
+                case 'soLuongNguoiDungToiDa':
+                    if (!input.disabled && value) {
+                        let v = parseInt(value);
+                        valid = v > 0;
+                    }
+                    break;
+                case 'donToiThieu':
+                    let v = parseInt(value);
+                    valid = v > 0;
+                    break;
+            }
+            if (valid) setValid(input); else setInvalid(input);
+            return valid;
+        }
+
+        function validateFormRealtime() {
+            const ids = [
+                'maVoucher', 'tenVoucher', 'inputPhanTram', 'inputVND',
+                'giamGiaToiDa', 'ngayBatDau', 'thoiHan', 'soLuongNguoiDungToiDa', 'donToiThieu'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', () => validateInput(el));
+                    el.addEventListener('blur', () => validateInput(el));
+                }
+            });
+        }
+
+        function validateFormOnSubmit(e) {
+            let valid = true;
+            const ids = [
+                'maVoucher', 'tenVoucher', 'inputPhanTram', 'inputVND',
+                'giamGiaToiDa', 'ngayBatDau', 'thoiHan', 'soLuongNguoiDungToiDa', 'donToiThieu'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !validateInput(el)) valid = false;
+            });
+            // Kiểm tra ngày kết thúc > ngày bắt đầu
+            const start = document.getElementById('ngayBatDau').value;
+            const end = document.getElementById('thoiHan').value;
+            if (start && end && start >= end) {
+                setInvalid(document.getElementById('thoiHan'), 'Thời hạn kết thúc phải sau thời gian bắt đầu.');
+                valid = false;
+            }
+            if (!valid) e.preventDefault();
+        }
+
         function updateDiscountTypeUI() {
             const isPercent = document.getElementById('discountTypePercent').checked;
             const inputPhanTram = document.getElementById('inputPhanTram');
@@ -219,10 +320,20 @@
         function updateSelectedKhachHangSummary() {
             const selectedDiv = document.getElementById('selectedKhachHang');
             const hiddenInput = document.getElementById('khachHangIds');
+            const soLuongInput = document.getElementById('soLuongNguoiDungToiDa');
+            const wrapKhongGioiHan = document.getElementById('wrapKhongGioiHanSoLuong');
             if (selectedKhachHang.size > 0) {
                 selectedDiv.textContent = 'Đã chọn: ' + Array.from(selectedKhachHang.values()).join(', ');
+                // Nếu chọn khách hàng cụ thể thì disable số lượng và ẩn checkbox không giới hạn
+                soLuongInput.disabled = true;
+                soLuongInput.value = '';
+                if (wrapKhongGioiHan) wrapKhongGioiHan.style.display = 'none';
             } else {
                 selectedDiv.textContent = 'Đã chọn: Tất cả khách hàng';
+                // Nếu chọn tất cả thì enable số lượng (nếu không bị tắt bởi checkbox không giới hạn) và hiện checkbox
+                const khongGioiHan = document.getElementById('khongGioiHanSoLuong');
+                soLuongInput.disabled = khongGioiHan && khongGioiHan.checked;
+                if (wrapKhongGioiHan) wrapKhongGioiHan.style.display = '';
             }
             hiddenInput.value = Array.from(selectedKhachHang.keys()).join(',');
         }
@@ -258,6 +369,8 @@
         updateDiscountTypeUI();
         toggleSoLuongNguoiDung();
         initSelectedKhachHangFromCheckboxes();
+        validateFormRealtime();
+        document.querySelector('form').addEventListener('submit', validateFormOnSubmit);
     </script>
 
     <th:block th:replace="~{adminTemplate/fragments/admin-scripts :: scripts}"></th:block>

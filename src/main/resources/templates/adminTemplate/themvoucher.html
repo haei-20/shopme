@@ -28,11 +28,13 @@
                                 <div class="mb-3">
                                     <label for="maVoucher" class="form-label">Mã Voucher</label>
                                     <input type="text" class="form-control" id="maVoucher" name="maVoucher" placeholder="VD: SALE25" required>
+                                                                    <div class="invalid-feedback">Vui lòng nhập mã voucher.</div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="tenVoucher" class="form-label">Tên Voucher</label>
                                     <input type="text" class="form-control" id="tenVoucher" name="tenVoucher" placeholder="VD: Sale ngày lương" required>
+                                                                    <div class="invalid-feedback">Vui lòng nhập tên voucher.</div>
                                 </div>
 
                                 <div class="mb-3">
@@ -61,6 +63,7 @@
                                         <label class="form-check-label" for="discountTypePercent">Giảm theo phần trăm (%)</label>
                                     </div>
                                     <input type="number" step="1" min="0" max="100" class="form-control" name="giamGiaTheoPhanTram" id="inputPhanTram" placeholder="VD: 15">
+                                                                    <div class="invalid-feedback">Nhập số từ 1 đến 100.</div>
                                 </div>
 
                                 <div class="discount-radio">
@@ -69,11 +72,13 @@
                                         <label class="form-check-label" for="discountTypeVnd">Giảm theo số tiền cố định (VND)</label>
                                     </div>
                                     <input type="number" step="1000" min="0" class="form-control" name="giamGiaCuThe" id="inputVND" placeholder="VD: 50000" disabled>
+                                                                    <div class="invalid-feedback">Số tiền phải lớn hơn 0.</div>
                                 </div>
 
                                 <div>
                                     <label for="giamGiaToiDa" class="form-label">Giảm tối đa (chỉ áp dụng với %)</label>
                                     <input type="number" step="1000" min="0" class="form-control" id="giamGiaToiDa" name="giamGiaToiDa" placeholder="VD: 200000">
+                                                                        <div class="invalid-feedback">Giảm tối đa phải lớn hơn 0.</div>
                                     <div class="form-text">Nếu dùng giảm cố định, hệ thống sẽ bỏ qua trường này.</div>
                                 </div>
                             </div>
@@ -89,11 +94,13 @@
                                 <div class="mb-3">
                                     <label for="ngayBatDau" class="form-label">Thời gian bắt đầu</label>
                                     <input type="datetime-local" class="form-control" id="ngayBatDau" name="ngayBatDau" step="60" required>
+                                                                    <div class="invalid-feedback">Vui lòng chọn thời gian bắt đầu.</div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="thoiHan" class="form-label">Thời hạn kết thúc</label>
                                     <input type="datetime-local" class="form-control" id="thoiHan" name="thoiHan" step="60" required>
+                                                                        <div class="invalid-feedback">Vui lòng chọn thời gian kết thúc hợp lệ.</div>
                                     <div class="form-text">Thời điểm kết thúc phải sau thời điểm bắt đầu.</div>
                                 </div>
 
@@ -104,11 +111,13 @@
                                     </div>
                                     <label for="soLuongNguoiDungToiDa" class="form-label">Số lượng người sử dụng tối đa</label>
                                     <input type="number" class="form-control" id="soLuongNguoiDungToiDa" name="soLuongNguoiDungToiDa" min="1" disabled>
+                                                                    <div class="invalid-feedback">Số lượng phải lớn hơn 0.</div>
                                 </div>
 
                                 <div>
                                     <label for="donToiThieu" class="form-label">Đơn tối thiểu (VND)</label>
                                     <input type="number" step="1000" min="0" class="form-control" id="donToiThieu" name="donToiThieu" required>
+                                                                    <div class="invalid-feedback">Đơn tối thiểu phải lớn hơn 0.</div>
                                 </div>
                             </div>
                         </div>

@@ -143,6 +143,14 @@ public class AdminVoucherController {
             return "redirect:/admin/voucher/them";
         }
 
+        // Validate giảm giá theo phần trăm
+        if (giamGiaTheoPhanTram != null) {
+            if (giamGiaTheoPhanTram <= 0 || giamGiaTheoPhanTram > 100) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Giảm giá theo phần trăm (%) phải lớn hơn 0 và nhỏ hơn hoặc bằng 100.");
+                return "redirect:/admin/voucher/them";
+            }
+        }
+
         Voucher voucher = new Voucher();
         voucher.setMaVoucher(voucherCode);
         voucher.setTenVoucher(tenVoucher);
@@ -240,6 +248,14 @@ public class AdminVoucherController {
         if (existingVoucher.isPresent() && !existingVoucher.get().getId().equals(id)) {
             redirectAttributes.addFlashAttribute("errorMessage", "Mã voucher đã tồn tại.");
             return "redirect:/admin/voucher/sua/" + id;
+        }
+
+        // Validate giảm giá theo phần trăm
+        if (giamGiaTheoPhanTram != null) {
+            if (giamGiaTheoPhanTram <= 0 || giamGiaTheoPhanTram > 100) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Giảm giá theo phần trăm (%) phải lớn hơn 0 và nhỏ hơn hoặc bằng 100.");
+                return "redirect:/admin/voucher/sua/" + id;
+            }
         }
 
         voucher.setMaVoucher(voucherCode);

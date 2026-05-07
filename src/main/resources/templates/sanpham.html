@@ -18,7 +18,7 @@
         <tbody>
             <tr th:each="sp : ${sanphams}">
                 <td th:text="${sp.tenSanPham}">Tên sản phẩm</td>
-                <td th:text="${sp.gia}">Giá</td>
+                <td th:text="${#numbers.formatInteger(sp.gia, 'COMMA')}">Giá</td>
             </tr>
         </tbody>
     </table>
