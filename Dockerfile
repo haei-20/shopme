@@ -4,9 +4,13 @@ FROM eclipse-temurin:17-jdk
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the Maven wrapper and pom.xml
+
+# Copy the Maven wrapper và pom.xml
 COPY mvnw* pom.xml ./
 COPY .mvn .mvn
+
+# Cấp quyền thực thi cho mvnw (fix lỗi permission denied)
+RUN chmod +x mvnw
 
 # Copy the source code
 COPY src ./src
