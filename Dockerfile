@@ -1,29 +1,28 @@
-# Use an official OpenJDK runtime as a parent image
+# Sử dụng ảnh chính thức OpenJDK làm ảnh cha
 FROM eclipse-temurin:17-jdk
 
-# Set the working directory inside the container
+# Đặt thư mục làm việc bên trong container
 WORKDIR /app
 
-
-# Copy the Maven wrapper và pom.xml
+# Sao chép Maven wrapper và pom.xml
 COPY mvnw* pom.xml ./
 COPY .mvn .mvn
 
-# Cấp quyền thực thi cho mvnw (fix lỗi permission denied)
+# Cấp quyền thực thi cho mvnw (sửa lỗi permission denied)
 RUN chmod +x mvnw
 
-# Copy the source code
+# Sao chép mã nguồn
 COPY src ./src
 COPY src/main/resources ./src/main/resources
 
-# Package the application (skip tests for faster build, can remove if you want tests)
+# Đóng gói ứng dụng (bỏ qua kiểm thử để build nhanh hơn, có thể bỏ nếu muốn chạy kiểm thử)
 RUN ./mvnw clean package -DskipTests
 
-# Copy the built jar to the container
+# Sao chép file jar đã build vào container
 RUN cp target/*.jar app.jar
 
-# Expose the port (change if your app uses a different port)
+# Mở cổng (thay đổi nếu ứng dụng dùng cổng khác)
 EXPOSE 8181
 
-# Run the application
+# Chạy ứng dụng
 ENTRYPOINT ["java", "-jar", "app.jar"]

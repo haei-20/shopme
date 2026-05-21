@@ -34,4 +34,3 @@ build/
 
 # Local secrets/config (Spring profile)
 src/main/resources/application-local.properties
-src/main/resources/application.properties
