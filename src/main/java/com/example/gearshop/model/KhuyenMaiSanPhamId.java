@@ -5,12 +5,12 @@ import java.util.Objects;
 
 public class KhuyenMaiSanPhamId implements Serializable {
 
-    private Long sanPham;
-    private Long khuyenMai;
+    private Integer sanPham;
+    private Integer khuyenMai;
 
     public KhuyenMaiSanPhamId() {}
 
-    public KhuyenMaiSanPhamId(Long sanPham, Long khuyenMai) {
+    public KhuyenMaiSanPhamId(Integer sanPham, Integer khuyenMai) {
         this.sanPham = sanPham;
         this.khuyenMai = khuyenMai;
     }
