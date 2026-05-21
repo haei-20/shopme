@@ -30,9 +30,8 @@ public class DanhGia {
     @JoinColumn(name = "khachHangID")
     private KhachHang khachHang;
 
-    @ManyToOne
-    @JoinColumn(name = "sanPhamID")
-    private SanPham sanPham;
+    @Column(name = "sanPhamID")
+    private Integer sanPhamID;
 
     public Integer getId() {
         return id;
@@ -82,11 +81,11 @@ public class DanhGia {
         this.khachHang = khachHang;
     }
 
-    public SanPham getSanPham() {
-        return sanPham;
+    public Integer getSanPhamID() {
+        return sanPhamID;
     }
 
-    public void setSanPham(SanPham sanPham) {
-        this.sanPham = sanPham;
+    public void setSanPhamID(Integer sanPhamID) {
+        this.sanPhamID = sanPhamID;
     }
 }
