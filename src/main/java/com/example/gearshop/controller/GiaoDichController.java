@@ -9,6 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.gearshop.dto.SanPhamTrongHoaDonDTO;
 import com.example.gearshop.model.HoaDon;
@@ -18,11 +22,6 @@ import com.example.gearshop.service.DanhGiaService;
 import com.example.gearshop.service.HoaDonService;
 
 import jakarta.servlet.http.HttpSession;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class GiaoDichController {
@@ -129,8 +128,11 @@ public class GiaoDichController {
 
         Map<Integer, Boolean> coTheDanhGiaSanPham = new HashMap<>();
         Map<Integer, Boolean> daDanhGiaSanPham = new HashMap<>();
-        for (var item : danhSachSanPham) {
-            int spId = item.getSanPham() != null ? item.getSanPham().getId() : item.getHoaDonChiTiet().getSanPhamID();
+        for (SanPhamTrongHoaDonDTO item : danhSachSanPham) {
+            int spId = item.getHoaDonChiTiet().getSanPhamID();
+            if (item.getSanPham() != null && item.getSanPham().getId() != null) {
+                spId = item.getSanPham().getId();
+            }
             coTheDanhGiaSanPham.put(spId, danhGiaService.duocPhepDanhGia(khachHang.getId(), spId));
             daDanhGiaSanPham.put(spId, danhGiaService.daCoDanhGia(khachHang.getId(), spId));
         }
