@@ -581,6 +581,7 @@ public class HomeController {
 
             if ("Đổi mật khẩu thành công.".equals(thongBao)) {
                 redirectAttributes.addFlashAttribute("thongBaoDoiMatKhauSuccess", thongBao);
+                return "redirect:/thongtincanhan/doimatkhau";
             } else {
                 redirectAttributes.addFlashAttribute("matKhauCu", matKhauCu);
                 redirectAttributes.addFlashAttribute("matKhauMoi", matKhauMoi);
@@ -595,7 +596,23 @@ public class HomeController {
                     redirectAttributes.addFlashAttribute("matKhauMoiError", thongBao);
                 }
             }
-            return "redirect:/thongtincanhan";
+            return "redirect:/thongtincanhan/doimatkhau";
+        }
+
+        @GetMapping("/doimatkhau")
+        public String hienFormDoiMatKhau(HttpSession session, Model model) {
+            NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
+            if (nguoiDung == null)
+                return "redirect:/dangnhap";
+
+            model.addAttribute("nguoiDung", nguoiDung);
+            boolean isKhachHang = khachHangRepo.findByNguoiDung_Id(nguoiDung.getId()).isPresent();
+            boolean isNhanVien = nhanVienRepo.findByNguoiDung_Id(nguoiDung.getId()).isPresent();
+            boolean showClientNavbar = !isNhanVien && isKhachHang;
+            model.addAttribute("isKhachHang", isKhachHang);
+            model.addAttribute("isNhanVien", isNhanVien);
+            model.addAttribute("showClientNavbar", showClientNavbar);
+            return "thongtincanhan-doimatkhau";
         }
     }
 
