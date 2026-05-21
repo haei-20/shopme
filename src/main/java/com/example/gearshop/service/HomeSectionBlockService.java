@@ -18,8 +18,6 @@ import com.example.gearshop.model.SanPham;
 import com.example.gearshop.repository.HomeSectionBlockRepository;
 import com.example.gearshop.repository.SanPhamRepository;
 
-import jakarta.annotation.PostConstruct;
-
 @Service
 public class HomeSectionBlockService {
     public static final String TYPE_BUILT_IN = "BUILT_IN";
@@ -38,12 +36,6 @@ public class HomeSectionBlockService {
     private HomeSectionBlockRepository homeSectionBlockRepository;
     @Autowired
     private SanPhamRepository sanPhamRepository;
-
-    @PostConstruct
-    @Transactional
-    public void initDefaultBlocksOnStartup() {
-        initializeDefaultBlocksIfEmpty();
-    }
 
     @Transactional
     public List<HomeSectionBlock> getOrderedBlocks() {
@@ -246,7 +238,7 @@ public class HomeSectionBlockService {
     }
 
     public int normalizePositive(Integer value, int fallback) {
-        return value != null && value > 0 ? value.intValue() : fallback;
+        return value == null || value < 1 ? fallback : value;
     }
 
     @Transactional
