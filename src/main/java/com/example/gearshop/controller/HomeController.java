@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.example.gearshop.model.KhachHang;
-import com.example.gearshop.model.LoaiSanPham;
 import com.example.gearshop.model.HomeDisplayConfig;
 import com.example.gearshop.model.HomeSectionBlock;
+import com.example.gearshop.model.KhachHang;
+import com.example.gearshop.model.LoaiSanPham;
 import com.example.gearshop.model.NguoiDung;
 import com.example.gearshop.model.NhanVien;
 import com.example.gearshop.model.SanPham;
@@ -514,7 +514,7 @@ public class HomeController {
             model.addAttribute("isKhachHang", isKhachHang);
             model.addAttribute("isNhanVien", isNhanVien);
             model.addAttribute("showClientNavbar", showClientNavbar);
-            return "/thongtincanhan";
+            return "thongtincanhan";
         }
 
         @PostMapping("/capnhat")
