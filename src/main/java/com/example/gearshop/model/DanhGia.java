@@ -2,11 +2,18 @@ package com.example.gearshop.model;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -30,8 +37,9 @@ public class DanhGia {
     @JoinColumn(name = "khachHangID")
     private KhachHang khachHang;
 
-    @Column(name = "sanPhamID")
-    private Integer sanPhamID;
+    @ManyToOne
+    @JoinColumn(name = "sanPhamID")
+    private SanPham sanPham;
 
     public Integer getId() {
         return id;
@@ -81,11 +89,11 @@ public class DanhGia {
         this.khachHang = khachHang;
     }
 
-    public Integer getSanPhamID() {
-        return sanPhamID;
+    public SanPham getSanPham() {
+        return sanPham;
     }
 
-    public void setSanPhamID(Integer sanPhamID) {
-        this.sanPhamID = sanPhamID;
+    public void setSanPham(SanPham sanPham) {
+        this.sanPham = sanPham;
     }
 }
