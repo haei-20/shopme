@@ -237,13 +237,7 @@
                                 <input type="text" class="form-control" id="diaChiHienTai"
                                     th:value="${nguoiDung.diaChi}" readonly>
                             </div>
-                            <div class="mt-3">
-                                <label for="matKhauXacNhanCapNhat" class="form-label">Mật khẩu</label>
-                                <input type="password" class="form-control" id="matKhauXacNhanCapNhat" name="matKhauXacNhan"
-                                    th:classappend="${matKhauXacNhanError != null ? ' is-invalid' : ''}" required>
-                                <div class="invalid-feedback"
-                                    th:text="${matKhauXacNhanError != null ? matKhauXacNhanError : ''}"></div>
-                            </div>
+                            
                             <div class="profile-actions">
                                 <button type="submit" class="btn btn-warning px-4">Lưu thay đổi</button>
                                 <a th:href="@{/thongtincanhan/doimatkhau}" class="btn btn-outline-secondary ms-2">Đổi mật khẩu</a>

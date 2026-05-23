@@ -50,11 +50,11 @@ public class NguoiDungService {
         if (!isValidFullName(tenNguoiDung)) {
             throw new IllegalArgumentException("Họ tên phải có ít nhất 2 từ và không được chỉ gồm số.");
         }
-        if (matKhauXacNhan == null || matKhauXacNhan.isBlank()) {
-            throw new IllegalArgumentException("Vui lòng nhập mật khẩu hiện tại để xác nhận.");
-        }
-        if (!matKhauXacNhan.equals(nd.getMatKhau())) {
-            throw new IllegalArgumentException("Mật khẩu xác nhận không đúng.");
+        // Nếu người dùng gửi mật khẩu xác nhận thì kiểm tra, nếu không gửi thì cho phép cập nhật
+        if (matKhauXacNhan != null && !matKhauXacNhan.isBlank()) {
+            if (!matKhauXacNhan.equals(nd.getMatKhau())) {
+                throw new IllegalArgumentException("Mật khẩu xác nhận không đúng.");
+            }
         }
 
         if (!email.toLowerCase().matches("^[a-z0-9._%+-]+@gmail\\.com$")) {

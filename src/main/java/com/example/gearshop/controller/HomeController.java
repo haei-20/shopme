@@ -519,13 +519,13 @@ public class HomeController {
 
         @PostMapping("/capnhat")
         public String capNhatThongTin(HttpSession session,
-                @RequestParam String tenDangNhap,
-                @RequestParam String tenNguoiDung,
-                @RequestParam String email,
-                @RequestParam String sdt,
-                @RequestParam String diaChi,
-                @RequestParam String matKhauXacNhan,
-                RedirectAttributes redirectAttributes) {
+            @RequestParam String tenDangNhap,
+            @RequestParam String tenNguoiDung,
+            @RequestParam String email,
+            @RequestParam String sdt,
+            @RequestParam String diaChi,
+            @RequestParam(name = "matKhauXacNhan", required = false) String matKhauXacNhan,
+            RedirectAttributes redirectAttributes) {
             NguoiDung nguoiDung = (NguoiDung) session.getAttribute("nguoiDung");
             if (nguoiDung == null)
                 return "redirect:/dangnhap";
