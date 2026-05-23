@@ -10,7 +10,7 @@
     <script th:src="@{/js/cart-storage.js}" th:attr="data-cart-owner=${nguoiDung != null ? 'user-' + nguoiDung.id : 'guest'}"></script>
 </head>
 
-<body th:attr="data-register-step=${registerStep}">
+<body>
     <div class="login-container">
         <h2>Đăng nhập</h2>
 
@@ -43,111 +43,11 @@
             </div>
 
             <button type="submit" class="btn btn-warning w-100 mb-3">Đăng nhập</button><br>
-            <button type="button" class="btn btn-secondary w-100" data-bs-toggle="modal"
-                data-bs-target="#dangKyModal">Đăng ký</button>
+            <a class="btn btn-secondary w-100" th:href="@{/dangky}">Đăng ký</a>
             <div class="mt-3 text-end">
                 <a th:href="@{/quen-mat-khau}">Quên mật khẩu?</a>
             </div>
         </form>
-    </div>
-    <!-- Modal Đăng Ký -->
-    <div class="modal fade" id="dangKyModal" tabindex="-1" aria-labelledby="dangKyLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div th:if="${registerStep == null or registerStep != 'verify'}">
-                <form th:action="@{/dangky/gui-ma}" method="post" id="registerForm" novalidate>
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="dangKyLabel">Đăng ký tài khoản</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                    </div>
-
-
-                    <div class="modal-body">
-                        <div class="mb-2">
-                            <label>Họ và tên</label>
-                            <input type="text" class="form-control" name="tenNguoiDung" minlength="2" maxlength="80" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label>Tên đăng nhập</label>
-                            <input type="text" class="form-control" name="tenDangNhap" pattern="^[A-Za-z0-9._-]{4,30}$" minlength="4" maxlength="30" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label>Mật khẩu</label>
-                            <input type="password" class="form-control" name="matKhau" minlength="6" maxlength="64" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label>Nhập lại mật khẩu</label>
-                            <input type="password" class="form-control" name="nhapLaiMatKhau" minlength="6" maxlength="64" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label>Email</label>
-                            <input type="email" class="form-control" name="email" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label>Số điện thoại</label>
-                            <input type="text" class="form-control" name="sdt" pattern="^0\d{9}$" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label for="registerTinhThanh">Tỉnh / Thành phố</label>
-                            <select id="registerTinhThanh" class="form-select" required>
-                                <option value="">Chọn tỉnh/thành phố</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label for="registerPhuongXa">Phường / Xã</label>
-                            <select id="registerPhuongXa" class="form-select" required>
-                                <option value="">Chọn phường/xã</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-2">
-                            <label for="registerStreetLine">Tên đường, tòa nhà, số nhà</label>
-                            <input type="text" id="registerStreetLine" class="form-control" minlength="8" maxlength="255"
-                                placeholder="Ví dụ: Số 12, Tòa A, Đường Lê Lợi" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <input type="hidden" id="registerDiaChi" name="diaChi">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Gửi</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
-                    </div>
-                </form>
-                </div>
-
-                <div th:if="${registerStep == 'verify'}">
-                    <form th:action="@{/dangky/xac-nhan}" method="post" id="otpRegisterForm" novalidate>
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="dangKyLabel">Xác nhận OTP đăng ký</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                        </div>
-
-                        <div class="modal-body">
-                            <div class="alert alert-info">
-                                Mã OTP đã được gửi đến email của bạn. Hãy nhập mã để hoàn tất đăng ký.
-                            </div>
-                            <div class="mb-2">
-                                <label>OTP</label>
-                                <input type="text" class="form-control" name="otp" placeholder="Nhập mã OTP" pattern="^\\d{6}$" maxlength="6" required>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-success">Xác nhận đăng ký</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
-                        </div>
-                    </form>
-                </div>
-
-            </div>
-        </div>
     </div>
 </body>
 
@@ -155,16 +55,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const otpRegisterForm = document.getElementById('otpRegisterForm');
-        const registerStep = document.body.dataset.registerStep;
-        const dangKyModalElement = document.getElementById('dangKyModal');
-        const registerTinhThanh = document.getElementById('registerTinhThanh');
-        const registerPhuongXa = document.getElementById('registerPhuongXa');
-        const registerStreetLine = document.getElementById('registerStreetLine');
-        const registerDiaChi = document.getElementById('registerDiaChi');
-        const provincesApiBase = 'https://provinces.open-api.vn/api/v2';
-        let cachedProvinces = [];
+        // Login page no longer hosts the registration form.
 
         function getMessage(input) {
             const labels = {
@@ -175,9 +66,6 @@
                 email: 'Email',
                 sdt: 'Số điện thoại',
                 diaChi: 'Địa chỉ',
-                registerTinhThanh: 'Tỉnh / Thành phố',
-                registerPhuongXa: 'Phường / Xã',
-                registerStreetLine: 'Tên đường, tòa nhà, số nhà',
                 otp: 'Mã OTP'
             };
             const label = labels[input.name] || labels[input.id] || 'Trường này';
@@ -192,97 +80,6 @@
             if (input.validity.tooShort) return label + ' quá ngắn.';
             if (input.validity.tooLong) return label + ' quá dài.';
             return label + ' chưa hợp lệ.';
-        }
-
-        function removeVietnameseDiacritics(value) {
-            return (value || '')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/đ/g, 'd')
-                .replace(/Đ/g, 'D')
-                .trim();
-        }
-
-        function normalizeAddressPart(value) {
-            return removeVietnameseDiacritics(value).replace(/\s+/g, ' ').trim();
-        }
-
-        function buildFullAddress(streetLine, phuongXa, tinhThanh) {
-            return [streetLine, phuongXa, tinhThanh]
-                .map(normalizeAddressPart)
-                .filter(Boolean)
-                .join(', ');
-        }
-
-        async function fetchJson(url) {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error('Không thể tải dữ liệu địa chỉ.');
-            }
-            return response.json();
-        }
-
-        function setSelectOptions(selectEl, options, placeholder) {
-            if (!selectEl) return;
-            selectEl.innerHTML = '';
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = placeholder;
-            selectEl.appendChild(defaultOption);
-
-            options.forEach(function (opt) {
-                const option = document.createElement('option');
-                if (typeof opt === 'object' && opt !== null) {
-                    option.value = String(opt.value ?? '');
-                    option.textContent = String(opt.label ?? opt.value ?? '');
-                } else {
-                    option.value = opt;
-                    option.textContent = opt;
-                }
-                selectEl.appendChild(option);
-            });
-        }
-
-        async function loadTinhThanhOptions() {
-            if (!registerTinhThanh) return;
-            try {
-                const provinces = await fetchJson(`${provincesApiBase}/p?depth=2`);
-                cachedProvinces = Array.isArray(provinces) ? provinces : [];
-                const provinceOptions = cachedProvinces
-                    .filter(function (item) { return item && item.name && item.code != null; })
-                    .sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'vi'); })
-                    .map(function (item) {
-                        return { value: item.code, label: item.name };
-                    });
-                setSelectOptions(registerTinhThanh, provinceOptions, 'Chọn tỉnh/thành phố');
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        async function loadPhuongXaByTinhThanh(provinceCode) {
-            if (!registerPhuongXa) return;
-            setSelectOptions(registerPhuongXa, [], 'Đang tải phường/xã...');
-            if (!provinceCode) {
-                setSelectOptions(registerPhuongXa, [], 'Chọn phường/xã');
-                return;
-            }
-            try {
-                const province = await fetchJson(`${provincesApiBase}/p/${provinceCode}?depth=2`);
-                const wardSet = new Set();
-                (province.wards || []).forEach(function (ward) {
-                    if (ward && ward.name) wardSet.add(ward.name);
-                });
-                const wards = Array.from(wardSet).sort(function (a, b) { return a.localeCompare(b, 'vi'); });
-                if (wards.length === 0) {
-                    setSelectOptions(registerPhuongXa, [], 'Không có dữ liệu phường/xã');
-                    return;
-                }
-                setSelectOptions(registerPhuongXa, wards, 'Chọn phường/xã');
-            } catch (err) {
-                console.error(err);
-                setSelectOptions(registerPhuongXa, [], 'Không tải được phường/xã');
-            }
         }
 
         function attachValidation(form) {
@@ -325,55 +122,6 @@
         }
 
         attachValidation(loginForm);
-        attachValidation(registerForm);
-        attachValidation(otpRegisterForm);
-
-        if (registerTinhThanh && registerPhuongXa) {
-            loadTinhThanhOptions();
-            registerTinhThanh.addEventListener('change', function () {
-                loadPhuongXaByTinhThanh(registerTinhThanh.value);
-            });
-        }
-
-        if (registerForm && registerDiaChi && registerStreetLine && registerTinhThanh && registerPhuongXa) {
-            registerForm.addEventListener('submit', function (e) {
-                const fullAddress = buildFullAddress(
-                    registerStreetLine.value,
-                    registerPhuongXa.value,
-                    registerTinhThanh.options[registerTinhThanh.selectedIndex]?.text || ''
-                );
-
-                if (!registerTinhThanh.value) {
-                    registerTinhThanh.setCustomValidity('Vui lòng chọn tỉnh/thành phố.');
-                } else {
-                    registerTinhThanh.setCustomValidity('');
-                }
-
-                if (!registerPhuongXa.value) {
-                    registerPhuongXa.setCustomValidity('Vui lòng chọn phường/xã.');
-                } else {
-                    registerPhuongXa.setCustomValidity('');
-                }
-
-                if (!fullAddress || fullAddress.length < 8) {
-                    registerStreetLine.setCustomValidity('Địa chỉ cần đủ số nhà/đường, phường/xã và tỉnh/thành phố.');
-                    registerDiaChi.value = '';
-                } else {
-                    registerStreetLine.setCustomValidity('');
-                    registerDiaChi.value = fullAddress;
-                }
-
-                if (!registerForm.checkValidity()) {
-                    e.preventDefault();
-                    registerForm.reportValidity();
-                }
-            });
-        }
-
-        if (dangKyModalElement && registerStep === 'verify') {
-            const dangKyModal = new bootstrap.Modal(dangKyModalElement);
-            dangKyModal.show();
-        }
     });
 </script>
 </html>

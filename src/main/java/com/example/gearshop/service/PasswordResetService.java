@@ -33,18 +33,44 @@ public class PasswordResetService {
         return code.toString();
     }
 
+    // Tao va gui email xac nhan dang ky tai khoan.
+    public void sendRegistrationVerificationCode(String toEmail, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject("Ma xac nhan dang ky tai khoan - PGearShop");
+        message.setText("""
+            Xin chao,
+
+            Ban vua tao yeu cau dang ky tai khoan PGearShop.
+            Ma xac nhan cua ban la: %s
+            Ma co hieu luc trong 5 phut.
+
+            Neu ban khong thuc hien yeu cau nay, vui long bo qua email nay.
+
+            PGearShop
+            """.formatted(code));
+
+        mailSender.send(message);
+    }
+
     // Tao va gui email chua ma xac nhan dat lai mat khau.
     public void sendVerificationCode(String toEmail, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);
         message.setTo(toEmail);
         message.setSubject("Ma xac nhan dat lai mat khau - PGearShop");
-        message.setText("Xin chao,\n\n"
-                + "Ban vua yeu cau dat lai mat khau tai khoan PGearShop.\n"
-                + "Ma xac nhan cua ban la: " + code + "\n"
-                + "Ma co hieu luc trong 5 phut.\n\n"
-                + "Neu ban khong thuc hien yeu cau nay, vui long bo qua email nay.\n\n"
-                + "PGearShop");
+        message.setText("""
+            Xin chao,
+
+            Ban vua yeu cau dat lai mat khau tai khoan PGearShop.
+            Ma xac nhan cua ban la: %s
+            Ma co hieu luc trong 5 phut.
+
+            Neu ban khong thuc hien yeu cau nay, vui long bo qua email nay.
+
+            PGearShop
+            """.formatted(code));
 
         mailSender.send(message);
     }

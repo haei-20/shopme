@@ -217,6 +217,14 @@ public class HomeController {
         return "clientTemplate/dangnhap"; // login.html trong templates
     }
 
+    @GetMapping("/dangky")
+    public String showRegisterPage(@RequestParam(value = "step", required = false) String step, Model model) {
+        if (!model.containsAttribute("registerStep")) {
+            model.addAttribute("registerStep", step == null ? "input" : step);
+        }
+        return "clientTemplate/dangky";
+    }
+
     @PostMapping("/dangky/gui-ma")
     public String sendRegisterOtp(@RequestParam String tenNguoiDung,
             @RequestParam String tenDangNhap,
@@ -232,12 +240,12 @@ public class HomeController {
         if (validationError != null) {
             redirectAttributes.addFlashAttribute("error", validationError);
             redirectAttributes.addFlashAttribute("registerStep", "input");
-            return "redirect:/dangnhap";
+            return "redirect:/dangky";
         }
 
         try {
             String otp = passwordResetService.generateVerificationCode();
-            passwordResetService.sendVerificationCode(email, otp);
+            passwordResetService.sendRegistrationVerificationCode(email, otp);
 
             session.setAttribute("pendingRegisterTenNguoiDung", tenNguoiDung);
             session.setAttribute("pendingRegisterTenDangNhap", tenDangNhap);
@@ -254,7 +262,7 @@ public class HomeController {
             redirectAttributes.addFlashAttribute("error", "Khong gui duoc OTP. Kiem tra lai cau hinh SMTP.");
             redirectAttributes.addFlashAttribute("registerStep", "input");
         }
-        return "redirect:/dangnhap";
+        return "redirect:/dangky";
     }
 
     @PostMapping("/dangky/xac-nhan")
@@ -267,20 +275,20 @@ public class HomeController {
         if (pendingOtp == null || pendingOtpExpiry == null) {
             redirectAttributes.addFlashAttribute("error", "Phien dang ky da het han. Vui long dang ky lai.");
             redirectAttributes.addFlashAttribute("registerStep", "input");
-            return "redirect:/dangnhap";
+            return "redirect:/dangky";
         }
 
         if (System.currentTimeMillis() > pendingOtpExpiry) {
             clearPendingRegister(session);
             redirectAttributes.addFlashAttribute("error", "OTP da het han. Vui long gui lai OTP.");
             redirectAttributes.addFlashAttribute("registerStep", "input");
-            return "redirect:/dangnhap";
+            return "redirect:/dangky";
         }
 
         if (!pendingOtp.equals(otp)) {
             redirectAttributes.addFlashAttribute("error", "OTP khong dung.");
             redirectAttributes.addFlashAttribute("registerStep", "verify");
-            return "redirect:/dangnhap";
+            return "redirect:/dangky";
         }
 
         String tenNguoiDung = (String) session.getAttribute("pendingRegisterTenNguoiDung");
@@ -294,7 +302,7 @@ public class HomeController {
             clearPendingRegister(session);
             redirectAttributes.addFlashAttribute("error", "Khong tim thay du lieu dang ky tam thoi. Vui long dang ky lai.");
             redirectAttributes.addFlashAttribute("registerStep", "input");
-            return "redirect:/dangnhap";
+            return "redirect:/dangky";
         }
 
         StringBuilder thongBao = new StringBuilder();
@@ -311,7 +319,7 @@ public class HomeController {
 
         redirectAttributes.addFlashAttribute("error", thongBao.toString());
         redirectAttributes.addFlashAttribute("registerStep", "input");
-        return "redirect:/dangnhap";
+        return "redirect:/dangky";
     }
 
     private void clearPendingRegister(HttpSession session) {
