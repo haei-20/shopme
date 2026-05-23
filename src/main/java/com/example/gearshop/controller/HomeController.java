@@ -624,41 +624,4 @@ public class HomeController {
         }
     }
 
-    @Controller
-    @RequestMapping("/dangky")
-    public class DangKyController {
-
-        @Autowired
-        private DangKyService dangKyService;
-
-        @GetMapping
-        public String hienFormDangKy() {
-            return "dangky"; // trang giao diện Thymeleaf
-        }
-
-        @PostMapping
-        public String xuLyDangKy(@RequestParam String tenDangNhap,
-                @RequestParam String matKhau,
-                @RequestParam String nhapLaiMatKhau,
-                @RequestParam String email,
-                @RequestParam String sdt,
-                @RequestParam String diaChi,
-                @RequestParam String tenNguoiDung,
-                RedirectAttributes redirectAttributes,
-                Model model) {
-            StringBuilder thongBao = new StringBuilder();
-            boolean thanhCong = dangKyService.dangKyTaiKhoan(
-                    tenDangNhap, matKhau, nhapLaiMatKhau,
-                    email, sdt, diaChi, tenNguoiDung, thongBao);
-
-            if (thanhCong) {
-                redirectAttributes.addFlashAttribute("success", thongBao.toString());
-                return "redirect:/dangnhap";
-            } else {
-                redirectAttributes.addFlashAttribute("error", thongBao.toString());
-                return "clientTemplate/dangnhap";
-            }
-        }
-    }
-
 }
